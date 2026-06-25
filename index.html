@@ -1404,6 +1404,19 @@ function getMonthLoad(p,m){
   if(mi<0||mi>=p.d)return 0;
   return MV[p.n][mi]||0;
 }
+/* Charge mensuelle (indexée mois global 0-9) d'un membre sur un projet.
+   Internes : proportionnel à la charge du mois (étalé).
+   ESN/prestataire : total regroupé en mois pleins (~20 j/h) dès le début du projet. */
+function memberMonthLoads(m,p,loads){
+  if(m.type==='prestataire'){
+    var total=Math.round((m.share||0)*loads.reduce(function(a,b){return a+b;},0));
+    var arr=[0,0,0,0,0,0,0,0,0,0], rem=total;
+    for(var i=0;i<p.d;i++){ var gm=p.s+i; if(gm>=10) break; if(rem<=0) break; var x=Math.min(20,rem); arr[gm]=x; rem-=x; }
+    if(rem>0){ var last=Math.min(9,p.s+p.d-1); arr[last]+=rem; }
+    return arr;
+  }
+  return loads.map(function(total){ return total>0?Math.round((m.share||0)*total):0; });
+}
 
 function initRes(){
   window.rReady=true;
@@ -1531,13 +1544,11 @@ function showTeamPanel(pi){
   }
 
   /* Global max across ALL members → barres comparables entre elles */
-  const globalMax=Math.max(...team.members.flatMap(m=>
-    loads.map((total,mi)=>total>0?Math.round(m.share*total):0)
-  ),1);
+  const globalMax=Math.max(...team.members.flatMap(m=>memberMonthLoads(m,p,loads)),1);
 
   html+='<div class="tmo-grid">';
   team.members.forEach((m,idx)=>{
-    const memberLoads=loads.map((total,mi)=>total>0?Math.round(m.share*total):0);
+    const memberLoads=memberMonthLoads(m,p,loads);
     const memberTotal=memberLoads.reduce((s,v)=>s+v,0);
     const memberMax=globalMax;
     const initials=m.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -1890,8 +1901,9 @@ function userMonthly(name){
   P.forEach(p=>{
     const t=TEAMS[p.n]; if(!t||!t.members) return;
     const m=t.members.find(x=>x.name===name); if(!m) return;
-    const arr=MV[p.n]||[]; const pm=Array.from({length:10},()=>0);
-    for(let gm=0;gm<10;gm++){ const idx=gm-p.s; if(idx>=0&&idx<p.d&&idx<arr.length){ const load=Math.round((arr[idx]||0)*(m.share||0)); pm[gm]=load; months[gm]+=load; } }
+    const loads=Array.from({length:10},(_,gm)=>getMonthLoad(p,gm));
+    const pm=memberMonthLoads(m,p,loads);
+    for(let gm=0;gm<10;gm++){ months[gm]+=pm[gm]; }
     if(pm.some(v=>v>0)) perProj.push({proj:p.n, color:CAT[p.cat]?CAT[p.cat].f:'#94A3B8', months:pm, total:pm.reduce((a,b)=>a+b,0)});
   });
   return {months:months, perProj:perProj, total:months.reduce((a,b)=>a+b,0)};
@@ -1979,7 +1991,7 @@ function autoAllocate(){
   var FAMLABEL={CP:'Chef de projet',Dev:'Développeur',Admin:'Admin',Tech:'Technicien'};
   var FAMCOLOR={CP:'#F97316',Dev:'#EF4444',Admin:'#8B5CF6',Tech:'#F59E0B'};
   order.forEach(function(p){
-    var members=[], usedNames=[];
+    var members=[], usedNames=[], esnShare=0;
     var pcts={CP:+p.pctCP||0,Dev:+p.pctDev||0,Admin:+p.pctAdmin||0,Tech:+p.pctTech||0};
     if((pcts.CP+pcts.Dev+pcts.Admin+pcts.Tech)===0){ var d=DEF_PCT[p.cat]||[20,40,20,20]; pcts={CP:d[0],Dev:d[1],Admin:d[2],Tech:d[3]}; }
     FAM.forEach(function(fam){
@@ -1987,8 +1999,9 @@ function autoAllocate(){
       var pool=internes.filter(function(u){ return roleFamily(u.role)===fam && usedNames.indexOf(u.name)<0 && maxShare(u.name,p)>0.01; }).sort(function(a,b){ return maxShare(b.name,p)-maxShare(a.name,p); });
       var limit=(fam==='CP')?1:pool.length;
       for(var i=0;i<pool.length && i<limit;i++){ if(remaining<=0.03) break; var u=pool[i]; var s=Math.floor(Math.min(maxShare(u.name,p),remaining)*100)/100; if(s>=0.03){ members.push({name:u.name,role:(fam==='CP'?'Chef de projet':(u.role||FAMLABEL[fam])),type:'interne',color:u.color||'#3B82F6',share:s}); commit(u.name,p,s); remaining-=s; usedNames.push(u.name); internCount++; } }
-      if(remaining>0.03){ members.push({name:'ESN '+fam+' · '+p.n,role:'ESN · '+FAMLABEL[fam],type:'prestataire',color:FAMCOLOR[fam],share:Math.round(remaining*100)/100}); esnCount++; }
+      if(remaining>0.03){ esnShare+=remaining; }
     });
+    if(esnShare>0.03){ members.push({name:'ESN · '+p.n,role:'Prestataire ESN',type:'prestataire',color:'#F97316',share:Math.round(esnShare*100)/100}); esnCount++; }
     newTeams[p.n]={members:members};
   });
   TEAMS=newTeams;
