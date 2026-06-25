@@ -581,6 +581,10 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <button class="btn btn-acc" style="height:33px" onclick="rhAddUser()"><i class="ti ti-check"></i>Ajouter</button>
       </div>
     </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <input type="text" id="rh-search" placeholder="🔍 Rechercher une personne..." oninput="renderRH()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit">
+      <select id="rh-rolefilter" onchange="renderRH()" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"><option value="all">Tous les rôles</option><option value="CP">Chef de projet</option><option value="Dev">Développeur</option><option value="Admin">Admin</option><option value="Tech">Technicien</option></select>
+    </div>
     <div id="rh-list"></div>
   </div>
 </div>
@@ -1872,23 +1876,25 @@ function userInfo(name){
 }
 function renderRH(){
   const el=document.getElementById('rh-list'); if(!el)return;
-  const names=allUserNames().sort((a,b)=>userAllocation(b).count-userAllocation(a).count || a.localeCompare(b));
-  if(!names.length){el.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:14px">Aucune ressource dans le vivier. Lance setupSheet() côté Apps Script, ou ajoute une personne.</div>';return;}
+  const q=(document.getElementById('rh-search')?document.getElementById('rh-search').value.trim().toLowerCase():'');
+  const rf=(document.getElementById('rh-rolefilter')?document.getElementById('rh-rolefilter').value:'all');
+  const FO={CP:0,Dev:1,Admin:2,Tech:3,Autre:4};
+  const names=allUserNames().filter(function(n){ const u=userInfo(n); const fam=roleFamily(u.role); if(rf!=='all' && fam!==rf) return false; if(q && n.toLowerCase().indexOf(q)<0 && (u.role||'').toLowerCase().indexOf(q)<0) return false; return true; }).sort(function(a,b){ const fa=(FO[roleFamily(userInfo(a).role)]==null?4:FO[roleFamily(userInfo(a).role)]), fb=(FO[roleFamily(userInfo(b).role)]==null?4:FO[roleFamily(userInfo(b).role)]); return fa-fb || a.localeCompare(b); });
+  if(!names.length){el.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:14px">Aucune personne ne correspond à la recherche.</div>';return;}
   el.innerHTML=names.map(name=>{
     const u=userInfo(name); const a=userAllocation(name);
-    const over=isOverloaded(a); const multi=a.count>=2; const pct=Math.round(a.share*100);
+    const multi=a.count>=2;
     const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const isESN=u.type==='prestataire';
     const chips=a.projs.map(pn=>`<span style="font-size:9px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:2px 8px;color:#475569">${pn}</span>`).join(' ')||'<span style="font-size:10px;color:#CBD5E1">Non affecté</span>';
-    return `<div class="card" onclick="openUserTimeline('${name}')" title="Voir la charge mois par mois" style="cursor:pointer;margin-bottom:8px;display:flex;align-items:flex-start;gap:11px;${over?'border-color:#FECACA':''}">
+    return `<div class="card" onclick="openUserTimeline('${name}')" title="Voir la charge mois par mois" style="cursor:pointer;margin-bottom:8px;display:flex;align-items:flex-start;gap:11px">
       <div style="width:34px;height:34px;border-radius:50%;background:${u.color||'#3B82F6'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0">${initials}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
           <span style="font-size:12.5px;font-weight:700;color:#0F172A">${name}</span>
           <span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:${isESN?'#EFF6FF':'#EFF6FF'};color:${isESN?'#2563EB':'#3B82F6'}">${isESN?'ESN':'Interne'}</span>
           ${u.role?`<span style="font-size:10px;color:#94A3B8">${u.role}</span>`:''}
-          ${multi?`<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#FEF9C3;color:#A16207">⚠ ${a.count} projets</span>`:''}
-          ${over?`<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#FEE2E2;color:#DC2626">⚠ Surchargé · ${pct}%</span>`:`<span style="font-size:9px;color:#94A3B8">${pct}% alloué</span>`}
+          ${multi?`<span style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#EFF6FF;color:#2563EB">${a.count} projets</span>`:`<span style="font-size:9px;color:#94A3B8">${a.count} projet</span>`}
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">${chips}</div>
       </div>
