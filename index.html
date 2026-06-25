@@ -583,7 +583,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <input type="text" id="rh-search" placeholder="🔍 Rechercher une personne..." oninput="renderRH()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit">
-      <select id="rh-rolefilter" onchange="renderRH()" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"><option value="all">Tous les rôles</option><option value="CP">Chef de projet</option><option value="Dev">Développeur</option><option value="Admin">Admin</option><option value="Tech">Technicien</option></select>
+      <select id="rh-rolefilter" onchange="renderRH()" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-family:inherit;cursor:pointer"><option value="all">Tous les rôles</option><option value="CP">Chef de projet</option><option value="Dev">Développeur</option><option value="Admin">Admin</option><option value="Tech">Technicien</option><option value="ESN">ESN</option></select>
     </div>
     <div id="rh-list"></div>
   </div>
@@ -1876,10 +1876,7 @@ function userInfo(name){
 }
 function rhFillPostes(){
   var sel=document.getElementById('rh-role'); if(!sel||sel.tagName!=='SELECT') return;
-  var base=['Chef de projet','Lead Developer','Développeur','Développeuse','Développeur Mobile','Développeuse Mobile','Technicien IT','Technicienne IT','Admin Sys/Réseau','Admin DB'];
-  var set={}; base.forEach(function(r){set[r]=true;});
-  (npUsers()||[]).forEach(function(u){ if(u.role) set[u.role]=true; });
-  var opts=Object.keys(set).filter(function(r){return r;}).sort();
+  var opts=['Chef de projet','Développeur','Admin','Technicien','ESN'];
   var cur=sel.value;
   sel.innerHTML='<option value="">-- Poste --</option>'+opts.map(function(r){return '<option>'+r+'</option>';}).join('');
   if(cur && opts.indexOf(cur)>=0) sel.value=cur;
@@ -1890,7 +1887,7 @@ function renderRH(){
   const q=(document.getElementById('rh-search')?document.getElementById('rh-search').value.trim().toLowerCase():'');
   const rf=(document.getElementById('rh-rolefilter')?document.getElementById('rh-rolefilter').value:'all');
   const FO={CP:0,Dev:1,Admin:2,Tech:3,Autre:4};
-  const names=allUserNames().filter(function(n){ const u=userInfo(n); const fam=roleFamily(u.role); if(rf!=='all' && fam!==rf) return false; if(q && n.toLowerCase().indexOf(q)<0 && (u.role||'').toLowerCase().indexOf(q)<0) return false; return true; }).sort(function(a,b){ const fa=(FO[roleFamily(userInfo(a).role)]==null?4:FO[roleFamily(userInfo(a).role)]), fb=(FO[roleFamily(userInfo(b).role)]==null?4:FO[roleFamily(userInfo(b).role)]); return fa-fb || a.localeCompare(b); });
+  const names=allUserNames().filter(function(n){ const u=userInfo(n); const fam=roleFamily(u.role); if(rf!=='all'){ if(rf==='ESN'){ if(u.type!=='prestataire') return false; } else if(fam!==rf) return false; } if(q && n.toLowerCase().indexOf(q)<0 && (u.role||'').toLowerCase().indexOf(q)<0) return false; return true; }).sort(function(a,b){ const fa=(FO[roleFamily(userInfo(a).role)]==null?4:FO[roleFamily(userInfo(a).role)]), fb=(FO[roleFamily(userInfo(b).role)]==null?4:FO[roleFamily(userInfo(b).role)]); return fa-fb || a.localeCompare(b); });
   if(!names.length){el.innerHTML='<div style="font-size:11px;color:#94A3B8;padding:14px">Aucune personne ne correspond à la recherche.</div>';return;}
   el.innerHTML=names.map(name=>{
     const u=userInfo(name); const a=userAllocation(name);
