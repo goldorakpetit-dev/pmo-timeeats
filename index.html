@@ -704,6 +704,10 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div id="np-team-newfields" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end"></div>
         <div id="np-team-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
+      <div class="form-section">
+        <div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(projets requis avant celui-ci)</span></div>
+        <div id="np-deps" style="max-height:130px;overflow:auto;border:1px solid #E2E8F0;border-radius:8px;padding:8px"></div>
+      </div>
       <div class="form-errors" id="np-errors"><strong>Champs obligatoires manquants :</strong><ul id="np-errors-list"></ul></div>
       <div class="ma2">
         <button class="btn" onclick="resetNPForm()"><i class="ti ti-refresh"></i>Réinitialiser</button>
@@ -978,6 +982,11 @@ function npDefaultPct(){
   document.getElementById('np-pct-cp').value=d[0];document.getElementById('np-pct-dev').value=d[1];document.getElementById('np-pct-admin').value=d[2];document.getElementById('np-pct-tech').value=d[3];
   npPctSum();
 }
+function npFillDeps(){
+  var box=document.getElementById('np-deps'); if(!box)return;
+  if(!P.length){box.innerHTML='<span style="font-size:10px;color:#CBD5E1">Aucun projet existant.</span>';return;}
+  box.innerHTML=P.map(function(p){return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;padding:3px 0;cursor:pointer"><input type="checkbox" class="np-dep" value="'+p.n+'" style="width:auto;margin:0">'+p.n+'</label>';}).join('');
+}
 function npPctSum(){
   var g=function(id){return +document.getElementById(id).value||0;};
   var s=g('np-pct-cp')+g('np-pct-dev')+g('np-pct-admin')+g('np-pct-tech');
@@ -988,7 +997,7 @@ function openNewProject(){
   resetNPForm();
   const cp=document.getElementById('np-cp');
   if(cp){ const cps=npUsers().filter(u=>/chef de projet/i.test(u.role||u.poste||'')); const list=cps.length?cps:npUsers(); cp.innerHTML='<option value="">-- Assigner --</option>'+list.map(u=>`<option>${u.name}</option>`).join(''); }
-  npTeam=[]; npRisks=[]; npRenderTeam(); npRefreshUserSelect(); npRenderCharges(); npRenderRisks(); npPctSum();
+  npTeam=[]; npRisks=[]; npRenderTeam(); npRefreshUserSelect(); npRenderCharges(); npRenderRisks(); npPctSum(); npFillDeps();
   document.getElementById('np-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 function closeNPModal(e){if(e&&e.target!==document.getElementById('np-overlay'))return;document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow='';}
@@ -1108,7 +1117,7 @@ function saveNewProject(){
   const MONS=(typeof MON!=='undefined')?MON:['Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc','Jan'];
   const dt=(MONS[s]||'')+' → '+(MONS[(s+d-1)%MONS.length]||'');
   const topRisk=npRisks.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
-  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',val:Math.min(20,Math.max(0,+document.getElementById('np-val').value)),fais:Math.min(20,Math.max(0,+document.getElementById('np-fais').value)),risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',val:Math.min(20,Math.max(0,+document.getElementById('np-val').value)),fais:Math.min(20,Math.max(0,+document.getElementById('np-fais').value)),risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:[].slice.call(document.querySelectorAll('#np-deps .np-dep:checked')).map(function(c){return c.value;})};
   newP.q=newP.val>=10&&newP.fais>=10?'stars':newP.val<10&&newP.fais>=10?'quickwins':newP.val>=10&&newP.fais<10?'majeurs':'reconsider';
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -1642,16 +1651,55 @@ const SP_LINKS={
 function renderList(){
 document.getElementById('lst').innerHTML=
   `<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /40</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`+
-  P.map(p=>`<div class="lr" onclick="openSP('${p.n}')" title="Ouvrir le SharePoint du projet">
+  P.map(p=>`<div class="lr" onclick="openProjectDetail('${p.n}')" title="Voir / modifier le projet">
     <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
     <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
     <div class="lc">${p.b}K€</div>
     <div class="lc" style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</div>
     <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
-    <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7" title="SharePoint"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject('${p.n}')" title="Supprimer ce projet"></i></div>
+    <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP('${p.n}')"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject('${p.n}')" title="Supprimer ce projet"></i></div>
   </div>`).join('');
 }
 
+let pdName=null;
+function openProjectDetail(name){
+  var p=P.find(function(x){return x.n===name;}); if(!p) return;
+  pdName=name;
+  document.getElementById('pd-title').textContent=name;
+  document.getElementById('pd-sub').textContent=p.cat+(p.dt?' · '+p.dt:'');
+  var cats=['Socle IT','Dev applicatif','CRM / Métier','DevOps','Réglementaire'];
+  var opt=function(arr,sel){return arr.map(function(o){return '<option'+(String(o)===String(sel)?' selected':'')+'>'+o+'</option>';}).join('');};
+  var fld=function(label,inner){return '<div class="fld" style="flex:1;min-width:120px"><label>'+label+'</label>'+inner+'</div>';};
+  var deps=p.deps||[];
+  var depBoxes=P.filter(function(x){return x.n!==name;}).map(function(x){var ck=deps.indexOf(x.n)>=0?' checked':'';return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;padding:3px 0;cursor:pointer"><input type="checkbox" class="pd-dep" value="'+x.n+'"'+ck+' style="width:auto;margin:0">'+x.n+'</label>';}).join('');
+  var team=(TEAMS[name]&&TEAMS[name].members&&TEAMS[name].members.length)?TEAMS[name].members.map(function(m){return '<span style="font-size:10px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:2px 8px;color:#475569">'+m.name+(m.type==='prestataire'?' · ESN':'')+'</span>';}).join(' '):'<span style="font-size:10px;color:#CBD5E1">Aucune équipe affectée</span>';
+  var risks=(RISKS[name]&&RISKS[name].length)?RISKS[name].map(function(r){return '<div style="font-size:11px;color:#475569;padding:2px 0">• '+r.risk+(r.level?' <strong>('+r.level+')</strong>':'')+'</div>';}).join(''):(p.risks?('<div style="font-size:11px;color:#475569">'+p.risks+'</div>'):'<span style="font-size:10px;color:#CBD5E1">Aucun risque</span>');
+  var h='';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-adjustments" style="font-size:12px;color:#2563EB"></i>Paramètres modifiables</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+fld('Dates','<input type="text" id="pd-dates" value="'+String(p.dt||'').replace(/"/g,'&quot;')+'">')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur /20','<input type="number" id="pd-val" min="0" max="20" value="'+p.val+'">')+fld('Faisabilité /20','<input type="number" id="pd-fais" min="0" max="20" value="'+p.fais+'">')+fld('Importance','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+'</div>';
+  h+='</div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(projets requis avant celui-ci)</span></div><div style="max-height:140px;overflow:auto;border:1px solid #E2E8F0;border-radius:8px;padding:8px" id="pd-deps">'+(depBoxes||'<span style="font-size:10px;color:#CBD5E1">Aucun autre projet</span>')+'</div></div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div>'+risks+'</div>';
+  h+='<div class="ma2"><button class="btn" onclick="openSP(pdName)"><i class="ti ti-brand-sharepoint"></i>SharePoint</button><button class="btn" onclick="closePD()">Fermer</button><button class="btn btn-acc" onclick="saveProjectDetail()"><i class="ti ti-check"></i>Enregistrer</button></div>';
+  document.getElementById('pd-body').innerHTML=h;
+  document.getElementById('pd-overlay').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closePD(e){ if(e&&e.target!==document.getElementById('pd-overlay'))return; document.getElementById('pd-overlay').classList.remove('open'); document.body.style.overflow=''; }
+function saveProjectDetail(){
+  var p=P.find(function(x){return x.n===pdName;}); if(!p)return;
+  var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
+  p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0; p.dt=g('pd-dates');
+  p.val=Math.min(20,Math.max(0,+g('pd-val')||0)); p.fais=Math.min(20,Math.max(0,+g('pd-fais')||0)); p.st=+g('pd-strat')||p.st;
+  p.deps=[].slice.call(document.querySelectorAll('#pd-deps .pd-dep:checked')).map(function(c){return c.value;});
+  p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
+  apiPost({action:'update', project:p, charges:MV[p.n]||[]});
+  closePD();
+  recalc(); buildHome(); renderList(); renderG(); renderRisques(); window.mReady=false; window.rReady=false;
+  toast('✓ Projet "'+p.n+'" mis à jour');
+}
 function openSP(name){
   const url=SP_LINKS[name];
   if(!url||url.startsWith('#')){
@@ -2054,6 +2102,18 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
         <button class="btn" style="background:#EF4444;color:#fff;border-color:transparent" onclick="executeDelete()"><i class="ti ti-trash"></i>Supprimer définitivement</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Fiche projet (détails + édition) -->
+<div class="overlay" id="pd-overlay" onclick="closePD(event)">
+  <div class="modal">
+    <div class="mo-header">
+      <div class="mo-icon" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-folder"></i></div>
+      <div><div class="mo-title" id="pd-title">Projet</div><div class="mo-sub" id="pd-sub"></div></div>
+      <button class="mo-close" onclick="closePD()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mo-body" id="pd-body"></div>
   </div>
 </div>
 
