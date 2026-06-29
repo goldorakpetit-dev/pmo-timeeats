@@ -990,7 +990,8 @@ function npFillStart(){
 function npFillDeps(){
   var box=document.getElementById('np-deps'); if(!box)return;
   if(!P.length){box.innerHTML='<span style="font-size:10px;color:#CBD5E1">Aucun projet existant.</span>';return;}
-  box.innerHTML=P.map(function(p){return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;padding:3px 0;cursor:pointer"><input type="checkbox" class="np-dep" value="'+p.n+'" style="width:auto;margin:0">'+p.n+'</label>';}).join('');
+  box.innerHTML=depsEditorMarkup('np');
+  depsEditorOpen('np', [], '');
 }
 function npPctSum(){
   var g=function(id){return +document.getElementById(id).value||0;};
@@ -1121,7 +1122,7 @@ function saveNewProject(){
   const d=+document.getElementById('np-dur').value;
   const dt=monLabel(s)+' '+yearTag(s)+' → '+monLabel(s+d-1)+' '+yearTag(s+d-1);
   const topRisk=npRisks.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
-  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',val:Math.min(20,Math.max(0,+document.getElementById('np-val').value)),fais:Math.min(20,Math.max(0,+document.getElementById('np-fais').value)),risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:[].slice.call(document.querySelectorAll('#np-deps .np-dep:checked')).map(function(c){return c.value;})};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',val:Math.min(20,Math.max(0,+document.getElementById('np-val').value)),fais:Math.min(20,Math.max(0,+document.getElementById('np-fais').value)),risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:(DEPS_STORE['np']||[]).slice()};
   newP.q=newP.val>=10&&newP.fais>=10?'stars':newP.val<10&&newP.fais>=10?'quickwins':newP.val>=10&&newP.fais<10?'majeurs':'reconsider';
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -1375,7 +1376,13 @@ function rescheduleGantt(){
     if(visiting[p.n]) return p.s;
     visiting[p.n]=true;
     var earliest=p.s;
-    (p.deps||[]).forEach(function(dn){ var d=byName[dn]; if(!d) return; var f=startOf(d)+d.d; if(f>earliest) earliest=f; });
+    (p.deps||[]).forEach(function(dep){
+      var nm=(typeof dep==='string')?dep:dep.dep; var d=byName[nm]; if(!d) return;
+      var type=(typeof dep==='string')?'FS':(dep.type||'FS'); var lag=(typeof dep==='string')?0:(+dep.lag||0);
+      var ds=startOf(d), de=ds+d.d, c;
+      if(type==='SS') c=ds+lag; else if(type==='FF') c=de+lag-p.d; else c=de+lag;
+      if(c>earliest) earliest=c;
+    });
     visiting[p.n]=false; memo[p.n]=earliest; return earliest;
   }
   var changed=[], overflow=false;
@@ -1702,6 +1709,69 @@ document.getElementById('lst').innerHTML=
   </div>`).join('');
 }
 
+var DEPS_STORE={};
+function depsTypeLabel(t){ return t==='SS'?'Début→Début':t==='FF'?'Fin→Fin':'Fin→Début'; }
+function depsEditorMarkup(prefix){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">'
+    +'<div class="fld" style="flex:1;min-width:130px"><label>Projet requis</label><select id="'+prefix+'-depsel"></select></div>'
+    +'<div class="fld" style="min-width:120px"><label>Type</label><select id="'+prefix+'-deptype"><option value="FS">Fin → Début</option><option value="SS">Début → Début</option><option value="FF">Fin → Fin</option></select></div>'
+    +'<div class="fld" style="width:78px"><label>Décalage (mois)</label><input type="number" id="'+prefix+'-deplag" value="0"></div>'
+    +'<button type="button" class="btn btn-acc" style="height:33px" onclick="depsAdd(\''+prefix+'\')"><i class="ti ti-plus"></i></button></div>'
+    +'<div id="'+prefix+'-deplist" style="display:flex;flex-wrap:wrap;gap:4px"></div>';
+}
+function depsEditorOpen(prefix,currentDeps,excludeName){
+  DEPS_STORE[prefix]=(currentDeps||[]).map(function(d){ return (typeof d==='string')?{dep:d,type:'FS',lag:0}:{dep:d.dep,type:d.type||'FS',lag:+d.lag||0}; });
+  DEPS_STORE[prefix+'_excl']=excludeName||'';
+  depsRender(prefix);
+}
+function depsRender(prefix){
+  var arr=DEPS_STORE[prefix]||[];
+  var list=document.getElementById(prefix+'-deplist');
+  if(list) list.innerHTML=arr.length?arr.map(function(d,i){return '<span style="display:inline-flex;align-items:center;gap:6px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:20px;padding:3px 10px;font-size:10.5px;color:#334155">'+d.dep+' <span style="color:#94A3B8">('+depsTypeLabel(d.type)+(d.lag?(', '+(d.lag>0?'+':'')+d.lag+' mois'):'')+')</span> <i class="ti ti-x" style="cursor:pointer;color:#94A3B8" onclick="depsRemove(\''+prefix+'\','+i+')"></i></span>';}).join(''):'<span style="font-size:10px;color:#CBD5E1">Aucune dépendance.</span>';
+  var sel=document.getElementById(prefix+'-depsel');
+  if(sel){ var used=arr.map(function(d){return d.dep;}); var excl=DEPS_STORE[prefix+'_excl']; sel.innerHTML='<option value="">-- Projet --</option>'+P.filter(function(x){return x.n!==excl && used.indexOf(x.n)<0;}).map(function(x){return '<option>'+x.n+'</option>';}).join(''); }
+}
+function depsAdd(prefix){
+  var name=document.getElementById(prefix+'-depsel').value; if(!name){toast('Choisis un projet');return;}
+  var type=document.getElementById(prefix+'-deptype').value||'FS';
+  var lag=+document.getElementById(prefix+'-deplag').value||0;
+  if(!DEPS_STORE[prefix])DEPS_STORE[prefix]=[];
+  if(DEPS_STORE[prefix].some(function(d){return d.dep===name;})){toast(name+' déjà ajouté');return;}
+  DEPS_STORE[prefix].push({dep:name,type:type,lag:lag});
+  document.getElementById(prefix+'-deplag').value='0';
+  depsRender(prefix);
+}
+function depsRemove(prefix,i){ if(DEPS_STORE[prefix]){DEPS_STORE[prefix].splice(i,1);depsRender(prefix);} }
+
+/* ─── Éditeur de risques (réutilisable) ─── */
+var RISKS_STORE={};
+function risksEditorMarkup(prefix){
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">'
+    +'<div class="fld" style="flex:2;min-width:140px"><label>Risque</label><input type="text" id="'+prefix+'-rdesc" placeholder="ex. Compétences manquantes"></div>'
+    +'<div class="fld" style="width:110px"><label>Niveau</label><select id="'+prefix+'-rlevel"><option>Faible</option><option selected>Modéré</option><option>Élevé</option><option>Critique</option></select></div>'
+    +'<div class="fld" style="flex:1;min-width:120px"><label>Mitigation</label><input type="text" id="'+prefix+'-rmit" placeholder="ex. Renfort ESN"></div>'
+    +'<button type="button" class="btn btn-acc" style="height:33px" onclick="risksAdd(\''+prefix+'\')"><i class="ti ti-plus"></i></button></div>'
+    +'<div id="'+prefix+'-rlist" style="display:flex;flex-direction:column;gap:4px"></div>';
+}
+function risksEditorOpen(prefix,cur){ RISKS_STORE[prefix]=(cur||[]).map(function(r){return {risk:r.risk,level:r.level||'Modéré',mitigation:r.mitigation||''};}); risksRender(prefix); }
+function risksRender(prefix){
+  var el=document.getElementById(prefix+'-rlist'); if(!el)return; var arr=RISKS_STORE[prefix]||[];
+  var LC={'Faible':'#10B981','Modéré':'#F59E0B','Élevé':'#F97316','Critique':'#EF4444'};
+  el.innerHTML=arr.length?arr.map(function(r,i){return '<div style="display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:6px 10px;font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:'+(LC[r.level]||'#94A3B8')+';flex-shrink:0"></span><span style="flex:1;color:#334155">'+r.risk+(r.mitigation?' <span style="color:#94A3B8">· '+r.mitigation+'</span>':'')+'</span><span style="font-size:9px;font-weight:700;color:'+(LC[r.level]||'#94A3B8')+'">'+r.level+'</span><i class="ti ti-x" style="cursor:pointer;color:#94A3B8" onclick="risksRemove(\''+prefix+'\','+i+')"></i></div>';}).join(''):'<span style="font-size:10px;color:#CBD5E1">Aucun risque ajouté.</span>';
+}
+function risksAdd(prefix){
+  var d=document.getElementById(prefix+'-rdesc').value.trim(); if(!d){toast('Décris le risque');return;}
+  var lv=document.getElementById(prefix+'-rlevel').value||'Modéré'; var mit=document.getElementById(prefix+'-rmit').value.trim();
+  if(!RISKS_STORE[prefix])RISKS_STORE[prefix]=[]; RISKS_STORE[prefix].push({risk:d,level:lv,mitigation:mit});
+  document.getElementById(prefix+'-rdesc').value='';document.getElementById(prefix+'-rmit').value=''; risksRender(prefix);
+}
+function risksRemove(prefix,i){ if(RISKS_STORE[prefix]){RISKS_STORE[prefix].splice(i,1);risksRender(prefix);} }
+/* Risque de retard/dépendance dérivé automatiquement (non stocké) */
+function depRisk(p){
+  if(!p.deps||!p.deps.length) return null;
+  var names=p.deps.map(function(d){return (typeof d==='string')?d:d.dep;}).join(', ');
+  return {risk:'Retard possible — ce projet dépend de : '+names, level:(p.deps.length>=2?'Élevé':'Modéré'), mitigation:'Suivre l\'avancement des projets requis ; replanifier si glissement', auto:true};
+}
 let pdName=null;
 function openProjectDetail(name){
   var p=P.find(function(x){return x.n===name;}); if(!p) return;
@@ -1714,18 +1784,21 @@ function openProjectDetail(name){
   var deps=p.deps||[];
   var depBoxes=P.filter(function(x){return x.n!==name;}).map(function(x){var ck=deps.indexOf(x.n)>=0?' checked':'';return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;padding:3px 0;cursor:pointer"><input type="checkbox" class="pd-dep" value="'+x.n+'"'+ck+' style="width:auto;margin:0">'+x.n+'</label>';}).join('');
   var team=(TEAMS[name]&&TEAMS[name].members&&TEAMS[name].members.length)?TEAMS[name].members.map(function(m){return '<span style="font-size:10px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:2px 8px;color:#475569">'+m.name+(m.type==='prestataire'?' · ESN':'')+'</span>';}).join(' '):'<span style="font-size:10px;color:#CBD5E1">Aucune équipe affectée</span>';
-  var risks=(RISKS[name]&&RISKS[name].length)?RISKS[name].map(function(r){return '<div style="font-size:11px;color:#475569;padding:2px 0">• '+r.risk+(r.level?' <strong>('+r.level+')</strong>':'')+'</div>';}).join(''):(p.risks?('<div style="font-size:11px;color:#475569">'+p.risks+'</div>'):'<span style="font-size:10px;color:#CBD5E1">Aucun risque</span>');
+  var dr=depRisk(p);
+  var depNote=dr?('<div style="display:flex;align-items:flex-start;gap:8px;background:#FEF9C3;border:1px solid #FDE68A;border-radius:8px;padding:7px 10px;font-size:11px;color:#854D0E;margin-bottom:8px"><i class="ti ti-link" style="margin-top:1px"></i><div><strong>Risque auto (dépendance) :</strong> '+dr.risk+' <span style="font-weight:700">('+dr.level+')</span></div></div>'):'';
   var h='';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-adjustments" style="font-size:12px;color:#2563EB"></i>Paramètres modifiables</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+fld('Dates','<input type="text" id="pd-dates" value="'+String(p.dt||'').replace(/"/g,'&quot;')+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur /20','<input type="number" id="pd-val" min="0" max="20" value="'+p.val+'">')+fld('Faisabilité /20','<input type="number" id="pd-fais" min="0" max="20" value="'+p.fais+'">')+fld('Importance','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+'</div>';
   h+='</div>';
-  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(projets requis avant celui-ci)</span></div><div style="max-height:140px;overflow:auto;border:1px solid #E2E8F0;border-radius:8px;padding:8px" id="pd-deps">'+(depBoxes||'<span style="font-size:10px;color:#CBD5E1">Aucun autre projet</span>')+'</div></div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
-  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div>'+risks+'</div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(ajoute / retire — sauvegardé)</span></div>'+depNote+risksEditorMarkup('pd')+'</div>';
   h+='<div class="ma2"><button class="btn" onclick="openSP(pdName)"><i class="ti ti-brand-sharepoint"></i>SharePoint</button><button class="btn" onclick="closePD()">Fermer</button><button class="btn btn-acc" onclick="saveProjectDetail()"><i class="ti ti-check"></i>Enregistrer</button></div>';
   document.getElementById('pd-body').innerHTML=h;
+  depsEditorOpen('pd', p.deps, name);
+  risksEditorOpen('pd', RISKS[name]||[]);
   document.getElementById('pd-overlay').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closePD(e){ if(e&&e.target!==document.getElementById('pd-overlay'))return; document.getElementById('pd-overlay').classList.remove('open'); document.body.style.overflow=''; }
@@ -1734,9 +1807,10 @@ function saveProjectDetail(){
   var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0; p.dt=g('pd-dates');
   p.val=Math.min(20,Math.max(0,+g('pd-val')||0)); p.fais=Math.min(20,Math.max(0,+g('pd-fais')||0)); p.st=+g('pd-strat')||p.st;
-  p.deps=[].slice.call(document.querySelectorAll('#pd-deps .pd-dep:checked')).map(function(c){return c.value;});
+  p.deps=(DEPS_STORE['pd']||[]).slice();
+  var manualRisks=(RISKS_STORE['pd']||[]).slice(); RISKS[p.n]=manualRisks;
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
-  apiPost({action:'update', project:p, charges:MV[p.n]||[]});
+  apiPost({action:'update', project:p, charges:MV[p.n]||[], risks:manualRisks});
   closePD();
   recalc(); buildHome(); renderList(); renderG(); renderRisques(); window.mReady=false; window.rReady=false;
   toast('✓ Projet "'+p.n+'" mis à jour');
@@ -1883,7 +1957,7 @@ function alertStyle(a){
 function renderRisques(){
   var el=document.getElementById('risk-list'); if(!el)return;
   var LV={'Critique':{bg:'#FEF2F2',c:'#EF4444',o:4},'Élevé':{bg:'#FFF7ED',c:'#F97316',o:3},'Modéré':{bg:'#FFFBEB',c:'#F59E0B',o:2},'Faible':{bg:'#ECFDF5',c:'#10B981',o:1}};
-  function riskOf(p){ return (RISKS[p.n]&&RISKS[p.n].length)?RISKS[p.n]:(p.risks?[{risk:p.risks,level:p.riskLevel,mitigation:p.mitigation}]:[]); }
+  function riskOf(p){ var base=(RISKS[p.n]&&RISKS[p.n].length)?RISKS[p.n].slice():(p.risks?[{risk:p.risks,level:p.riskLevel,mitigation:p.mitigation}]:[]); var dr=depRisk(p); if(dr) base=[dr].concat(base); return base; }
   function maxLevel(p){ return riskOf(p).reduce(function(m,r){ return Math.max(m,(LV[r.level]||{}).o||0); },0); }
   var data=P.slice().sort(function(a,b){ return (maxLevel(b)-maxLevel(a))||(a.fais-b.fais); });
   var out='';
