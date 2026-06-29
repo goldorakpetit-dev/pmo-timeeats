@@ -425,7 +425,18 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <div id="p-gantt" class="page">
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril N → Janvier N+1</div></div>
-    <div class="ab-r"><button class="btn btn-acc" onclick="rescheduleGantt()" title="Décale chaque projet après la fin de ses dépendances"><i class="ti ti-refresh"></i>Recalculer le planning</button></div>
+    <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
+      <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
+      <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
+      <button class="btn btn-acc" onclick="rescheduleGantt()" title="Aperçu : replanifie selon les dépendances, sans modifier le Sheet"><i class="ti ti-refresh"></i>Simuler le planning</button>
+    </div>
+  </div>
+  <div id="sim-banner" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:#FEF9C3;border:1px solid #FDE68A;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:12px;color:#854D0E">
+    <i class="ti ti-flask" style="font-size:16px;flex-shrink:0"></i>
+    <span id="sim-msg" style="flex:1;min-width:180px"><strong>Mode simulation</strong> — aperçu non enregistré.</span>
+    <button class="btn" onclick="resetSimulation()"><i class="ti ti-arrow-back-up"></i>Réinitialiser</button>
+    <button class="btn btn-acc" onclick="applySimulation()"><i class="ti ti-check"></i>Appliquer au Sheet</button>
   </div>
   <div class="ct">
     <div class="gf">
@@ -449,7 +460,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l">
       <div class="ab-title">Matrice de décision — Valeur &amp; Complexité</div>
-      <div class="ab-bc"><div class="ab-dot"></div>Axe X : Valeur &amp; Alignement (0→20) · Axe Y : Faisabilité &amp; Risques (0→20) · Seuil : 10/20 · Taille bulle = budget</div>
+      <div class="ab-bc"><div class="ab-dot"></div>Critères du brief cotés /5 : Axe X = Importance + Rentabilité · Axe Y = Maîtrise des risques · Seuil : 10/20 · Taille bulle = budget</div>
     </div>
     <div class="ab-r"></div>
   </div>
@@ -475,7 +486,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         </div>
         <div class="qlegend">
           <div class="qleg-title" style="margin-bottom:8px">Lecture</div>
-          <div style="font-size:10px;color:#64748B;line-height:1.7">Seuil : <strong style="color:#334155">10/20</strong> par axe.<br><br><strong style="color:#334155">Axe X</strong> — Valeur &amp; Alignement stratégique (0→20).<br><br><strong style="color:#334155">Axe Y</strong> — Faisabilité &amp; Maîtrise des risques (0→20). Score élevé = risque faible.</div>
+          <div style="font-size:10px;color:#64748B;line-height:1.7">Les 3 critères du brief sont cotés <strong style="color:#334155">/5</strong>.<br><br><strong style="color:#334155">Axe X</strong> — Valeur = Importance stratégique + Rentabilité (×2 → 0→20).<br><br><strong style="color:#334155">Axe Y</strong> — Faisabilité = Maîtrise des risques (×4 → 0→20). Score élevé = risque faible.<br><br>Seuil : <strong style="color:#334155">10/20</strong> par axe.</div>
         </div>
       </div>
     </div>
@@ -679,7 +690,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       </div>
       <div class="form-section">
         <div class="form-section-title"><i class="ti ti-star" style="font-size:12px;color:#F59E0B"></i>Scoring matrice (0→20)</div>
-        <div class="frow c3"><div class="fld"><label>Valeur strat. /20 <span class="req">*</span></label><input type="number" id="np-val" min="0" max="20" placeholder="0→20" oninput="updNP()"></div><div class="fld"><label>Faisabilité /20 <span class="req">*</span></label><input type="number" id="np-fais" min="0" max="20" placeholder="0→20" oninput="updNP()"></div><div class="fld"><label>Importance strat. <span class="req">*</span></label><select id="np-strat" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyen</option><option value="4">4</option><option value="5">5 — Critique</option></select></div></div>
+        <div class="frow c3"><div class="fld"><label>Importance strat. /5 <span class="req">*</span></label><select id="np-strat" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyen</option><option value="4">4</option><option value="5">5 — Critique</option></select></div><div class="fld"><label>Rentabilité /5 <span class="req">*</span></label><select id="np-rent" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyenne</option><option value="4">4</option><option value="5">5 — Élevée</option></select></div><div class="fld"><label>Maîtrise des risques /5 <span class="req">*</span></label><select id="np-mait" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyenne</option><option value="4">4</option><option value="5">5 — Élevée</option></select></div></div>
+        <div style="font-size:9.5px;color:#94A3B8;margin:-2px 2px 0">Les 3 critères cotés du brief. La matrice en dérive : Valeur = (Importance + Rentabilité) · Faisabilité = Maîtrise des risques.</div>
       </div>
       <div class="form-section">
         <div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(ajoute-en autant que nécessaire)</span></div>
@@ -954,8 +966,8 @@ function saveMeeting(){
 }
 
 /* ═══════════════ NOUVEAU PROJET ═══════════════ */
-const NP_REQ=['np-name','np-cat','np-desc','np-cp','np-sponsor','np-st2','np-start','np-dur','np-meth','np-budget','np-charge','np-val','np-fais','np-strat'];
-const NP_LABELS={'np-name':'Nom','np-cat':'Catégorie','np-desc':'Description','np-cp':'Chef de projet','np-sponsor':'Sponsor','np-st2':'Statut','np-start':'Date de début','np-dur':'Durée','np-meth':'Méthodologie','np-budget':'Budget','np-charge':'Charge','np-val':'Valeur strat.','np-fais':'Faisabilité','np-strat':'Importance strat.'};
+const NP_REQ=['np-name','np-cat','np-desc','np-cp','np-sponsor','np-st2','np-start','np-dur','np-meth','np-budget','np-charge','np-strat','np-rent','np-mait'];
+const NP_LABELS={'np-name':'Nom','np-cat':'Catégorie','np-desc':'Description','np-cp':'Chef de projet','np-sponsor':'Sponsor','np-st2':'Statut','np-start':'Date de début','np-dur':'Durée','np-meth':'Méthodologie','np-budget':'Budget','np-charge':'Charge','np-strat':'Importance strat.','np-rent':'Rentabilité','np-mait':'Maîtrise des risques'};
 let npTeam=[];
 let npRisks=[];
 const RISK_LC={'Faible':'#10B981','Modéré':'#F59E0B','Élevé':'#F97316','Critique':'#EF4444'};
@@ -1122,8 +1134,8 @@ function saveNewProject(){
   const d=+document.getElementById('np-dur').value;
   const dt=monLabel(s)+' '+yearTag(s)+' → '+monLabel(s+d-1)+' '+yearTag(s+d-1);
   const topRisk=npRisks.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
-  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',val:Math.min(20,Math.max(0,+document.getElementById('np-val').value)),fais:Math.min(20,Math.max(0,+document.getElementById('np-fais').value)),risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:(DEPS_STORE['np']||[]).slice()};
-  newP.q=newP.val>=10&&newP.fais>=10?'stars':newP.val<10&&newP.fais>=10?'quickwins':newP.val>=10&&newP.fais<10?'majeurs':'reconsider';
+  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',rent:+document.getElementById('np-rent').value,mait:+document.getElementById('np-mait').value,risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:(DEPS_STORE['np']||[]).slice()};
+  scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
   const team=npTeam.slice();
@@ -1155,19 +1167,30 @@ const CAT={
 };
 
 let P=[
-  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', val:11,fais:14},
-  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', val:19,fais:10},
-  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', val:10,fais:14},
-  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',val:19,fais:12},
-  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',val:19,fais:11},
-  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',val:16,fais:12,sel:1},
-  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',val:12,fais:12},
-  {n:'Migration Azure',        cat:'Socle IT',      s:4,d:5,b:200,c:300,st:3,dt:'Août → Déc',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',val:12,fais:9},
-  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',val:12,fais:17},
-  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',val:11,fais:15},
-  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',val:12,fais:17},
+  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3},
+  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2},
+  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3},
+  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3},
+  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2},
+  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,sel:1},
+  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4},
+  {n:'Migration Azure',        cat:'Socle IT',      s:4,d:5,b:200,c:300,st:3,dt:'Août → Déc',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',rent:4,mait:1},
+  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',rent:1,mait:4},
+  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3},
+  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5},
 ];
-P.forEach(p=>{p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';});
+/* Priorisation alignée sur le brief : 3 critères cotés /5 (Importance=st, Rentabilité=rent, Maîtrise des risques=mait).
+   Les 2 axes de la matrice en sont dérivés : Valeur=(Importance+Rentabilité)×2 /20 · Faisabilité=Maîtrise×4 /20. */
+function scoreP(p){
+  p.st  =Math.min(5,Math.max(1,Math.round(+p.st||3)));
+  p.rent=Math.min(5,Math.max(1,Math.round(+p.rent||3)));
+  p.mait=Math.min(5,Math.max(1,Math.round(+p.mait||3)));
+  p.val =Math.min(20,Math.max(0,(p.st+p.rent)*2));
+  p.fais=Math.min(20,Math.max(0,p.mait*4));
+  p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
+  return p;
+}
+P.forEach(scoreP);
 
 /* ── CHARGES MENSUELLES VARIABLES (réalistes) ── */
 let MV={
@@ -1311,7 +1334,7 @@ document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
 
 document.getElementById('nav-tiles').innerHTML=[
   {id:'gantt', icon:'ti-chart-gantt',  bg:'#EFF6FF',ic:'#2563EB',name:'Gantt',      desc:'Planning temporel · dépendances · charge mensuelle'},
-  {id:'matrix',icon:'ti-chart-bubble', bg:'#ECFDF5',ic:'#10B981',name:'Matrice',    desc:'Valeur vs Faisabilité · seuil 10/20 · données Excel'},
+  {id:'matrix',icon:'ti-chart-bubble', bg:'#ECFDF5',ic:'#10B981',name:'Matrice',    desc:'3 critères cotés /5 · Importance · Rentabilité · Maîtrise'},
   {id:'res',   icon:'ti-users-group',  bg:'#EFF6FF',ic:'#3B82F6',name:'Ressources', desc:'Charge réaliste · équipes · prestataires ESN'},
   {id:'lst',   icon:'ti-list-details', bg:'#FFFBEB',ic:'#F59E0B',name:'Liste',      desc:'Vue tabulaire · tous les indicateurs'},
 ].map(t=>`<div class="tile" onclick="goPageTile('${t.id}')"><div class="tile-icon" style="background:${t.bg};color:${t.ic}"><i class="ti ${t.icon}"></i></div><div class="tile-name">${t.name}</div><div class="tile-desc">${t.desc}</div><i class="ti ti-arrow-right tile-arrow"></i></div>`).join('');
@@ -1358,19 +1381,22 @@ function attachBars(){
           <div><div class="dp-k">Budget</div><div class="dp-v">${p.b} K€</div></div>
           <div><div class="dp-k">Charge</div><div class="dp-v">${p.c} j/h</div></div>
           <div><div class="dp-k">Durée</div><div class="dp-v">${p.d} mois</div></div>
-          <div><div class="dp-k">Valeur strat.</div><div class="dp-v">${p.val}/20</div></div>
-          <div><div class="dp-k">Faisabilité</div><div class="dp-v">${p.fais}/20</div></div>
-          <div><div class="dp-k">Score total</div><div class="dp-v">${p.val+p.fais}/40</div></div>
+          <div><div class="dp-k">Importance</div><div class="dp-v">${p.st}/5</div></div>
+          <div><div class="dp-k">Rentabilité</div><div class="dp-v">${p.rent}/5</div></div>
+          <div><div class="dp-k">Maîtrise risques</div><div class="dp-v">${p.mait}/5</div></div>
         </div>`;
     });
     b.addEventListener('mouseleave',()=>{const dp=document.getElementById('gdp');dp.className='gdp';dp.innerHTML='<div class="dp-hint"><i class="ti ti-hand-finger" style="font-size:16px"></i>Survolez une barre pour afficher les détails</div>';});
   });
 }
 function fg(f,el){document.querySelectorAll('.gfi').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderG(f);}
-function rescheduleGantt(){
-  if(!confirm('Recalculer les dates de début selon les dépendances ?\nChaque projet sera décalé pour démarrer après la fin de ses dépendances.')) return;
+var GANTT_WINDOW=10; /* fenêtre cible : 10 mois (Avr → Jan) */
+var SIM={active:false, backup:null, changed:[], tension:false};
+
+/* Calcule les dates au plus tôt selon les dépendances typées, bornées à la fenêtre. Ne modifie rien. */
+function computeSchedule(){
   var byName={}; P.forEach(function(p){byName[p.n]=p;});
-  var memo={}, visiting={};
+  var memo={}, visiting={}, tension=false;
   function startOf(p){
     if(memo[p.n]!=null) return memo[p.n];
     if(visiting[p.n]) return p.s;
@@ -1383,23 +1409,116 @@ function rescheduleGantt(){
       if(type==='SS') c=ds+lag; else if(type==='FF') c=de+lag-p.d; else c=de+lag;
       if(c>earliest) earliest=c;
     });
+    /* borne à la fenêtre : le projet doit finir au plus tard au mois 9 */
+    var maxStart=Math.max(0, GANTT_WINDOW - p.d);
+    if(earliest>maxStart){ earliest=maxStart; tension=true; }
+    if(earliest<0) earliest=0;
     visiting[p.n]=false; memo[p.n]=earliest; return earliest;
   }
-  var changed=[], overflow=false;
+  var starts={}; P.forEach(function(p){ starts[p.n]=startOf(p); });
+  return {starts:starts, tension:tension};
+}
+
+/* APERÇU (mode simulation) : applique le recalcul à la vue, SANS écrire dans le Sheet. */
+function rescheduleGantt(){
+  if(!SIM.active){ SIM.backup=P.map(function(p){return {n:p.n,s:p.s,dt:p.dt};}); }
+  var r=computeSchedule(), changed=[];
   P.forEach(function(p){
-    var ns=startOf(p);
+    var ns=r.starts[p.n];
     if(ns!==p.s){
       p.s=ns; var end=p.s+p.d-1;
-      if(p.s>9||end>9) overflow=true;
       p.dt=monLabel(p.s)+' '+yearTag(p.s)+' → '+monLabel(end)+' '+yearTag(end);
-      changed.push(p);
+      changed.push(p.n);
     }
   });
-  changed.forEach(function(p){ apiPost({action:'update', project:p, charges:MV[p.n]||[]}); });
+  if(!changed.length && !SIM.active){ SIM.backup=null; toast('Planning déjà conforme — tout tient dans les '+GANTT_WINDOW+' mois.'); return; }
+  SIM.active=true; SIM.changed=changed; SIM.tension=r.tension;
   window.mReady=false; window.rReady=false;
   buildHome(); renderList(); renderG(); refreshActiveView();
-  if(!changed.length) toast('Aucun décalage nécessaire — le planning respecte déjà les dépendances.');
-  else toast('✓ Planning recalculé : '+changed.length+' projet(s) replanifié(s)'+(overflow?' · ⚠ certains dépassent Janvier':''));
+  showSimBanner(changed.length, r.tension);
+}
+function showSimBanner(n,tension){
+  var b=document.getElementById('sim-banner'); if(!b)return;
+  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
+  b.style.display='flex';
+}
+function hideSimBanner(){ var b=document.getElementById('sim-banner'); if(b) b.style.display='none'; }
+function applySimulation(){
+  if(!SIM.active) return;
+  var n=SIM.changed.length;
+  SIM.changed.forEach(function(nm){ var p=P.find(function(x){return x.n===nm;}); if(p) apiPost({action:'update', project:p, charges:MV[p.n]||[]}); });
+  SIM={active:false,backup:null,changed:[],tension:false}; hideSimBanner();
+  toast('✓ Plan appliqué au Sheet : '+n+' projet(s) replanifié(s).');
+}
+function resetSimulation(){
+  if(!SIM.active) return;
+  if(SIM.backup){ var map={}; SIM.backup.forEach(function(b){map[b.n]=b;}); P.forEach(function(p){ var b=map[p.n]; if(b){ p.s=b.s; p.dt=b.dt; } }); }
+  SIM={active:false,backup:null,changed:[],tension:false}; hideSimBanner();
+  window.mReady=false; window.rReady=false;
+  buildHome(); renderList(); renderG(); refreshActiveView();
+  toast('Plan restauré — simulation annulée.');
+}
+
+/* ── EXPORT / IMPORT CSV du portefeuille ── */
+function depsToStr(deps){ return (deps||[]).map(function(d){ return (typeof d==='string')?(d+':FS:0'):((d.dep||'')+':'+(d.type||'FS')+':'+(+d.lag||0)); }).join(' | '); }
+function strToDeps(s){ s=String(s||'').trim(); if(!s) return []; return s.split(/\s*\|\s*/).filter(Boolean).map(function(tok){ var pr=tok.split(':'); return {dep:(pr[0]||'').trim(), type:(pr[1]||'FS').trim().toUpperCase(), lag:(+pr[2]||0)}; }); }
+var CSV_COLS=['Nom','Categorie','MoisDebut','DureeMois','BudgetKE','ChargeJH','ImportanceStrat','Rentabilite','MaitriseRisques','Dates','Note','Statut','Selectionne','Sponsor','Methodologie','ChefProjet','Dependances'];
+function csvEsc(v){ v=(v==null)?'':String(v); return /[",\n;]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
+function exportCSV(){
+  var rows=[CSV_COLS.join(',')];
+  P.forEach(function(p){
+    rows.push([p.n,p.cat,p.s,p.d,p.b,p.c,p.st,p.rent,p.mait,p.dt,p.note,p.st2,(p.sel?1:0),p.sponsor||'',p.methodo||'',p.cp||'',depsToStr(p.deps)].map(csvEsc).join(','));
+  });
+  var blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  var d=new Date(), tag=d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  a.href=url; a.download='portefeuille_'+tag+'.csv'; document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },100);
+  toast('✓ Portefeuille exporté ('+P.length+' projets) — portefeuille_'+tag+'.csv');
+}
+function parseCSV(text){
+  text=String(text).replace(/^﻿/,''); var rows=[], row=[], cur='', q=false;
+  for(var i=0;i<text.length;i++){ var ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else { if(ch==='"') q=true; else if(ch===','){ row.push(cur); cur=''; } else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(ch!=='\r') cur+=ch; }
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(function(r){ return r.length>1 || (r[0]&&r[0].trim()); });
+}
+function importCSV(ev){
+  var f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var rows=parseCSV(rd.result); if(rows.length<2){ toast('CSV vide ou invalide'); return; }
+      var head=rows[0].map(function(h){return h.trim();});
+      var ix=function(name){ return head.indexOf(name); };
+      if(ix('Nom')<0){ toast('Colonne « Nom » introuvable dans le CSV'); return; }
+      var np=[];
+      for(var i=1;i<rows.length;i++){
+        var r=rows[i]; var get=function(name){ var k=ix(name); return k>=0?(r[k]||''):''; };
+        var nm=get('Nom').trim(); if(!nm) continue;
+        var p={ n:nm, cat:get('Categorie').trim()||'Socle IT', s:+get('MoisDebut')||0, d:+get('DureeMois')||1,
+          b:+get('BudgetKE')||0, c:+get('ChargeJH')||0, st:+get('ImportanceStrat')||3,
+          rent:+get('Rentabilite')||3, mait:+get('MaitriseRisques')||3,
+          dt:get('Dates').trim(), note:get('Note').trim(), st2:get('Statut').trim()||'Planifié',
+          sel:(get('Selectionne').trim()==='1'||get('Selectionne').toLowerCase()==='oui')?1:0,
+          sponsor:get('Sponsor').trim(), methodo:get('Methodologie').trim(), cp:get('ChefProjet').trim(),
+          deps:strToDeps(get('Dependances')) };
+        if(!CAT[p.cat]) p.cat='Socle IT';
+        if(!p.dt){ var end=p.s+p.d-1; p.dt=monLabel(p.s)+' '+yearTag(p.s)+' → '+monLabel(end)+' '+yearTag(end); }
+        scoreP(p); np.push(p);
+      }
+      if(!np.length){ toast('Aucun projet lisible dans le CSV'); return; }
+      SIM={active:false,backup:null,changed:[],tension:false}; hideSimBanner();
+      P=np; recalc();
+      window.mReady=false; window.rReady=false;
+      buildHome(); renderList(); renderG(); renderRisques(); refreshActiveView();
+      toast('✓ '+np.length+' projet(s) chargé(s) depuis le CSV (vue locale — non écrit dans le Sheet).');
+    }catch(err){ toast('Import CSV impossible : '+err.message); }
+    finally{ ev.target.value=''; }
+  };
+  rd.readAsText(f);
 }
 
 /* ── MATRICE ── */
@@ -1426,11 +1545,11 @@ function initMatrix(){
   }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:P.map(p=>({label:p.n,data:[{x:p.val,y:p.fais,r:Math.max(7,Math.round(5+(p.b-50)/260*16)),budget:p.b}],
+    data:{datasets:P.map(p=>({label:p.n,data:[{x:p.val,y:p.fais,r:Math.max(7,Math.round(5+(p.b-50)/260*16)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait}],
       backgroundColor:qColor[p.q]+'BB',borderColor:p.sel?'#2563EB':qColor[p.q],borderWidth:p.sel?3:1.5}))},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,
-        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Valeur : ${d.x}/20`,` Faisabilité : ${d.y}/20`,` Budget : ${d.budget}K€`,` Score : ${d.x+d.y}/40`];}}}},
+        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Importance : ${d.st}/5`,` Rentabilité : ${d.rent}/5`,` Maîtrise risques : ${d.mait}/5`,` → Valeur : ${d.x}/20 · Faisabilité : ${d.y}/20`,` Budget : ${d.budget}K€`];}}}},
       scales:{
         x:{min:0,max:20,title:{display:true,text:'Valeur & Alignement stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}},
         y:{min:0,max:20,title:{display:true,text:'Faisabilité & Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}}
@@ -1790,7 +1909,8 @@ function openProjectDetail(name){
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-adjustments" style="font-size:12px;color:#2563EB"></i>Paramètres modifiables</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+fld('Dates','<input type="text" id="pd-dates" value="'+String(p.dt||'').replace(/"/g,'&quot;')+'">')+'</div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur /20','<input type="number" id="pd-val" min="0" max="20" value="'+p.val+'">')+fld('Faisabilité /20','<input type="number" id="pd-fais" min="0" max="20" value="'+p.fais+'">')+fld('Importance','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Importance /5','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+fld('Rentabilité /5','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent)+'</select>')+fld('Maîtrise risques /5','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait)+'</select>')+'</div>';
+  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Critères cotés du brief. Position matrice : Valeur '+((p.st+p.rent)*2)+'/20 · Faisabilité '+(p.mait*4)+'/20.</div>';
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
@@ -1806,7 +1926,7 @@ function saveProjectDetail(){
   var p=P.find(function(x){return x.n===pdName;}); if(!p)return;
   var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0; p.dt=g('pd-dates');
-  p.val=Math.min(20,Math.max(0,+g('pd-val')||0)); p.fais=Math.min(20,Math.max(0,+g('pd-fais')||0)); p.st=+g('pd-strat')||p.st;
+  p.st=+g('pd-strat')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
   var manualRisks=(RISKS_STORE['pd']||[]).slice(); RISKS[p.n]=manualRisks;
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
@@ -1880,8 +2000,14 @@ function recalc(){
 function applyData(d){
   if(d && Array.isArray(d.projects) && d.projects.length){
     P = d.projects.map(p=>{
-      p.s=+p.s; p.d=+p.d; p.b=+p.b; p.c=+p.c; p.st=+p.st; p.val=+p.val; p.fais=+p.fais;
-      p.q = p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
+      p.s=+p.s; p.d=+p.d; p.b=+p.b; p.c=+p.c; p.st=+p.st;
+      // Si le Sheet fournit Rentabilité/Maîtrise (>0), on dérive val/fais des 3 critères du brief ;
+      // sinon (ancien Sheet) on conserve les ValeurStrat/Faisabilite existantes.
+      if((+p.rent>0)&&(+p.mait>0)){ scoreP(p); }
+      else {
+        p.val=+p.val; p.fais=+p.fais;
+        p.q = p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
+      }
       return p;
     });
   }
