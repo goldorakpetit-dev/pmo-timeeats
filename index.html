@@ -409,9 +409,9 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <!-- PAGE ACCUEIL -->
 <div id="p-home" class="page on">
   <div class="hero">
-    <div class="hero-eyebrow"><div class="hero-dot"></div>Portefeuille actif — Avril N</div>
+    <div class="hero-eyebrow"><div class="hero-dot"></div>Portefeuille actif — Avril 2026</div>
     <h1 class="hero-title">Portefeuille projets<br><span>DSI Time'Eats</span></h1>
-    <p class="hero-sub">Supervision complète du portefeuille IT — coûts, délais, risques et valeur stratégique. Année N · Postulat : avril en cours.</p>
+    <p class="hero-sub">Supervision complète du portefeuille IT — coûts, délais, risques et valeur stratégique. Année de référence 2026 (Avril) · postulat du brief.</p>
     <div class="hero-kpis" id="hero-kpis"></div>
   </div>
   <div class="nav-tiles" id="nav-tiles"></div>
@@ -424,7 +424,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <!-- PAGE GANTT -->
 <div id="p-gantt" class="page">
   <div class="ab">
-    <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril N → Janvier N+1</div></div>
+    <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril 2026 → Janvier 2027</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn" onclick="openPortfolioModal()" title="Créer un portefeuille avec une échéance"><i class="ti ti-folder-plus"></i>Nouveau portefeuille</button>
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
@@ -456,7 +456,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <div class="ab-title">Matrice de décision</div>
       <div class="ab-bc"><div class="ab-dot"></div>Valeur stratégique × Maîtrise des risques · taille des bulles = budget</div>
     </div>
-    <div class="ab-r"></div>
+    <div class="ab-r"><select id="matrix-pf" onchange="initMatrixReload()" style="font-size:11px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Tous les portefeuilles</option></select></div>
   </div>
   <div class="ct">
     <div class="chart-wrap">
@@ -726,7 +726,7 @@ const KPI_DEFS={
   'risque':{title:'Projets à risque élevé',sub:'Faisabilité < 10/20 — vigilance requise',dot:'#EF4444'},
   'esn':{title:'Prestataires ESN',sub:'Charge et budget externalisés',dot:'#2563EB'},
   'score-max':{title:'Classement complet — Scores portefeuille',sub:'11 projets classés par score de priorisation',dot:'#F59E0B'},
-  'actifs':{title:'Projets actifs — Avril N',sub:'3 projets actifs · détail charge et équipes',dot:'#10B981'},
+  'actifs':{title:'Projets actifs — Avril 2026',sub:'3 projets actifs · détail charge et équipes',dot:'#10B981'},
 };
 
 function openKPIModal(id){
@@ -1388,7 +1388,7 @@ document.getElementById('alerts').innerHTML=ALERTS.map(a=>{const s=alertStyle(a)
 /* ── GANTT ── */
 function ganttMonths(){ var mx=10; P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0); if(e>mx) mx=e; }); return Math.min(mx,24); }
 function monLabel(i){ var b=['Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc','Jan','Fév','Mar']; return b[((i%12)+12)%12]; }
-function yearTag(i){ var off=Math.floor((i+3)/12); return off===0?'N':'N+'+off; }
+function yearTag(i){ return String(BASE_YEAR+Math.floor((i+3)/12)); }
 /* Conversion calendrier ↔ index mois (index 0 = Avril de l'année N). Postulat du brief : N = année en cours. */
 var BASE_YEAR=2026; /* Avril N */
 function idxToDate(i){ var m=3+(+i||0); var y=BASE_YEAR+Math.floor(m/12); var mm=((m%12)+12)%12+1; return y+'-'+('0'+mm).slice(-2)+'-01'; }
@@ -1587,21 +1587,29 @@ function importCSV(ev){
 window.mReady=false;
 /* Anti-collision : plusieurs projets peuvent partager les mêmes coordonnées (critères /5 discrets).
    On éclate légèrement les bulles d'un même point pour qu'elles restent toutes visibles. */
-function matrixPoints(){
+function matrixPoints(list){
   var groups={}, pos={};
-  P.forEach(function(p){ var k=p.val+'|'+p.fais; (groups[k]=groups[k]||[]).push(p); });
+  list.forEach(function(p){ var k=p.val+'|'+p.fais; (groups[k]=groups[k]||[]).push(p); });
   Object.keys(groups).forEach(function(k){
     var g=groups[k];
     if(g.length===1){ pos[g[0].n]={x:g[0].val,y:g[0].fais}; return; }
-    var R=0.8;
+    var R=0.85;
     g.forEach(function(p,i){ var a=Math.PI*2*i/g.length - Math.PI/4;
       pos[p.n]={x:Math.min(20,Math.max(0,p.val+Math.cos(a)*R)), y:Math.min(20,Math.max(0,p.fais+Math.sin(a)*R))}; });
   });
   return pos;
 }
+var MATRIX_PF='';
+function initMatrixReload(){ var sel=document.getElementById('matrix-pf'); MATRIX_PF=sel?sel.value:''; window.mReady=false; initMatrix(); }
 function initMatrix(){
   window.mReady=true;
-  var MPT=matrixPoints();
+  if(window.matrixChart){ try{window.matrixChart.destroy();}catch(e){} window.matrixChart=null; }
+  // filtre par portefeuille
+  var sel=document.getElementById('matrix-pf');
+  if(sel){ var keep=MATRIX_PF; sel.innerHTML='<option value="">Tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===keep?' selected':'')+'>'+pf.name+'</option>';}).join(''); }
+  var LP=MATRIX_PF?P.filter(function(p){return p.pf===MATRIX_PF;}):P.slice();
+  if(!LP.length) LP=P.slice();
+  var MPT=matrixPoints(LP);
   const qPlugin={id:'quad',beforeDraw(chart){
     const{ctx,scales:{x,y}}=chart;
     const mx=x.getPixelForValue(10),my=y.getPixelForValue(10);
@@ -1622,14 +1630,14 @@ function initMatrix(){
   }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:P.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(7,Math.round(5+(p.b-50)/260*16)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
-      backgroundColor:qColor[p.q]+'BB',borderColor:p.sel?'#2563EB':qColor[p.q],borderWidth:p.sel?3:1.5}))},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,
+    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(8,Math.round(7+(p.b-50)/300*11)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
+      backgroundColor:qColor[p.q]+'CC',borderColor:p.sel?'#1D4ED8':'#fff',borderWidth:p.sel?3:2,hoverBackgroundColor:qColor[p.q],hoverBorderColor:'#1D4ED8',hoverBorderWidth:2}))},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:14,top:8,left:4,bottom:4}},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,displayColors:false,
         callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Importance : ${d.st}/5`,` Rentabilité : ${d.rent}/5`,` Maîtrise risques : ${d.mait}/5`,` → Valeur : ${d.vx}/20 · Faisabilité : ${d.vy}/20`,` Budget : ${d.budget}K€`];}}}},
       scales:{
-        x:{min:0,max:20,title:{display:true,text:'Valeur & Alignement stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}},
-        y:{min:0,max:20,title:{display:true,text:'Faisabilité & Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}}
+        x:{min:-0.8,max:20.8,title:{display:true,text:'Valeur stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}},
+        y:{min:-0.8,max:20.8,title:{display:true,text:'Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}}
       }},plugins:[qPlugin]
   });
   window.matrixChart=chart;
