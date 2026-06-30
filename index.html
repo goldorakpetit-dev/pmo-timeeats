@@ -404,9 +404,10 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="nav">
     <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i>Accueil</div>
     <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i>Dashboard</div>
-    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-chart-gantt"></i>Gantt</div>
+    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i>Gantt</div>
     <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i>Matrice</div>
     <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i>Ressources</div>
+    <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i>Budget</div>
     <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i>Agenda</div>
     <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i>Risques</div>
     <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i>RH</div>
@@ -428,27 +429,25 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="hero-eyebrow"><div class="hero-dot"></div>PMO Suite · Plateforme de gestion de portefeuille projets</div>
     <h1 class="hero-title">Pilotez votre portefeuille<br><span>de projets, de bout en bout</span></h1>
     <p class="hero-sub">Standardisez, priorisez, planifiez, suivez les coûts / délais / risques et clôturez vos projets — sur un tableau de bord unique et collaboratif, alimenté en temps réel.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 8px">
-      <button class="btn btn-acc home-cta" onclick="goPageTile('dash')"><i class="ti ti-chart-pie"></i>Ouvrir le dashboard</button>
-      <button class="btn home-cta" onclick="goPageTile('gantt')"><i class="ti ti-chart-gantt"></i>Voir le planning</button>
-      <button class="btn home-cta" onclick="scrollHome('home-decouvrir')"><i class="ti ti-arrow-down"></i>Découvrir l'outil</button>
-    </div>
-    <div class="hero-kpis" id="hero-kpis"></div>
+    <div class="hero-kpis" id="hero-kpis" style="margin-top:18px"></div>
   </div>
 
-  <div class="nav-tiles" id="nav-tiles"></div>
-
-  <!-- DÉCOUVRIR : fonctionnalités -->
-  <div id="home-decouvrir" style="padding:14px 28px 4px">
-    <div class="home-sec-eyebrow">Ce que fait l'outil</div>
+  <!-- PRÉSENTATION (texte) -->
+  <div style="padding:16px 28px 4px;max-width:1000px">
+    <div class="home-sec-eyebrow">Présentation</div>
     <h2 class="home-sec-title">Une suite complète pour la cellule PMO</h2>
-    <div class="feat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <div class="feat-card" onclick="goPageTile('matrix')" style="cursor:pointer"><div class="feat-ic" style="background:#ECFDF5;color:#10B981"><i class="ti ti-target-arrow"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Prioriser le portefeuille</div><div style="font-size:11px;color:#64748B;line-height:1.6">Matrice de décision sur 3 critères cotés /5 (importance, rentabilité, maîtrise des risques) pour arbitrer objectivement.</div></div>
-      <div class="feat-card" onclick="goPageTile('gantt')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-chart-gantt"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Planifier & simuler</div><div style="font-size:11px;color:#64748B;line-height:1.6">Gantt multi-projets, dépendances typées (FS/SS/FF) et simulation de replanification par portefeuille, dans les échéances.</div></div>
-      <div class="feat-card" onclick="goPageTile('res')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#3B82F6"><i class="ti ti-users-group"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Allouer les ressources</div><div style="font-size:11px;color:#64748B;line-height:1.6">Charge réaliste par personne et par mois, répartition automatique par rôle et renforts ESN quand c'est nécessaire.</div></div>
-      <div class="feat-card" onclick="goPageTile('risques')" style="cursor:pointer"><div class="feat-ic" style="background:#FEF2F2;color:#EF4444"><i class="ti ti-alert-triangle"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Maîtriser les risques</div><div style="font-size:11px;color:#64748B;line-height:1.6">Registre des risques par projet, niveaux et plans de mitigation, alertes automatiques sur les dépendances critiques.</div></div>
-      <div class="feat-card" onclick="goPageTile('dash')" style="cursor:pointer"><div class="feat-ic" style="background:#FFFBEB;color:#F59E0B"><i class="ti ti-folders"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Gérer plusieurs portefeuilles</div><div style="font-size:11px;color:#64748B;line-height:1.6">Regroupez vos projets par portefeuille avec une échéance cible ; chaque portefeuille a ses propres KPI consolidés.</div></div>
-      <div class="feat-card" onclick="goPageTile('agenda')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#8B5CF6"><i class="ti ti-calendar-event"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Piloter & cadencer</div><div style="font-size:11px;color:#64748B;line-height:1.6">Agenda des comités et jalons, export vers votre calendrier, et suivi du triangle d'or coûts / délais / qualité.</div></div>
+    <p style="font-size:13px;color:#475569;line-height:1.75;margin:0 0 12px">PMO Suite centralise le pilotage de votre portefeuille de projets IT : de la priorisation initiale jusqu'à la clôture, en passant par la planification, l'allocation des ressources et le suivi des risques. Les données sont partagées et mises à jour en temps réel, pour une cellule PMO qui parle d'une seule voix.</p>
+    <p style="font-size:13px;color:#475569;line-height:1.75;margin:0 0 18px">L'outil regroupe vos projets en <strong>portefeuilles</strong>, chacun avec sa propre échéance et ses indicateurs consolidés, et permet de simuler des replanifications sans jamais altérer le plan de référence.</p>
+    <div class="home-sec-eyebrow">Les modules</div>
+    <div style="display:flex;flex-direction:column;gap:9px;font-size:12.5px;color:#334155;line-height:1.6;margin-top:8px">
+      <div><strong style="color:#0F172A">Dashboard</strong> — les indicateurs consolidés de chaque portefeuille : budget, charge, délais, priorisation.</div>
+      <div><strong style="color:#0F172A">Gantt</strong> — le planning multi-projets, les dépendances typées (FS/SS/FF) et la simulation par portefeuille.</div>
+      <div><strong style="color:#0F172A">Matrice de décision</strong> — la priorisation sur 3 critères cotés /5 : importance, rentabilité, maîtrise des risques.</div>
+      <div><strong style="color:#0F172A">Ressources</strong> — la charge réaliste par personne et par mois, la répartition automatique par rôle et les renforts ESN.</div>
+      <div><strong style="color:#0F172A">Agenda</strong> — les comités et jalons, avec export vers votre calendrier personnel.</div>
+      <div><strong style="color:#0F172A">Risques</strong> — le registre des risques par projet et leurs plans de mitigation.</div>
+      <div><strong style="color:#0F172A">Budget</strong> — la vue financière : budget total, par portefeuille, par catégorie et par projet.</div>
+      <div><strong style="color:#0F172A">Liste</strong> — la vue tabulaire de tous les projets, regroupés par portefeuille.</div>
     </div>
   </div>
 
@@ -458,7 +457,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <h2 class="home-sec-title">Le cycle de vie d'un projet, structuré</h2>
     <div style="max-width:1000px;display:flex;flex-direction:column;gap:9px">
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc1')"><div style="width:30px;height:30px;border-radius:8px;background:#ECFDF5;color:#10B981;display:flex;align-items:center;justify-content:center"><i class="ti ti-target-arrow"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">1 · Cadrage & priorisation</div><i class="ti ti-chevron-down" id="acc1-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc1-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet est qualifié (budget, charge, importance stratégique, rentabilité, maîtrise des risques) puis positionné sur la matrice de décision. On distingue les <strong>Stars</strong>, les <strong>quick wins</strong>, les projets <strong>majeurs</strong> à cadrer et ceux à reconsidérer.</div></div></div>
-      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc2')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center"><i class="ti ti-chart-gantt"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">2 · Planification & dépendances</div><i class="ti ti-chevron-down" id="acc2-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc2-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Le Gantt multi-projets relie les projets par des dépendances typées (fin→début, début→début, fin→fin) avec décalage. La simulation recalcule le planning d'un portefeuille pour tenir l'échéance, sans toucher au plan de référence tant qu'on n'applique pas.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc2')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center"><i class="ti ti-timeline"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">2 · Planification & dépendances</div><i class="ti ti-chevron-down" id="acc2-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc2-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Le Gantt multi-projets relie les projets par des dépendances typées (fin→début, début→début, fin→fin) avec décalage. La simulation recalcule le planning d'un portefeuille pour tenir l'échéance, sans toucher au plan de référence tant qu'on n'applique pas.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc3')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#3B82F6;display:flex;align-items:center;justify-content:center"><i class="ti ti-users-group"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">3 · Ressources & exécution</div><i class="ti ti-chevron-down" id="acc3-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc3-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">La charge est répartie mois par mois et par rôle (chef de projet, dev, admin, technicien), avec un plafond réaliste par personne et le recours à des prestataires ESN en dernier ressort.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc4')"><div style="width:30px;height:30px;border-radius:8px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center"><i class="ti ti-alert-triangle"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">4 · Suivi des risques & des délais</div><i class="ti ti-chevron-down" id="acc4-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc4-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet porte ses risques et plans de mitigation. Les dépendances génèrent des alertes de retard, et le dashboard signale les projets hors délai par rapport à l'échéance de leur portefeuille.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc5')"><div style="width:30px;height:30px;border-radius:8px;background:#FFFBEB;color:#F59E0B;display:flex;align-items:center;justify-content:center"><i class="ti ti-circle-check"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">5 · Clôture & capitalisation</div><i class="ti ti-chevron-down" id="acc5-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc5-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">En fin de projet : PV de recette, documents contractuels et retour d'expérience. Les indicateurs consolidés alimentent l'amélioration continue des projets suivants.</div></div></div>
@@ -475,9 +474,18 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <div id="p-dash" class="page">
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Dashboard portefeuilles</div><div class="ab-bc"><div class="ab-dot"></div>Indicateurs clés par portefeuille de projets</div></div>
-    <div class="ab-r"></div>
+    <div class="ab-r"><button class="btn btn-acc" onclick="openPortfolioModal()" title="Créer un portefeuille avec une échéance"><i class="ti ti-folder-plus"></i>Nouveau portefeuille</button></div>
   </div>
   <div class="ct"><div id="dash-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
+</div>
+
+<!-- PAGE BUDGET -->
+<div id="p-budget" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Budget du portefeuille</div><div class="ab-bc"><div class="ab-dot"></div>Vue financière · par portefeuille, catégorie et projet</div></div>
+    <div class="ab-r"></div>
+  </div>
+  <div class="ct"><div id="budget-body" style="display:flex;flex-direction:column;gap:16px"></div></div>
 </div>
 
 <!-- PAGE GANTT -->
@@ -485,7 +493,6 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril 2026 → Janvier 2027</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" onclick="openPortfolioModal()" title="Créer un portefeuille avec une échéance"><i class="ti ti-folder-plus"></i>Nouveau portefeuille</button>
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
@@ -1462,6 +1469,7 @@ function goPage(id,el){
   if(id==='risques')renderRisques();
   if(id==='rh')renderRH();
   if(id==='dash')renderDash();
+  if(id==='budget')renderBudget();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -1503,13 +1511,6 @@ document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
     <div style="font-size:9px;color:#CBD5E1;margin-top:3px;line-height:1.4">${k.sub}</div>
     <div class="hkpi-hint"><i class="ti ti-zoom-in" style="font-size:9px"></i> Voir détail</div>
   </div>`).join('');
-
-document.getElementById('nav-tiles').innerHTML=[
-  {id:'dash',  icon:'ti-chart-pie',    bg:'#FFFBEB',ic:'#F59E0B',name:'Dashboard',  desc:'KPI par portefeuille · budget · charge · délais'},
-  {id:'gantt', icon:'ti-chart-gantt',  bg:'#EFF6FF',ic:'#2563EB',name:'Gantt',      desc:'Planning temporel · dépendances · charge mensuelle'},
-  {id:'matrix',icon:'ti-chart-bubble', bg:'#ECFDF5',ic:'#10B981',name:'Matrice',    desc:'3 critères cotés /5 · Importance · Rentabilité · Maîtrise'},
-  {id:'res',   icon:'ti-users-group',  bg:'#EFF6FF',ic:'#3B82F6',name:'Ressources', desc:'Charge réaliste · équipes · prestataires ESN'},
-].map(t=>`<div class="tile" onclick="goPageTile('${t.id}')"><div class="tile-icon" style="background:${t.bg};color:${t.ic}"><i class="ti ${t.icon}"></i></div><div class="tile-name">${t.name}</div><div class="tile-desc">${t.desc}</div><i class="ti ti-arrow-right tile-arrow"></i></div>`).join('');
 
 const sortedP=[...P].sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));
 document.getElementById('top5').innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.val+p.fais}/40</div></div>`).join('');
@@ -1638,6 +1639,41 @@ function openPortfolioDetail(name){
   document.getElementById('pfd-overlay').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closePortfolioDetail(e){ var ov=document.getElementById('pfd-overlay'); if(!ov)return; if(e&&e.target!==ov)return; ov.classList.remove('open'); document.body.style.overflow=''; }
+
+/* ── BUDGET ── */
+function budgetBar(label,val,max,col,unit){
+  var w=max>0?Math.round(val/max*100):0;
+  return '<div style="display:flex;align-items:center;gap:9px"><div style="width:170px;font-size:11px;color:#475569;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+label+'</div><div style="flex:1;background:#F1F5F9;border-radius:5px;height:10px;overflow:hidden"><div style="width:'+w+'%;height:100%;background:'+col+'"></div></div><div style="width:72px;text-align:right;font-size:11px;font-weight:700;color:#0F172A">'+val+(unit||' K€')+'</div></div>';
+}
+function renderBudget(){
+  var body=document.getElementById('budget-body'); if(!body)return;
+  var totB=P.reduce(function(s,p){return s+(+p.b||0);},0), totC=P.reduce(function(s,p){return s+(+p.c||0);},0);
+  var avg=P.length?Math.round(totB/P.length):0;
+  var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+    + dashStat('Budget total',totB,' K€','ti-coin','#F59E0B')
+    + dashStat('Charge totale',totC,' j/h','ti-clock','#8B5CF6')
+    + dashStat('Budget moyen / projet',avg,' K€','ti-briefcase','#2563EB')
+    + dashStat('Projets',P.length,'','ti-folders','#10B981')
+    +'</div>';
+  var byPf={}; P.forEach(function(p){var k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');byPf[k]=(byPf[k]||0)+(+p.b||0);});
+  var pfNames=Object.keys(byPf); var maxPf=Math.max.apply(null,pfNames.map(function(n){return byPf[n];}).concat([1]));
+  h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:12px">Budget par portefeuille</div><div style="display:flex;flex-direction:column;gap:8px">';
+  pfNames.sort(function(a,b){return byPf[b]-byPf[a];}).forEach(function(n){var pf=pfByName(n);var col=pf?pf.color:'#64748B';h+=budgetBar(n,byPf[n],maxPf,col);});
+  h+='</div></div>';
+  var byCat={}; P.forEach(function(p){byCat[p.cat]=(byCat[p.cat]||0)+(+p.b||0);});
+  var cats=Object.keys(byCat); var maxCat=Math.max.apply(null,cats.map(function(c){return byCat[c];}).concat([1]));
+  h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:12px">Budget par catégorie</div><div style="display:flex;flex-direction:column;gap:8px">';
+  cats.sort(function(a,b){return byCat[b]-byCat[a];}).forEach(function(c){var col=(CAT[c]&&CAT[c].f)||'#64748B';h+=budgetBar(c,byCat[c],maxCat,col);});
+  h+='</div></div>';
+  h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:12px">Détail par projet</div>';
+  h+='<div style="display:flex;font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;padding:0 4px 6px;border-bottom:1px solid #F1F5F9"><div style="flex:2">Projet</div><div style="flex:1.3">Portefeuille</div><div style="flex:1.2">Catégorie</div><div style="width:72px;text-align:right">Budget</div><div style="width:72px;text-align:right">Charge</div><div style="width:80px;text-align:right">K€ / j·h</div></div>';
+  P.slice().sort(function(a,b){return b.b-a.b;}).forEach(function(p){
+    var ratio=p.c?(p.b/p.c).toFixed(2):'—'; var cc=(CAT[p.cat]&&CAT[p.cat].f)||'#64748B';
+    h+='<div style="display:flex;align-items:center;font-size:11.5px;color:#334155;padding:7px 4px;border-bottom:1px solid #F8FAFC"><div style="flex:2;font-weight:600;color:#0F172A">'+p.n+'</div><div style="flex:1.3;color:#64748B">'+(p.pf||'—')+'</div><div style="flex:1.2;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+cc+';flex-shrink:0"></span>'+p.cat+'</div><div style="width:72px;text-align:right;font-weight:700">'+p.b+' K€</div><div style="width:72px;text-align:right">'+p.c+' j/h</div><div style="width:80px;text-align:right;color:#64748B">'+ratio+'</div></div>';
+  });
+  h+='<div style="display:flex;align-items:center;font-size:11.5px;font-weight:800;color:#0F172A;padding:9px 4px;border-top:2px solid #E2E8F0;margin-top:2px"><div style="flex:2">Total</div><div style="flex:1.3"></div><div style="flex:1.2"></div><div style="width:72px;text-align:right">'+totB+' K€</div><div style="width:72px;text-align:right">'+totC+' j/h</div><div style="width:80px;text-align:right"></div></div></div>';
+  body.innerHTML=h;
+}
 
 /* ── GANTT ── */
 function ganttMonths(){ var mx=10; P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0); if(e>mx) mx=e; }); return Math.min(mx,24); }
@@ -2156,16 +2192,44 @@ const SP_LINKS={
   'Sauvegarde Cloud':'#sharepoint-sauvegarde',
 };
 function renderList(){
-document.getElementById('lst').innerHTML=
-  `<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /40</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`+
-  P.map(p=>`<div class="lr" onclick="openProjectDetail('${p.n}')" title="Voir / modifier le projet">
-    <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
-    <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
-    <div class="lc">${p.b}K€</div>
-    <div class="lc" style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</div>
-    <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
-    <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP('${p.n}')"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject('${p.n}')" title="Supprimer ce projet"></i></div>
-  </div>`).join('');
+  const order=PORTFOLIOS.map(pf=>pf.name);
+  const groups={}; P.forEach(p=>{const k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(groups[k]=groups[k]||[]).push(p);});
+  Object.keys(groups).forEach(k=>{if(order.indexOf(k)<0)order.push(k);});
+  const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /40</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`;
+  let h='';
+  order.forEach(name=>{
+    const g=groups[name]; if(!g||!g.length) return;
+    const pf=pfByName(name); const col=pf?pf.color:'#64748B'; const dl=pf?(+pf.deadline):null;
+    const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
+    const canDel=pf&&PORTFOLIOS.length>1;
+    h+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 12px;margin:16px 0 6px;background:${col}14;border-left:3px solid ${col};border-radius:0 8px 8px 0">
+      <span style="font-size:12.5px;font-weight:800;color:${col};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${name}</span>
+      <span style="font-size:10.5px;color:#64748B">échéance ${dlLabel} · ${g.length} projet${g.length>1?'s':''}</span>
+      ${canDel?`<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px;color:#EF4444;border-color:#FECACA" onclick="deletePortfolio(${jsArg(name)})" title="Supprimer ce portefeuille — ses projets repassent au portefeuille par défaut"><i class="ti ti-trash"></i>Supprimer le portefeuille</button>`:''}
+    </div>`+colHead+
+    g.map(p=>`<div class="lr" onclick="openProjectDetail(${jsArg(p.n)})" title="Voir / modifier le projet">
+      <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
+      <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
+      <div class="lc">${p.b}K€</div>
+      <div class="lc" style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</div>
+      <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
+      <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP(${jsArg(p.n)})"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject(${jsArg(p.n)})" title="Supprimer ce projet"></i></div>
+    </div>`).join('');
+  });
+  document.getElementById('lst').innerHTML=h;
+}
+function deletePortfolio(name){
+  var pf=pfByName(name); if(!pf){ toast('Portefeuille introuvable'); return; }
+  if(PORTFOLIOS.length<=1){ toast('Impossible de supprimer le dernier portefeuille.'); return; }
+  var other=PORTFOLIOS.filter(function(x){return x.name!==name;})[0]; var def=other.name;
+  var n=P.filter(function(p){return (p.pf||'')===name;}).length;
+  if(!confirm('Supprimer le portefeuille « '+name+' » ?'+(n?('\nSes '+n+' projet(s) seront rattachés à « '+def+' » (les projets ne sont pas supprimés).'):''))) return;
+  P.forEach(function(p){ if((p.pf||'')===name){ p.pf=def; apiPost({action:'update', project:p, charges:MV[p.n]||[]}); } });
+  PORTFOLIOS=PORTFOLIOS.filter(function(x){return x.name!==name;});
+  apiPost({action:'deletePortfolio', name:name});
+  window.mReady=false; window.rReady=false;
+  renderList(); renderG(); buildHome(); if(typeof renderDash==='function')renderDash();
+  toast('✓ Portefeuille « '+name+' » supprimé'+(n?(' · '+n+' projet(s) → « '+def+' »'):''));
 }
 
 var DEPS_STORE={};
