@@ -390,6 +390,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   </div>
   <div class="nav">
     <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i>Accueil</div>
+    <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i>Dashboard</div>
     <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-chart-gantt"></i>Gantt</div>
     <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i>Matrice</div>
     <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i>Ressources</div>
@@ -409,9 +410,17 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <!-- PAGE ACCUEIL -->
 <div id="p-home" class="page on">
   <div class="hero">
-    <div class="hero-eyebrow"><div class="hero-dot"></div>Portefeuille actif — Avril 2026</div>
-    <h1 class="hero-title">Portefeuille projets<br><span>DSI Time'Eats</span></h1>
-    <p class="hero-sub">Supervision complète du portefeuille IT — coûts, délais, risques et valeur stratégique. Année de référence 2026 (Avril) · postulat du brief.</p>
+    <div class="hero-eyebrow"><div class="hero-dot"></div>Outil de gestion de portefeuille projets · PMO Time'Eats DSI</div>
+    <h1 class="hero-title">Pilotez votre portefeuille<br><span>de projets IT, de bout en bout</span></h1>
+    <p class="hero-sub">Une cellule PMO professionnalisée : standardiser, prioriser, planifier, suivre les coûts / délais / risques et clôturer vos projets — sur un tableau de bord unique, alimenté en temps réel par Google&nbsp;Sheets.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px;max-width:880px">
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-target-arrow" style="color:#10B981;font-size:13px"></i>Priorisation — matrice /5</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-chart-gantt" style="color:#2563EB;font-size:13px"></i>Planification & dépendances</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-users-group" style="color:#3B82F6;font-size:13px"></i>Ressources & ESN</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-alert-triangle" style="color:#EF4444;font-size:13px"></i>Gestion des risques</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-folders" style="color:#8B5CF6;font-size:13px"></i>Portefeuilles & échéances</span>
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-chart-pie" style="color:#F59E0B;font-size:13px"></i>Dashboard KPI</span>
+    </div>
     <div class="hero-kpis" id="hero-kpis"></div>
   </div>
   <div class="nav-tiles" id="nav-tiles"></div>
@@ -419,6 +428,15 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="card"><div class="card-h"><i class="ti ti-trophy" style="color:#F59E0B;font-size:13px"></i>Top 5 — Score de priorisation</div><div id="top5"></div></div>
     <div class="card"><div class="card-h"><i class="ti ti-alert-triangle" style="color:#2563EB;font-size:13px"></i>Points de vigilance</div><div id="alerts"></div></div>
   </div>
+</div>
+
+<!-- PAGE DASHBOARD -->
+<div id="p-dash" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Dashboard portefeuilles</div><div class="ab-bc"><div class="ab-dot"></div>Indicateurs clés par portefeuille de projets</div></div>
+    <div class="ab-r"></div>
+  </div>
+  <div class="ct"><div id="dash-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
 </div>
 
 <!-- PAGE GANTT -->
@@ -430,7 +448,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
-      <button class="btn btn-acc" onclick="rescheduleGantt()" title="Aperçu : replanifie selon les dépendances, sans modifier le Sheet"><i class="ti ti-refresh"></i>Simuler le planning</button>
+      <select id="sim-pf" title="Portefeuille à simuler" style="font-size:11px;padding:7px 9px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Tous les portefeuilles</option></select>
+      <button class="btn btn-acc" onclick="rescheduleGantt()" title="Aperçu : replanifie selon les dépendances et les échéances, sans modifier le Sheet"><i class="ti ti-refresh"></i>Simuler le planning</button>
     </div>
   </div>
   <div id="sim-banner" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:#FEF9C3;border:1px solid #FDE68A;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:12px;color:#854D0E">
@@ -1400,6 +1419,7 @@ function goPage(id,el){
   if(id==='agenda')renderCalendar();
   if(id==='risques')renderRisques();
   if(id==='rh')renderRH();
+  if(id==='dash')renderDash();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 
@@ -1436,15 +1456,67 @@ document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
   </div>`).join('');
 
 document.getElementById('nav-tiles').innerHTML=[
+  {id:'dash',  icon:'ti-chart-pie',    bg:'#FFFBEB',ic:'#F59E0B',name:'Dashboard',  desc:'KPI par portefeuille · budget · charge · délais'},
   {id:'gantt', icon:'ti-chart-gantt',  bg:'#EFF6FF',ic:'#2563EB',name:'Gantt',      desc:'Planning temporel · dépendances · charge mensuelle'},
   {id:'matrix',icon:'ti-chart-bubble', bg:'#ECFDF5',ic:'#10B981',name:'Matrice',    desc:'3 critères cotés /5 · Importance · Rentabilité · Maîtrise'},
   {id:'res',   icon:'ti-users-group',  bg:'#EFF6FF',ic:'#3B82F6',name:'Ressources', desc:'Charge réaliste · équipes · prestataires ESN'},
-  {id:'lst',   icon:'ti-list-details', bg:'#FFFBEB',ic:'#F59E0B',name:'Liste',      desc:'Vue tabulaire · tous les indicateurs'},
 ].map(t=>`<div class="tile" onclick="goPageTile('${t.id}')"><div class="tile-icon" style="background:${t.bg};color:${t.ic}"><i class="ti ${t.icon}"></i></div><div class="tile-name">${t.name}</div><div class="tile-desc">${t.desc}</div><i class="ti ti-arrow-right tile-arrow"></i></div>`).join('');
 
 const sortedP=[...P].sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));
 document.getElementById('top5').innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.val+p.fais}/40</div></div>`).join('');
 document.getElementById('alerts').innerHTML=ALERTS.map(a=>{const s=alertStyle(a);return `<div class="alert-row"><div class="alert-icon" style="background:${s.bg};color:${s.c}"><i class="ti ${s.ic}" style="font-size:11px"></i></div><div class="alert-txt">${a.text||a.t||''}</div></div>`;}).join('');
+}
+
+/* ── DASHBOARD (KPI par portefeuille) ── */
+function dashStat(label,val,unit,icon,col){
+  return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:26px;height:26px;border-radius:7px;background:'+col+'1A;display:flex;align-items:center;justify-content:center"><i class="ti '+icon+'" style="color:'+col+';font-size:13px"></i></div><div style="font-size:10px;color:#94A3B8;font-weight:600">'+label+'</div></div><div style="font-size:22px;font-weight:800;color:#0F172A">'+val+'<span style="font-size:12px;color:#94A3B8;font-weight:600">'+unit+'</span></div></div>';
+}
+function dashMini(label,val,unit){
+  return '<div><div style="font-size:17px;font-weight:800;color:#0F172A">'+val+'<span style="font-size:10px;color:#94A3B8;font-weight:600">'+unit+'</span></div><div style="font-size:9.5px;color:#94A3B8;margin-top:1px">'+label+'</div></div>';
+}
+function renderDash(){
+  var body=document.getElementById('dash-body'); if(!body)return;
+  var qCol={stars:'#10B981',quickwins:'#3B82F6',majeurs:'#2563EB',reconsider:'#EF4444'};
+  var qLab={stars:'Stars',quickwins:'Quick wins',majeurs:'Majeurs',reconsider:'À revoir'};
+  var totBud=P.reduce(function(s,p){return s+(+p.b||0);},0), totCh=P.reduce(function(s,p){return s+(+p.c||0);},0);
+  var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
+    + dashStat('Portefeuilles',PORTFOLIOS.length,'','ti-folders','#2563EB')
+    + dashStat('Projets',P.length,'','ti-briefcase','#10B981')
+    + dashStat('Budget total',totBud,' K€','ti-coin','#F59E0B')
+    + dashStat('Charge totale',totCh,' j/h','ti-clock','#8B5CF6')
+    + '</div>';
+  var order=PORTFOLIOS.map(function(pf){return pf.name;});
+  var groups={}; P.forEach(function(p){var k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(groups[k]=groups[k]||[]).push(p);});
+  Object.keys(groups).forEach(function(k){if(order.indexOf(k)<0)order.push(k);});
+  order.forEach(function(name){
+    var g=groups[name]; if(!g||!g.length) return;
+    var pf=pfByName(name); var col=pf?pf.color:'#64748B'; var dl=pf?(+pf.deadline):null;
+    var dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
+    var bud=g.reduce(function(s,p){return s+(+p.b||0);},0), ch=g.reduce(function(s,p){return s+(+p.c||0);},0);
+    var enCours=g.filter(function(p){return p.st2==='En cours';}).length;
+    var over=g.filter(function(p){return dl!=null&&!projectFits(p,dl);}).length;
+    var avg=Math.round(g.reduce(function(s,p){return s+(p.val+p.fais);},0)/g.length);
+    var qc={stars:0,quickwins:0,majeurs:0,reconsider:0}; g.forEach(function(p){qc[p.q]=(qc[p.q]||0)+1;});
+    var bar='',leg='';
+    ['stars','quickwins','majeurs','reconsider'].forEach(function(q){ if(qc[q]>0){ bar+='<div style="flex:'+qc[q]+';background:'+qCol[q]+'"></div>'; leg+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;color:#64748B"><span style="width:8px;height:8px;border-radius:2px;background:'+qCol[q]+'"></span>'+qLab[q]+' '+qc[q]+'</span>'; } });
+    h+='<div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid '+col+';border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">'
+        +'<div style="display:flex;align-items:center;gap:9px"><i class="ti ti-folder" style="color:'+col+';font-size:18px"></i><div><div style="font-size:14px;font-weight:800;color:#0F172A">'+name+'</div><div style="font-size:10.5px;color:#94A3B8">Échéance : <strong style="color:#475569">'+dlLabel+'</strong></div></div></div>'
+        +(over>0?'<span style="background:#FEF2F2;color:#EF4444;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px">⚠ '+over+' hors délai</span>':'<span style="background:#ECFDF5;color:#10B981;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px">✓ Dans les délais</span>')
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">'
+        + dashMini('Projets',g.length,'')
+        + dashMini('Budget',bud,' K€')
+        + dashMini('Charge',ch,' j/h')
+        + dashMini('En cours',enCours,'/'+g.length)
+        + dashMini('Score moy.',avg,'/40')
+      +'</div>'
+      +'<div style="font-size:10px;color:#94A3B8;margin-bottom:5px">Répartition priorisation (matrice)</div>'
+      +'<div style="display:flex;height:10px;border-radius:6px;overflow:hidden;background:#F1F5F9;margin-bottom:7px">'+bar+'</div>'
+      +'<div style="display:flex;gap:12px;flex-wrap:wrap">'+leg+'</div>'
+    +'</div>';
+  });
+  body.innerHTML=h;
 }
 
 /* ── GANTT ── */
@@ -1491,6 +1563,8 @@ function renderG(f='all'){
   document.getElementById('grows').innerHTML=h;
   const cats=[...new Set(data.map(p=>p.cat))];
   document.getElementById('gleg').innerHTML=cats.map(cat=>`<div class="gli"><div class="gld" style="background:${CAT[cat].f}"></div><span>${cat}</span></div>`).join('')+(data.some(p=>p.sel)?`<div class="gli"><div style="width:7px;height:7px;border-radius:50%;outline:2.5px solid #2563EB;outline-offset:1px;flex-shrink:0"></div><span>Projet sélectionné</span></div>`:'');
+  var simSel=document.getElementById('sim-pf');
+  if(simSel){ var keep=simSel.value; simSel.innerHTML='<option value="">Tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===keep?' selected':'')+'>'+pf.name+'</option>';}).join(''); }
   attachBars();
 }
 function attachBars(){
@@ -1515,12 +1589,14 @@ function fg(f,el){document.querySelectorAll('.gfi').forEach(b=>b.classList.remov
 var GANTT_WINDOW=10; /* fenêtre cible : 10 mois (Avr → Jan) */
 var SIM={active:false, backup:null, changed:[], tension:false};
 
-/* Calcule les dates au plus tôt selon les dépendances typées, bornées à la fenêtre. Ne modifie rien. */
-function computeSchedule(){
+/* Calcule les dates au plus tôt selon les dépendances typées, bornées à l'échéance.
+   scopePf : si renseigné, seuls les projets de CE portefeuille sont déplacés ; les autres restent figés (références de dépendance). */
+function computeSchedule(scopePf){
   var byName={}; P.forEach(function(p){byName[p.n]=p;});
   var memo={}, visiting={}, tension=false;
   function startOf(p){
     if(memo[p.n]!=null) return memo[p.n];
+    if(scopePf && p.pf!==scopePf){ memo[p.n]=p.s; return p.s; } /* hors portefeuille ciblé : figé */
     if(visiting[p.n]) return p.s;
     visiting[p.n]=true;
     var earliest=p.s;
@@ -1544,8 +1620,10 @@ function computeSchedule(){
 
 /* APERÇU (mode simulation) : applique le recalcul à la vue, SANS écrire dans le Sheet. */
 function rescheduleGantt(){
+  var sel=document.getElementById('sim-pf'); var scope=sel?sel.value:''; if(scope&&!pfByName(scope))scope='';
+  var scopeLabel=scope?('« '+scope+' »'):'tous les portefeuilles';
   if(!SIM.active){ SIM.backup=P.map(function(p){return {n:p.n,s:p.s,dt:p.dt};}); }
-  var r=computeSchedule(), changed=[];
+  var r=computeSchedule(scope), changed=[];
   P.forEach(function(p){
     var ns=r.starts[p.n];
     if(ns!==p.s){
@@ -1554,15 +1632,15 @@ function rescheduleGantt(){
       changed.push(p.n);
     }
   });
-  if(!changed.length && !SIM.active){ SIM.backup=null; toast('✓ Simulation : plan déjà conforme aux dépendances et aux échéances — aucun décalage nécessaire.'); return; }
+  if(!changed.length && !SIM.active){ SIM.backup=null; toast('✓ Simulation ('+scopeLabel+') : plan déjà conforme aux dépendances et aux échéances.'); return; }
   SIM.active=true; SIM.changed=changed; SIM.tension=r.tension;
   window.mReady=false; window.rReady=false;
   buildHome(); renderList(); renderG(); refreshActiveView();
-  showSimBanner(changed.length, r.tension);
+  showSimBanner(changed.length, r.tension, scopeLabel);
 }
-function showSimBanner(n,tension){
+function showSimBanner(n,tension,scopeLabel){
   var b=document.getElementById('sim-banner'); if(!b)return;
-  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
+  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> ('+(scopeLabel||'tous les portefeuilles')+') — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
   b.style.display='flex';
 }
 function hideSimBanner(){ var b=document.getElementById('sim-banner'); if(b) b.style.display='none'; }
