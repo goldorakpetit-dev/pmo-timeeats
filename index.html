@@ -620,6 +620,25 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   </div>
 </div>
 
+<!-- Ajouter au calendrier personnel -->
+<div class="overlay" id="cal-overlay" onclick="closeCalModal(event)">
+  <div class="modal" style="width:min(440px,94vw)">
+    <div class="mo-header">
+      <div class="mo-icon" style="background:#ECFDF5;color:#10B981"><i class="ti ti-calendar-check"></i></div>
+      <div><div class="mo-title">Ajouter à mon calendrier</div><div class="mo-sub" id="cal-sub">Ajoutez-la à votre agenda personnel</div></div>
+      <button class="mo-close" onclick="closeCalModal({target:document.getElementById('cal-overlay')})"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mo-body">
+      <div style="font-size:11.5px;color:#475569;margin-bottom:14px;line-height:1.5">Choisissez où ajouter cette réunion. Le fichier <strong>.ics</strong> fonctionne avec Outlook, Apple Calendrier et la plupart des agendas.</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-blue" onclick="gcalOpen(LAST_MEETING)"><i class="ti ti-calendar-plus"></i>Ajouter à Google Agenda</button>
+        <button class="btn" onclick="downloadICS(LAST_MEETING)"><i class="ti ti-download"></i>Télécharger le fichier .ics (Outlook, Apple…)</button>
+        <button class="btn" onclick="closeCalModal({target:document.getElementById('cal-overlay')})">Plus tard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Nouveau Projet Modal -->
 <div class="overlay" id="np-overlay" onclick="closeNPModal(event)">
   <div class="modal">
@@ -916,7 +935,7 @@ function renderCalendar(){
   }
   document.getElementById('cal-days').innerHTML=html;
   const upcoming=[...meetings].filter(m=>m.date>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,7);
-  document.getElementById('meeting-list').innerHTML=upcoming.length?upcoming.map(m=>`<div class="meeting-item"><div class="meeting-dot" style="background:${MC[m.type]}"></div><div style="flex:1"><div class="meeting-title">${m.title}</div><div class="meeting-meta">${new Date(m.date+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} · ${m.time}${m.project?' · '+m.project:''}</div></div><button class="meeting-del" onclick="delMeeting(${m.id})"><i class="ti ti-trash"></i></button></div>`).join(''):'<div style="font-size:11px;color:#94A3B8;padding:8px 0;text-align:center"><i class="ti ti-calendar-off" style="font-size:18px;display:block;margin-bottom:5px"></i>Aucune réunion à venir</div>';
+  document.getElementById('meeting-list').innerHTML=upcoming.length?upcoming.map(m=>`<div class="meeting-item"><div class="meeting-dot" style="background:${MC[m.type]}"></div><div style="flex:1"><div class="meeting-title">${m.title}</div><div class="meeting-meta">${new Date(m.date+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} · ${m.time}${m.project?' · '+m.project:''}</div></div><button class="meeting-del" onclick="exportMeeting(${m.id})" title="Ajouter à mon calendrier"><i class="ti ti-calendar-plus"></i></button><button class="meeting-del" onclick="delMeeting(${m.id})"><i class="ti ti-trash"></i></button></div>`).join(''):'<div style="font-size:11px;color:#94A3B8;padding:8px 0;text-align:center"><i class="ti ti-calendar-off" style="font-size:18px;display:block;margin-bottom:5px"></i>Aucune réunion à venir</div>';
   document.getElementById('ms-total').textContent=meetings.length;
   document.getElementById('ms-codir').textContent=meetings.filter(m=>m.type==='codir').length;
   document.getElementById('ms-proj').textContent=meetings.filter(m=>m.type==='projet'||m.type==='equipe').length;
@@ -944,8 +963,47 @@ function saveMeeting(){
   meetings.push(newM);apiMeeting(newM);
   document.getElementById('meeting-overlay').classList.remove('open');document.body.style.overflow='';
   const d=new Date(date+'T12:00');calYear=d.getFullYear();calMonth=d.getMonth();renderCalendar();
-  toast('✓ Réunion planifiée — '+title);
+  openCalExport(newM, true);
 }
+
+/* ── Export vers calendrier personnel (.ics + Google Agenda) ── */
+var LAST_MEETING=null;
+function pad2_(n){return ('0'+n).slice(-2);}
+function icsStamp_(dateStr,timeStr){ var p=String(dateStr).split('-'); var t=String(timeStr||'09:00').split(':'); return p[0]+pad2_(p[1])+pad2_(p[2])+'T'+pad2_(t[0]||'09')+pad2_(t[1]||'00')+'00'; }
+function icsAddMin_(dateStr,timeStr,min){ var d=new Date(dateStr+'T'+(timeStr||'09:00')+':00'); d=new Date(d.getTime()+(+min||60)*60000); return d.getFullYear()+pad2_(d.getMonth()+1)+pad2_(d.getDate())+'T'+pad2_(d.getHours())+pad2_(d.getMinutes())+'00'; }
+function icsEsc_(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+function meetingDetails_(m){ return [m.desc, m.participants?('Participants : '+m.participants):'', m.project?('Projet : '+m.project):''].filter(Boolean).join('\n'); }
+function icsForMeeting(m){
+  var now=new Date();
+  var stamp=now.getUTCFullYear()+pad2_(now.getUTCMonth()+1)+pad2_(now.getUTCDate())+'T'+pad2_(now.getUTCHours())+pad2_(now.getUTCMinutes())+pad2_(now.getUTCSeconds())+'Z';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//TimeEats PMO//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+    'UID:'+(m.id||Date.now())+'@timeeats-pmo','DTSTAMP:'+stamp,'DTSTART:'+icsStamp_(m.date,m.time),'DTEND:'+icsAddMin_(m.date,m.time,m.duration),
+    'SUMMARY:'+icsEsc_(m.title),'DESCRIPTION:'+icsEsc_(meetingDetails_(m)),'LOCATION:'+icsEsc_(m.location),'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function downloadICS(m){
+  if(!m)return;
+  var blob=new Blob([icsForMeeting(m)],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url; a.download=(m.title||'reunion').replace(/[^a-z0-9]+/gi,'_').toLowerCase()+'.ics';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+  toast('✓ Fichier .ics téléchargé — ouvre-le pour l\'ajouter à ton agenda.');
+}
+function gcalOpen(m){
+  if(!m)return;
+  var url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(m.title||'Réunion')
+    +'&dates='+icsStamp_(m.date,m.time)+'/'+icsAddMin_(m.date,m.time,m.duration)
+    +'&details='+encodeURIComponent(meetingDetails_(m))+'&location='+encodeURIComponent(m.location||'');
+  window.open(url,'_blank','noopener');
+}
+function openCalExport(m, isNew){
+  LAST_MEETING=m;
+  var sub=document.getElementById('cal-sub');
+  if(sub) sub.textContent=(isNew?'Réunion planifiée — ':'')+'Ajoutez-la à votre agenda personnel';
+  document.getElementById('cal-overlay').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closeCalModal(e){ if(e&&e.target!==document.getElementById('cal-overlay'))return; document.getElementById('cal-overlay').classList.remove('open'); document.body.style.overflow=''; }
+function exportMeeting(id){ var m=meetings.find(function(x){return x.id===id;}); if(m) openCalExport(m,false); }
 
 /* ═══════════════ NOUVEAU PROJET ═══════════════ */
 const NP_REQ=['np-name','np-cat','np-desc','np-startdate','np-enddate','np-budget','np-charge','np-strat','np-rent','np-mait'];
@@ -1159,6 +1217,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
   document.getElementById('np-overlay').classList.remove('open');
   if(document.getElementById('del-overlay'))document.getElementById('del-overlay').classList.remove('open');
   if(document.getElementById('pf-overlay'))document.getElementById('pf-overlay').classList.remove('open');
+  if(document.getElementById('cal-overlay'))document.getElementById('cal-overlay').classList.remove('open');
   document.body.style.overflow='';
 }});
 </script>
