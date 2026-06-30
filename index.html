@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PMO Suite — Time'Eats DSI (connecté Sheets)</title>
+<title>PMO Suite — Gestion de portefeuille de projets</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -64,6 +64,19 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 .tile-desc{font-size:10px;color:#64748B;line-height:1.5}
 .tile-arrow{position:absolute;bottom:12px;right:12px;font-size:14px;color:#E2E8F0;transition:all .15s}
 .tile:hover .tile-arrow{color:#2563EB;transform:translateX(3px)}
+.feat-card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 17px;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:all .18s}
+.feat-card:hover{border-color:#CBD5E1;box-shadow:0 6px 20px rgba(0,0,0,.08);transform:translateY(-3px)}
+.feat-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:11px}
+.pf-card{cursor:pointer;transition:all .16s}
+.pf-card:hover{border-color:#CBD5E1 !important;box-shadow:0 6px 20px rgba(0,0,0,.09) !important;transform:translateY(-2px)}
+.acc-item{background:#fff;border:1px solid #E2E8F0;border-radius:11px;overflow:hidden;transition:border-color .15s}
+.acc-item:hover{border-color:#CBD5E1}
+.acc-head{display:flex;align-items:center;gap:11px;padding:13px 16px;cursor:pointer;user-select:none}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .28s ease}
+.home-sec-eyebrow{font-size:11px;font-weight:800;letter-spacing:.6px;color:#2563EB;text-transform:uppercase;margin-bottom:5px}
+.home-sec-title{font-size:20px;font-weight:800;color:#0F172A;margin:0 0 16px;letter-spacing:-.3px}
+.home-cta{padding:11px 18px;font-size:13px;font-weight:700}
+@media(max-width:900px){.feat-grid{grid-template-columns:1fr 1fr !important}}
 
 .insights{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 28px 24px}
 .card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
@@ -386,7 +399,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="logo-box"><i class="ti ti-layout-dashboard"></i></div>
     <span class="logo-name">PMO Suite</span>
     <div class="logo-sep"></div>
-    <span class="logo-tag">Time'Eats · DSI</span>
+    <span class="logo-tag">Gestion de portefeuille projets</span>
   </div>
   <div class="nav">
     <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i>Accueil</div>
@@ -403,27 +416,55 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <button class="ib" onclick="toast('Recherche globale — bientôt disponible')"><i class="ti ti-search"></i></button>
     <button class="ib" onclick="toast('2 alertes · Office 365 prérequis · Migration Azure risque élevé')"><i class="ti ti-bell"></i></button>
     <button class="ib" onclick="toast('Paramètres du compte')"><i class="ti ti-settings"></i></button>
-    <div class="av" onclick="toast('Chef de projet PMO · Time\'Eats DSI')">PM</div>
+    <div class="av" onclick="toast('Cellule PMO · Chef de projet')">PM</div>
   </div>
 </div>
 
-<!-- PAGE ACCUEIL -->
+<!-- PAGE ACCUEIL (landing) -->
 <div id="p-home" class="page on">
-  <div class="hero">
-    <div class="hero-eyebrow"><div class="hero-dot"></div>Outil de gestion de portefeuille projets · PMO Time'Eats DSI</div>
-    <h1 class="hero-title">Pilotez votre portefeuille<br><span>de projets IT, de bout en bout</span></h1>
-    <p class="hero-sub">Une cellule PMO professionnalisée : standardiser, prioriser, planifier, suivre les coûts / délais / risques et clôturer vos projets — sur un tableau de bord unique, alimenté en temps réel par Google&nbsp;Sheets.</p>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 4px;max-width:880px">
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-target-arrow" style="color:#10B981;font-size:13px"></i>Priorisation — matrice /5</span>
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-chart-gantt" style="color:#2563EB;font-size:13px"></i>Planification & dépendances</span>
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-users-group" style="color:#3B82F6;font-size:13px"></i>Ressources & ESN</span>
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-alert-triangle" style="color:#EF4444;font-size:13px"></i>Gestion des risques</span>
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-folders" style="color:#8B5CF6;font-size:13px"></i>Portefeuilles & échéances</span>
-      <span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #E2E8F0;border-radius:20px;padding:6px 12px;font-size:11px;color:#334155;font-weight:600"><i class="ti ti-chart-pie" style="color:#F59E0B;font-size:13px"></i>Dashboard KPI</span>
+  <div class="hero" style="position:relative;overflow:hidden">
+    <div style="position:absolute;top:-90px;right:-70px;width:340px;height:340px;background:radial-gradient(circle,rgba(37,99,235,.13),transparent 70%);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-120px;left:30%;width:300px;height:300px;background:radial-gradient(circle,rgba(16,185,129,.10),transparent 70%);pointer-events:none"></div>
+    <div class="hero-eyebrow"><div class="hero-dot"></div>PMO Suite · Plateforme de gestion de portefeuille projets</div>
+    <h1 class="hero-title">Pilotez votre portefeuille<br><span>de projets, de bout en bout</span></h1>
+    <p class="hero-sub">Standardisez, priorisez, planifiez, suivez les coûts / délais / risques et clôturez vos projets — sur un tableau de bord unique et collaboratif, alimenté en temps réel.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:20px 0 8px">
+      <button class="btn btn-acc home-cta" onclick="goPageTile('dash')"><i class="ti ti-chart-pie"></i>Ouvrir le dashboard</button>
+      <button class="btn home-cta" onclick="goPageTile('gantt')"><i class="ti ti-chart-gantt"></i>Voir le planning</button>
+      <button class="btn home-cta" onclick="scrollHome('home-decouvrir')"><i class="ti ti-arrow-down"></i>Découvrir l'outil</button>
     </div>
     <div class="hero-kpis" id="hero-kpis"></div>
   </div>
+
   <div class="nav-tiles" id="nav-tiles"></div>
+
+  <!-- DÉCOUVRIR : fonctionnalités -->
+  <div id="home-decouvrir" style="padding:14px 28px 4px">
+    <div class="home-sec-eyebrow">Ce que fait l'outil</div>
+    <h2 class="home-sec-title">Une suite complète pour la cellule PMO</h2>
+    <div class="feat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="feat-card" onclick="goPageTile('matrix')" style="cursor:pointer"><div class="feat-ic" style="background:#ECFDF5;color:#10B981"><i class="ti ti-target-arrow"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Prioriser le portefeuille</div><div style="font-size:11px;color:#64748B;line-height:1.6">Matrice de décision sur 3 critères cotés /5 (importance, rentabilité, maîtrise des risques) pour arbitrer objectivement.</div></div>
+      <div class="feat-card" onclick="goPageTile('gantt')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-chart-gantt"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Planifier & simuler</div><div style="font-size:11px;color:#64748B;line-height:1.6">Gantt multi-projets, dépendances typées (FS/SS/FF) et simulation de replanification par portefeuille, dans les échéances.</div></div>
+      <div class="feat-card" onclick="goPageTile('res')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#3B82F6"><i class="ti ti-users-group"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Allouer les ressources</div><div style="font-size:11px;color:#64748B;line-height:1.6">Charge réaliste par personne et par mois, répartition automatique par rôle et renforts ESN quand c'est nécessaire.</div></div>
+      <div class="feat-card" onclick="goPageTile('risques')" style="cursor:pointer"><div class="feat-ic" style="background:#FEF2F2;color:#EF4444"><i class="ti ti-alert-triangle"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Maîtriser les risques</div><div style="font-size:11px;color:#64748B;line-height:1.6">Registre des risques par projet, niveaux et plans de mitigation, alertes automatiques sur les dépendances critiques.</div></div>
+      <div class="feat-card" onclick="goPageTile('dash')" style="cursor:pointer"><div class="feat-ic" style="background:#FFFBEB;color:#F59E0B"><i class="ti ti-folders"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Gérer plusieurs portefeuilles</div><div style="font-size:11px;color:#64748B;line-height:1.6">Regroupez vos projets par portefeuille avec une échéance cible ; chaque portefeuille a ses propres KPI consolidés.</div></div>
+      <div class="feat-card" onclick="goPageTile('agenda')" style="cursor:pointer"><div class="feat-ic" style="background:#EFF6FF;color:#8B5CF6"><i class="ti ti-calendar-event"></i></div><div style="font-size:13.5px;font-weight:800;color:#0F172A;margin-bottom:5px">Piloter & cadencer</div><div style="font-size:11px;color:#64748B;line-height:1.6">Agenda des comités et jalons, export vers votre calendrier, et suivi du triangle d'or coûts / délais / qualité.</div></div>
+    </div>
+  </div>
+
+  <!-- MÉTHODOLOGIE : accordéon déroulant -->
+  <div style="padding:20px 28px 8px">
+    <div class="home-sec-eyebrow">Méthodologie</div>
+    <h2 class="home-sec-title">Le cycle de vie d'un projet, structuré</h2>
+    <div style="max-width:1000px;display:flex;flex-direction:column;gap:9px">
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc1')"><div style="width:30px;height:30px;border-radius:8px;background:#ECFDF5;color:#10B981;display:flex;align-items:center;justify-content:center"><i class="ti ti-target-arrow"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">1 · Cadrage & priorisation</div><i class="ti ti-chevron-down" id="acc1-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc1-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet est qualifié (budget, charge, importance stratégique, rentabilité, maîtrise des risques) puis positionné sur la matrice de décision. On distingue les <strong>Stars</strong>, les <strong>quick wins</strong>, les projets <strong>majeurs</strong> à cadrer et ceux à reconsidérer.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc2')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center"><i class="ti ti-chart-gantt"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">2 · Planification & dépendances</div><i class="ti ti-chevron-down" id="acc2-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc2-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Le Gantt multi-projets relie les projets par des dépendances typées (fin→début, début→début, fin→fin) avec décalage. La simulation recalcule le planning d'un portefeuille pour tenir l'échéance, sans toucher au plan de référence tant qu'on n'applique pas.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc3')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#3B82F6;display:flex;align-items:center;justify-content:center"><i class="ti ti-users-group"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">3 · Ressources & exécution</div><i class="ti ti-chevron-down" id="acc3-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc3-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">La charge est répartie mois par mois et par rôle (chef de projet, dev, admin, technicien), avec un plafond réaliste par personne et le recours à des prestataires ESN en dernier ressort.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc4')"><div style="width:30px;height:30px;border-radius:8px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center"><i class="ti ti-alert-triangle"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">4 · Suivi des risques & des délais</div><i class="ti ti-chevron-down" id="acc4-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc4-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet porte ses risques et plans de mitigation. Les dépendances génèrent des alertes de retard, et le dashboard signale les projets hors délai par rapport à l'échéance de leur portefeuille.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc5')"><div style="width:30px;height:30px;border-radius:8px;background:#FFFBEB;color:#F59E0B;display:flex;align-items:center;justify-content:center"><i class="ti ti-circle-check"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">5 · Clôture & capitalisation</div><i class="ti ti-chevron-down" id="acc5-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc5-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">En fin de projet : PV de recette, documents contractuels et retour d'expérience. Les indicateurs consolidés alimentent l'amélioration continue des projets suivants.</div></div></div>
+    </div>
+  </div>
+
   <div class="insights">
     <div class="card"><div class="card-h"><i class="ti ti-trophy" style="color:#F59E0B;font-size:13px"></i>Top 5 — Score de priorisation</div><div id="top5"></div></div>
     <div class="card"><div class="card-h"><i class="ti ti-alert-triangle" style="color:#2563EB;font-size:13px"></i>Points de vigilance</div><div id="alerts"></div></div>
@@ -1240,6 +1281,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
   if(document.getElementById('del-overlay'))document.getElementById('del-overlay').classList.remove('open');
   if(document.getElementById('pf-overlay'))document.getElementById('pf-overlay').classList.remove('open');
   if(document.getElementById('cal-overlay'))document.getElementById('cal-overlay').classList.remove('open');
+  if(document.getElementById('pfd-overlay'))document.getElementById('pfd-overlay').classList.remove('open');
   document.body.style.overflow='';
 }});
 </script>
@@ -1422,6 +1464,13 @@ function goPage(id,el){
   if(id==='dash')renderDash();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
+function toggleAcc(id){
+  var b=document.getElementById(id+'-body'), c=document.getElementById(id+'-chev'); if(!b)return;
+  var open=b.style.maxHeight && b.style.maxHeight!=='0px';
+  if(open){ b.style.maxHeight='0px'; if(c)c.style.transform=''; }
+  else { b.style.maxHeight=b.scrollHeight+'px'; if(c)c.style.transform='rotate(180deg)'; }
+}
+function scrollHome(id){ var e=document.getElementById(id); if(e)e.scrollIntoView({behavior:'smooth',block:'start'}); }
 
 /* ── HOME ── */
 function buildHome(){
@@ -1468,6 +1517,8 @@ document.getElementById('alerts').innerHTML=ALERTS.map(a=>{const s=alertStyle(a)
 }
 
 /* ── DASHBOARD (KPI par portefeuille) ── */
+/* argument JS sûr à l'intérieur d'un attribut onclick="..." (guillemets doubles) */
+function jsArg(s){ return "'"+String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;')+"'"; }
 function dashStat(label,val,unit,icon,col){
   return '<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:26px;height:26px;border-radius:7px;background:'+col+'1A;display:flex;align-items:center;justify-content:center"><i class="ti '+icon+'" style="color:'+col+';font-size:13px"></i></div><div style="font-size:10px;color:#94A3B8;font-weight:600">'+label+'</div></div><div style="font-size:22px;font-weight:800;color:#0F172A">'+val+'<span style="font-size:12px;color:#94A3B8;font-weight:600">'+unit+'</span></div></div>';
 }
@@ -1499,7 +1550,7 @@ function renderDash(){
     var qc={stars:0,quickwins:0,majeurs:0,reconsider:0}; g.forEach(function(p){qc[p.q]=(qc[p.q]||0)+1;});
     var bar='',leg='';
     ['stars','quickwins','majeurs','reconsider'].forEach(function(q){ if(qc[q]>0){ bar+='<div style="flex:'+qc[q]+';background:'+qCol[q]+'"></div>'; leg+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;color:#64748B"><span style="width:8px;height:8px;border-radius:2px;background:'+qCol[q]+'"></span>'+qLab[q]+' '+qc[q]+'</span>'; } });
-    h+='<div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid '+col+';border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
+    h+='<div class="pf-card" onclick="openPortfolioDetail('+jsArg(name)+')" style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid '+col+';border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">'
         +'<div style="display:flex;align-items:center;gap:9px"><i class="ti ti-folder" style="color:'+col+';font-size:18px"></i><div><div style="font-size:14px;font-weight:800;color:#0F172A">'+name+'</div><div style="font-size:10.5px;color:#94A3B8">Échéance : <strong style="color:#475569">'+dlLabel+'</strong></div></div></div>'
         +(over>0?'<span style="background:#FEF2F2;color:#EF4444;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px">⚠ '+over+' hors délai</span>':'<span style="background:#ECFDF5;color:#10B981;font-size:10px;font-weight:700;padding:4px 9px;border-radius:20px">✓ Dans les délais</span>')
@@ -1513,11 +1564,80 @@ function renderDash(){
       +'</div>'
       +'<div style="font-size:10px;color:#94A3B8;margin-bottom:5px">Répartition priorisation (matrice)</div>'
       +'<div style="display:flex;height:10px;border-radius:6px;overflow:hidden;background:#F1F5F9;margin-bottom:7px">'+bar+'</div>'
-      +'<div style="display:flex;gap:12px;flex-wrap:wrap">'+leg+'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;flex-wrap:wrap">'+leg+'</div><span style="font-size:10.5px;color:#2563EB;font-weight:700">Voir tous les KPI <i class="ti ti-arrow-right"></i></span></div>'
     +'</div>';
   });
   body.innerHTML=h;
 }
+
+/* ── DÉTAIL PORTEFEUILLE (tous les KPI au clic) ── */
+function openPortfolioDetail(name){
+  var pf=pfByName(name); var col=pf?pf.color:'#64748B'; var dl=pf?(+pf.deadline):null;
+  var dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
+  var defName=PORTFOLIOS[0]?PORTFOLIOS[0].name:'';
+  var g=P.filter(function(p){ var k=p.pf||defName; return k===name; });
+  var bud=g.reduce(function(s,p){return s+(+p.b||0);},0), ch=g.reduce(function(s,p){return s+(+p.c||0);},0);
+  var enCours=g.filter(function(p){return p.st2==='En cours';}).length, planif=g.length-enCours;
+  var over=g.filter(function(p){return dl!=null&&!projectFits(p,dl);}).length;
+  var avg=g.length?Math.round(g.reduce(function(s,p){return s+(p.val+p.fais);},0)/g.length):0;
+  var nRisks=g.reduce(function(s,p){return s+((RISKS[p.n]||[]).length);},0);
+  var qCol={stars:'#10B981',quickwins:'#3B82F6',majeurs:'#2563EB',reconsider:'#EF4444'};
+  var qLab={stars:'Stars',quickwins:'Quick wins',majeurs:'Majeurs',reconsider:'À revoir'};
+  var qc={stars:0,quickwins:0,majeurs:0,reconsider:0}; g.forEach(function(p){qc[p.q]=(qc[p.q]||0)+1;});
+  document.getElementById('pfd-icon').style.background=col+'1A';
+  document.getElementById('pfd-icon').style.color=col;
+  document.getElementById('pfd-title').textContent=name;
+  document.getElementById('pfd-sub').innerHTML='Échéance '+dlLabel+' · '+g.length+' projet'+(g.length>1?'s':'')+(over>0?(' · <span style="color:#EF4444;font-weight:700">'+over+' hors délai</span>'):'');
+  var h='';
+  // bandeau échéance
+  h+='<div style="display:flex;align-items:center;gap:8px;background:'+(over>0?'#FEF2F2':'#ECFDF5')+';border:1px solid '+(over>0?'#FECACA':'#A7F3D0')+';border-radius:9px;padding:9px 12px;margin-bottom:14px;font-size:11.5px;color:'+(over>0?'#991B1B':'#065F46')+'"><i class="ti '+(over>0?'ti-alert-triangle':'ti-circle-check')+'"></i>'+(over>0?(over+' projet(s) finissent après l\'échéance ('+dlLabel+').'):('Tous les projets tiennent dans l\'échéance ('+dlLabel+').'))+'</div>';
+  // grille de stats
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px">'
+    + dashStat('Projets',g.length,'','ti-briefcase','#2563EB')
+    + dashStat('Budget',bud,' K€','ti-coin','#F59E0B')
+    + dashStat('Charge',ch,' j/h','ti-clock','#8B5CF6')
+    + dashStat('Score moyen',avg,'/40','ti-star','#10B981')
+    + dashStat('En cours',enCours,'','ti-player-play','#3B82F6')
+    + dashStat('Planifiés',planif,'','ti-calendar','#94A3B8')
+    + dashStat('Hors délai',over,'','ti-alert-triangle',over>0?'#EF4444':'#10B981')
+    + dashStat('Risques',nRisks,'','ti-shield-half','#EF4444')
+    +'</div>';
+  // répartition quadrants
+  var bar='',leg='';
+  ['stars','quickwins','majeurs','reconsider'].forEach(function(q){ if(qc[q]>0){ bar+='<div style="flex:'+qc[q]+';background:'+qCol[q]+'"></div>'; leg+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#64748B"><span style="width:9px;height:9px;border-radius:2px;background:'+qCol[q]+'"></span>'+qLab[q]+' '+qc[q]+'</span>'; } });
+  h+='<div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:6px">Priorisation (matrice)</div>'
+    +'<div style="display:flex;height:11px;border-radius:6px;overflow:hidden;background:#F1F5F9;margin-bottom:7px">'+(bar||'<div style="flex:1"></div>')+'</div>'
+    +'<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">'+leg+'</div>';
+  // budget par catégorie
+  var byCat={}; g.forEach(function(p){ byCat[p.cat]=(byCat[p.cat]||0)+(+p.b||0); });
+  var cats=Object.keys(byCat); var maxCat=Math.max.apply(null,cats.map(function(c){return byCat[c];}).concat([1]));
+  if(cats.length){
+    h+='<div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:8px">Budget par catégorie</div><div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">';
+    cats.sort(function(a,b){return byCat[b]-byCat[a];}).forEach(function(c){
+      var w=Math.round(byCat[c]/maxCat*100); var cc=(CAT[c]&&CAT[c].f)||'#64748B';
+      h+='<div style="display:flex;align-items:center;gap:9px"><div style="width:120px;font-size:10.5px;color:#475569;flex-shrink:0">'+c+'</div><div style="flex:1;background:#F1F5F9;border-radius:5px;height:9px;overflow:hidden"><div style="width:'+w+'%;height:100%;background:'+cc+'"></div></div><div style="width:60px;text-align:right;font-size:10.5px;font-weight:700;color:#0F172A">'+byCat[c]+' K€</div></div>';
+    });
+    h+='</div>';
+  }
+  // liste des projets
+  h+='<div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:8px">Projets du portefeuille</div><div style="display:flex;flex-direction:column;gap:5px">';
+  if(!g.length){ h+='<div style="font-size:11px;color:#CBD5E1">Aucun projet.</div>'; }
+  g.slice().sort(function(a,b){return a.s-b.s;}).forEach(function(p){
+    var late=(dl!=null&&!projectFits(p,dl)); var cc=(CAT[p.cat]&&CAT[p.cat].f)||'#64748B';
+    h+='<div onclick="closePortfolioDetail({target:document.getElementById(\'pfd-overlay\')});openProjectDetail('+jsArg(p.n)+')" style="display:flex;align-items:center;gap:10px;padding:8px 11px;border:1px solid #E2E8F0;border-radius:8px;cursor:pointer;background:#fff">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+cc+';flex-shrink:0"></span>'
+      +'<div style="flex:1;min-width:120px"><div style="font-size:12px;font-weight:700;color:#0F172A">'+p.n+(late?' <span style="font-size:8.5px;color:#EF4444;font-weight:700">HORS DÉLAI</span>':'')+'</div><div style="font-size:9.5px;color:#94A3B8">'+p.dt+' · '+p.st2+'</div></div>'
+      +'<div style="font-size:10.5px;color:#475569;width:60px;text-align:right">'+p.b+' K€</div>'
+      +'<div style="font-size:10.5px;color:#475569;width:60px;text-align:right">'+p.c+' j/h</div>'
+      +'<div style="font-size:10.5px;font-weight:700;color:#0F172A;width:46px;text-align:right">'+(p.val+p.fais)+'/40</div>'
+      +'<i class="ti ti-chevron-right" style="color:#CBD5E1"></i>'
+    +'</div>';
+  });
+  h+='</div>';
+  document.getElementById('pfd-body').innerHTML=h;
+  document.getElementById('pfd-overlay').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closePortfolioDetail(e){ var ov=document.getElementById('pfd-overlay'); if(!ov)return; if(e&&e.target!==ov)return; ov.classList.remove('open'); document.body.style.overflow=''; }
 
 /* ── GANTT ── */
 function ganttMonths(){ var mx=10; P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0); if(e>mx) mx=e; }); return Math.min(mx,24); }
@@ -2600,6 +2720,18 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
         <button class="btn btn-acc" onclick="savePortfolio()"><i class="ti ti-check"></i>Créer</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Détail portefeuille (tous les KPI) -->
+<div class="overlay" id="pfd-overlay" onclick="closePortfolioDetail(event)">
+  <div class="modal" style="width:min(880px,96vw)">
+    <div class="mo-header">
+      <div class="mo-icon" id="pfd-icon" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-folder"></i></div>
+      <div><div class="mo-title" id="pfd-title">Portefeuille</div><div class="mo-sub" id="pfd-sub"></div></div>
+      <button class="mo-close" onclick="closePortfolioDetail({target:document.getElementById('pfd-overlay')})"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mo-body" id="pfd-body"></div>
   </div>
 </div>
 
