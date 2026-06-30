@@ -426,6 +426,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril N → Janvier N+1</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" onclick="openPortfolioModal()" title="Créer un portefeuille avec une échéance"><i class="ti ti-folder-plus"></i>Nouveau portefeuille</button>
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
@@ -663,6 +664,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div class="fld" style="margin-bottom:8px"><label>Cahier des charges</label><textarea id="np-cdc" placeholder="Lien (SharePoint, Drive...) ou résumé du cahier des charges"></textarea></div>
         <div class="frow c2"><div class="fld"><label>Chef de projet <span class="req">*</span></label><select id="np-cp" onchange="updNP()"><option value="">-- Assigner --</option></select></div><div class="fld"><label>Sponsor <span class="req">*</span></label><input type="text" id="np-sponsor" placeholder="ex. DSI, DG..." oninput="updNP()"></div></div>
         <div class="frow c2"><div class="fld"><label>Statut <span class="req">*</span></label><select id="np-st2" onchange="updNP()"><option value="">-- Sélectionner --</option><option>En cours</option><option>Planifié</option></select></div><div class="fld"><label>Lien SharePoint</label><input type="text" id="np-sp" placeholder="https://sharepoint..."></div></div>
+        <div class="frow c2"><div class="fld"><label>Portefeuille</label><select id="np-pf"></select></div><div class="fld"><label>&nbsp;</label><div style="font-size:10px;color:#94A3B8;padding:8px 0">Le projet doit finir avant l'échéance du portefeuille (sinon refusé).</div></div></div>
         <div class="fld" style="margin-bottom:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="np-sel" style="width:auto;margin:0">Marquer comme projet sélectionné (mis en avant)</label></div>
       </div>
       <div class="form-section">
@@ -1015,6 +1017,7 @@ function openNewProject(){
   resetNPForm();
   const cp=document.getElementById('np-cp');
   if(cp){ const cps=npUsers().filter(u=>/chef de projet/i.test(u.role||u.poste||'')); const list=cps.length?cps:npUsers(); cp.innerHTML='<option value="">-- Assigner --</option>'+list.map(u=>`<option>${u.name}</option>`).join(''); }
+  const pfSel=document.getElementById('np-pf'); if(pfSel) pfSel.innerHTML=pfOptions(PORTFOLIOS[0]?PORTFOLIOS[0].name:'');
   npTeam=[]; npRisks=[]; npFillStart(); npRenderTeam(); npRefreshUserSelect(); npRenderCharges(); npRenderRisks(); npPctSum(); npFillDeps();
   document.getElementById('np-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
@@ -1133,8 +1136,15 @@ function saveNewProject(){
   const s=+document.getElementById('np-start').value;
   const d=+document.getElementById('np-dur').value;
   const dt=monLabel(s)+' '+yearTag(s)+' → '+monLabel(s+d-1)+' '+yearTag(s+d-1);
+  const pfName=(document.getElementById('np-pf')&&document.getElementById('np-pf').value)||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'');
+  const dl=pfDeadline(pfName);
+  if(dl!=null && (s+d-1)>dl){
+    const e3=document.getElementById('np-errors');e3.style.display='block';
+    document.getElementById('np-errors-list').innerHTML='<li>Ce projet finit en '+monLabel(s+d-1)+' '+yearTag(s+d-1)+', après l\'échéance du portefeuille « '+pfName+' » ('+monLabel(dl)+' '+yearTag(dl)+'). Choisis un autre portefeuille, avance la date de début ou réduis la durée.</li>';
+    return;
+  }
   const topRisk=npRisks.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
-  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',rent:+document.getElementById('np-rent').value,mait:+document.getElementById('np-mait').value,risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:(DEPS_STORE['np']||[]).slice()};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:document.getElementById('np-cat').value,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',rent:+document.getElementById('np-rent').value,mait:+document.getElementById('np-mait').value,risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
   scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -1153,6 +1163,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
   document.getElementById('meeting-overlay').classList.remove('open');
   document.getElementById('np-overlay').classList.remove('open');
   if(document.getElementById('del-overlay'))document.getElementById('del-overlay').classList.remove('open');
+  if(document.getElementById('pf-overlay'))document.getElementById('pf-overlay').classList.remove('open');
   document.body.style.overflow='';
 }});
 </script>
@@ -1191,6 +1202,41 @@ function scoreP(p){
   return p;
 }
 P.forEach(scoreP);
+/* Dépendances par défaut (Fin→Fin = mise en service après, conforme au brief) — seedées si absentes. */
+var DEP_SEED={
+  'App mobile clients':      [{dep:'Office 365',type:'FF',lag:0},{dep:'CRM',type:'FF',lag:0},{dep:'Refonte app web',type:'FF',lag:0}],
+  'App mobile fournisseurs': [{dep:'Office 365',type:'FF',lag:0},{dep:'CRM',type:'FF',lag:0},{dep:'Refonte app web',type:'FF',lag:0}],
+  'CRM':                     [{dep:'Office 365',type:'FF',lag:0}],
+  'Refonte app web':         [{dep:'Office 365',type:'FF',lag:0}],
+  'Auth forte (MFA)':        [{dep:'Office 365',type:'FF',lag:0}],
+  'Sauvegarde Cloud':        [{dep:'Migration Azure',type:'FF',lag:0}]
+};
+P.forEach(function(p){ if((!p.deps||!p.deps.length)&&DEP_SEED[p.n]) p.deps=DEP_SEED[p.n].map(function(d){return {dep:d.dep,type:d.type,lag:d.lag};}); if(!p.deps)p.deps=[]; });
+
+/* ── PORTEFEUILLES (deadline = dernier mois autorisé, index 0=Avr N) ── */
+let PORTFOLIOS=[{name:'Portefeuille DSI', deadline:9, color:'#2563EB'}];
+var PF_COLORS=['#2563EB','#DB2777','#10B981','#F59E0B','#8B5CF6','#06B6D4'];
+P.forEach(function(p){ if(!p.pf) p.pf=PORTFOLIOS[0].name; });
+function pfByName(n){ for(var i=0;i<PORTFOLIOS.length;i++){ if(PORTFOLIOS[i].name===n) return PORTFOLIOS[i]; } return null; }
+function pfDeadline(n){ var pf=pfByName(n); return pf?(+pf.deadline):null; }
+function projectFits(p, deadline){ return ((+p.s||0)+(+p.d||0)-1) <= deadline; } /* fin du projet ≤ deadline */
+function pfMonthOptions(sel){ var h=''; for(var i=1;i<=15;i++){ h+='<option value="'+i+'"'+(i===sel?' selected':'')+'>'+monLabel(i)+' '+yearTag(i)+'</option>'; } return h; }
+function pfOptions(sel){ return PORTFOLIOS.map(function(pf){ var nm=pf.name; return '<option value="'+nm.replace(/"/g,'&quot;')+'"'+(nm===sel?' selected':'')+'>'+nm+' (éch. '+monLabel(pf.deadline)+' '+yearTag(pf.deadline)+')</option>'; }).join(''); }
+function openPortfolioModal(){ document.getElementById('pf-name').value=''; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(9); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function closePortfolioModal(e){ if(e&&e.target!==document.getElementById('pf-overlay'))return; document.getElementById('pf-overlay').classList.remove('open'); document.body.style.overflow=''; }
+function savePortfolio(){
+  var name=document.getElementById('pf-name').value.trim();
+  var dl=+document.getElementById('pf-deadline').value;
+  var err=document.getElementById('pf-err');
+  if(!name){ err.textContent='Donne un nom au portefeuille.'; err.style.display='block'; return; }
+  if(pfByName(name)){ err.textContent='Un portefeuille « '+name+' » existe déjà.'; err.style.display='block'; return; }
+  var color=PF_COLORS[PORTFOLIOS.length%PF_COLORS.length];
+  PORTFOLIOS.push({name:name,deadline:dl,color:color});
+  apiPost({action:'addPortfolio', portfolio:{name:name,deadline:dl,color:color}});
+  closePortfolioModal({target:document.getElementById('pf-overlay')});
+  renderG();
+  toast('✓ Portefeuille « '+name+' » créé — échéance '+monLabel(dl)+' '+yearTag(dl));
+}
 
 /* ── CHARGES MENSUELLES VARIABLES (réalistes) ── */
 let MV={
@@ -1353,18 +1399,33 @@ function renderG(f='all'){
   const N=ganttMonths(); const gridCss='repeat('+N+',1fr)';
   const mh=document.getElementById('mhdr'); mh.style.gridTemplateColumns=gridCss;
   mh.innerHTML=Array.from({length:N},(_,i)=>{var yt=yearTag(i);var showY=(i===0||yt!==yearTag(i-1));return `<div class="gm${i===0?' cur':''}" style="position:relative">${i===0?'<span class="now-pin">maintenant</span>':''}<div style="font-size:8px;font-weight:700;color:#2563EB;height:10px;line-height:10px">${showY?'année '+yt:''}</div>${monLabel(i)}</div>`;}).join('');
-  let h='';let prev=-1;
-  data.forEach((p,idx)=>{
-    const c=CAT[p.cat];
-    const lp=(p.s/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
-    if(p.s>0&&prev===0)h+='<div class="gsep"></div>';
-    prev=p.s;
-    const boundary=N>10?`<div style="position:absolute;top:0;bottom:0;left:${(10/N*100).toFixed(2)}%;width:1px;background:rgba(239,68,68,.4);z-index:4"></div>`:'';
-    h+=`<div class="gr"><div class="gl"><div class="gldot" style="background:${c.f}"></div><div><div class="gln">${p.n}${p.sel?`<span class="bsm" style="background:#EFF6FF;color:#2563EB">sélectionné</span>`:''}</div><div class="gls">${p.b}K€ · ${p.dt}</div></div></div>
-    <div class="gt" style="grid-template-columns:${gridCss}">${Array.from({length:N},(_,i)=>`<div class="gc${i===0?' cur':''}"></div>`).join('')}
-      <div style="position:absolute;top:0;bottom:0;left:0%;width:1px;background:rgba(37,99,235,.35);z-index:5"></div>${boundary}
-      <div class="gb${p.sel?' sel':''}" style="left:${lp}%;width:${wp}%;background:${c.f};animation-delay:${delay}s" data-i="${P.indexOf(p)}">${p.d>=3?`<span class="gb-txt">${p.b}K€</span>`:''}</div>
-    </div></div>`;
+  let h='';
+  // regroupe les projets visibles par portefeuille, dans l'ordre des PORTFOLIOS
+  const order=PORTFOLIOS.map(pf=>pf.name);
+  const groups={}; data.forEach(p=>{ const k=p.pf||PORTFOLIOS[0].name; (groups[k]=groups[k]||[]).push(p); });
+  Object.keys(groups).forEach(k=>{ if(order.indexOf(k)<0) order.push(k); });
+  order.forEach(pfName=>{
+    const g=groups[pfName]; if(!g||!g.length) return;
+    const pf=pfByName(pfName); const dl=pf?(+pf.deadline):null; const col=pf?pf.color:'#64748B';
+    const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
+    const over=g.filter(p=>dl!=null&&!projectFits(p,dl)).length;
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin:10px 0 2px;background:${col}0F;border-left:3px solid ${col};border-radius:0 8px 8px 0">
+      <span style="font-size:12px;font-weight:800;color:${col};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${pfName}</span>
+      <span style="font-size:10.5px;color:#64748B">échéance : <strong style="color:#334155">${dlLabel}</strong> · ${g.length} projet${g.length>1?'s':''}${over?` · <span style="color:#EF4444;font-weight:700">⚠ ${over} hors délai</span>`:''}</span>
+    </div>`;
+    g.forEach((p,idx)=>{
+      const c=CAT[p.cat];
+      const lp=(p.s/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
+      const boundary=N>10?`<div style="position:absolute;top:0;bottom:0;left:${(10/N*100).toFixed(2)}%;width:1px;background:rgba(239,68,68,.4);z-index:4"></div>`:'';
+      const dlPos=(dl!=null)?((dl+1)/N*100):null;
+      const dlLine=(dlPos!=null&&dlPos<=100.5)?`<div title="Échéance ${pfName}" style="position:absolute;top:0;bottom:0;left:${dlPos.toFixed(2)}%;width:0;border-left:2px dashed ${col};z-index:6"></div>`:'';
+      const late=(dl!=null&&!projectFits(p,dl));
+      h+=`<div class="gr"><div class="gl"><div class="gldot" style="background:${c.f}"></div><div><div class="gln">${p.n}${p.sel?`<span class="bsm" style="background:#EFF6FF;color:#2563EB">sélectionné</span>`:''}${late?`<span class="bsm" style="background:#FEF2F2;color:#EF4444">hors délai</span>`:''}</div><div class="gls">${p.b}K€ · ${p.dt}</div></div></div>
+      <div class="gt" style="grid-template-columns:${gridCss}">${Array.from({length:N},(_,i)=>`<div class="gc${i===0?' cur':''}"></div>`).join('')}
+        <div style="position:absolute;top:0;bottom:0;left:0%;width:1px;background:rgba(37,99,235,.35);z-index:5"></div>${boundary}${dlLine}
+        <div class="gb${p.sel?' sel':''}" style="left:${lp}%;width:${wp}%;background:${c.f};animation-delay:${delay}s;${late?'outline:2px solid #EF4444;outline-offset:1px':''}" data-i="${P.indexOf(p)}">${p.d>=3?`<span class="gb-txt">${p.b}K€</span>`:''}</div>
+      </div></div>`;
+    });
   });
   document.getElementById('grows').innerHTML=h;
   const cats=[...new Set(data.map(p=>p.cat))];
@@ -1409,8 +1470,9 @@ function computeSchedule(){
       if(type==='SS') c=ds+lag; else if(type==='FF') c=de+lag-p.d; else c=de+lag;
       if(c>earliest) earliest=c;
     });
-    /* borne à la fenêtre : le projet doit finir au plus tard au mois 9 */
-    var maxStart=Math.max(0, GANTT_WINDOW - p.d);
+    /* borne à l'échéance du portefeuille (sinon fenêtre 10 mois) : le projet doit finir avant la deadline */
+    var dl=pfDeadline(p.pf); var win=(dl!=null)?(dl+1):GANTT_WINDOW;
+    var maxStart=Math.max(0, win - p.d);
     if(earliest>maxStart){ earliest=maxStart; tension=true; }
     if(earliest<0) earliest=0;
     visiting[p.n]=false; memo[p.n]=earliest; return earliest;
@@ -1431,7 +1493,7 @@ function rescheduleGantt(){
       changed.push(p.n);
     }
   });
-  if(!changed.length && !SIM.active){ SIM.backup=null; toast('Planning déjà conforme — tout tient dans les '+GANTT_WINDOW+' mois.'); return; }
+  if(!changed.length && !SIM.active){ SIM.backup=null; toast('✓ Simulation : plan déjà conforme aux dépendances et aux échéances — aucun décalage nécessaire.'); return; }
   SIM.active=true; SIM.changed=changed; SIM.tension=r.tension;
   window.mReady=false; window.rReady=false;
   buildHome(); renderList(); renderG(); refreshActiveView();
@@ -1462,12 +1524,12 @@ function resetSimulation(){
 /* ── EXPORT / IMPORT CSV du portefeuille ── */
 function depsToStr(deps){ return (deps||[]).map(function(d){ return (typeof d==='string')?(d+':FS:0'):((d.dep||'')+':'+(d.type||'FS')+':'+(+d.lag||0)); }).join(' | '); }
 function strToDeps(s){ s=String(s||'').trim(); if(!s) return []; return s.split(/\s*\|\s*/).filter(Boolean).map(function(tok){ var pr=tok.split(':'); return {dep:(pr[0]||'').trim(), type:(pr[1]||'FS').trim().toUpperCase(), lag:(+pr[2]||0)}; }); }
-var CSV_COLS=['Nom','Categorie','MoisDebut','DureeMois','BudgetKE','ChargeJH','ImportanceStrat','Rentabilite','MaitriseRisques','Dates','Note','Statut','Selectionne','Sponsor','Methodologie','ChefProjet','Dependances'];
+var CSV_COLS=['Nom','Categorie','MoisDebut','DureeMois','BudgetKE','ChargeJH','ImportanceStrat','Rentabilite','MaitriseRisques','Dates','Note','Statut','Selectionne','Sponsor','Methodologie','ChefProjet','Dependances','Portefeuille'];
 function csvEsc(v){ v=(v==null)?'':String(v); return /[",\n;]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
 function exportCSV(){
   var rows=[CSV_COLS.join(',')];
   P.forEach(function(p){
-    rows.push([p.n,p.cat,p.s,p.d,p.b,p.c,p.st,p.rent,p.mait,p.dt,p.note,p.st2,(p.sel?1:0),p.sponsor||'',p.methodo||'',p.cp||'',depsToStr(p.deps)].map(csvEsc).join(','));
+    rows.push([p.n,p.cat,p.s,p.d,p.b,p.c,p.st,p.rent,p.mait,p.dt,p.note,p.st2,(p.sel?1:0),p.sponsor||'',p.methodo||'',p.cp||'',depsToStr(p.deps),p.pf||''].map(csvEsc).join(','));
   });
   var blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob), a=document.createElement('a');
@@ -1504,8 +1566,9 @@ function importCSV(ev){
           dt:get('Dates').trim(), note:get('Note').trim(), st2:get('Statut').trim()||'Planifié',
           sel:(get('Selectionne').trim()==='1'||get('Selectionne').toLowerCase()==='oui')?1:0,
           sponsor:get('Sponsor').trim(), methodo:get('Methodologie').trim(), cp:get('ChefProjet').trim(),
-          deps:strToDeps(get('Dependances')) };
+          deps:strToDeps(get('Dependances')), pf:get('Portefeuille').trim() };
         if(!CAT[p.cat]) p.cat='Socle IT';
+        if(!p.pf || !pfByName(p.pf)) p.pf=PORTFOLIOS[0]?PORTFOLIOS[0].name:'Portefeuille DSI';
         if(!p.dt){ var end=p.s+p.d-1; p.dt=monLabel(p.s)+' '+yearTag(p.s)+' → '+monLabel(end)+' '+yearTag(end); }
         scoreP(p); np.push(p);
       }
@@ -1523,8 +1586,23 @@ function importCSV(ev){
 
 /* ── MATRICE ── */
 window.mReady=false;
+/* Anti-collision : plusieurs projets peuvent partager les mêmes coordonnées (critères /5 discrets).
+   On éclate légèrement les bulles d'un même point pour qu'elles restent toutes visibles. */
+function matrixPoints(){
+  var groups={}, pos={};
+  P.forEach(function(p){ var k=p.val+'|'+p.fais; (groups[k]=groups[k]||[]).push(p); });
+  Object.keys(groups).forEach(function(k){
+    var g=groups[k];
+    if(g.length===1){ pos[g[0].n]={x:g[0].val,y:g[0].fais}; return; }
+    var R=0.8;
+    g.forEach(function(p,i){ var a=Math.PI*2*i/g.length - Math.PI/4;
+      pos[p.n]={x:Math.min(20,Math.max(0,p.val+Math.cos(a)*R)), y:Math.min(20,Math.max(0,p.fais+Math.sin(a)*R))}; });
+  });
+  return pos;
+}
 function initMatrix(){
   window.mReady=true;
+  var MPT=matrixPoints();
   const qPlugin={id:'quad',beforeDraw(chart){
     const{ctx,scales:{x,y}}=chart;
     const mx=x.getPixelForValue(10),my=y.getPixelForValue(10);
@@ -1545,11 +1623,11 @@ function initMatrix(){
   }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:P.map(p=>({label:p.n,data:[{x:p.val,y:p.fais,r:Math.max(7,Math.round(5+(p.b-50)/260*16)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait}],
+    data:{datasets:P.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(7,Math.round(5+(p.b-50)/260*16)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
       backgroundColor:qColor[p.q]+'BB',borderColor:p.sel?'#2563EB':qColor[p.q],borderWidth:p.sel?3:1.5}))},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,
-        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Importance : ${d.st}/5`,` Rentabilité : ${d.rent}/5`,` Maîtrise risques : ${d.mait}/5`,` → Valeur : ${d.x}/20 · Faisabilité : ${d.y}/20`,` Budget : ${d.budget}K€`];}}}},
+        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Importance : ${d.st}/5`,` Rentabilité : ${d.rent}/5`,` Maîtrise risques : ${d.mait}/5`,` → Valeur : ${d.vx}/20 · Faisabilité : ${d.vy}/20`,` Budget : ${d.budget}K€`];}}}},
       scales:{
         x:{min:0,max:20,title:{display:true,text:'Valeur & Alignement stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}},
         y:{min:0,max:20,title:{display:true,text:'Faisabilité & Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2},border:{color:'#E2E8F0'}}
@@ -1907,7 +1985,7 @@ function openProjectDetail(name){
   var depNote=dr?('<div style="display:flex;align-items:flex-start;gap:8px;background:#FEF9C3;border:1px solid #FDE68A;border-radius:8px;padding:7px 10px;font-size:11px;color:#854D0E;margin-bottom:8px"><i class="ti ti-link" style="margin-top:1px"></i><div><strong>Risque auto (dépendance) :</strong> '+dr.risk+' <span style="font-weight:700">('+dr.level+')</span></div></div>'):'';
   var h='';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-adjustments" style="font-size:12px;color:#2563EB"></i>Paramètres modifiables</div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+fld('Portefeuille','<select id="pd-pf">'+pfOptions(p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:''))+'</select>')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+fld('Dates','<input type="text" id="pd-dates" value="'+String(p.dt||'').replace(/"/g,'&quot;')+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Importance /5','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+fld('Rentabilité /5','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent)+'</select>')+fld('Maîtrise risques /5','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait)+'</select>')+'</div>';
   h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Critères cotés du brief. Position matrice : Valeur '+((p.st+p.rent)*2)+'/20 · Faisabilité '+(p.mait*4)+'/20.</div>';
@@ -1925,6 +2003,9 @@ function closePD(e){ if(e&&e.target!==document.getElementById('pd-overlay'))retu
 function saveProjectDetail(){
   var p=P.find(function(x){return x.n===pdName;}); if(!p)return;
   var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
+  var newPf=g('pd-pf')||p.pf; var ndl=pfDeadline(newPf);
+  if(ndl!=null && ((+p.s||0)+(+p.d||0)-1)>ndl){ toast('Impossible : ce projet finit après l\'échéance de « '+newPf+' » ('+monLabel(ndl)+' '+yearTag(ndl)+').'); return; }
+  p.pf=newPf;
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0; p.dt=g('pd-dates');
   p.st=+g('pd-strat')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
@@ -2008,9 +2089,16 @@ function applyData(d){
         p.val=+p.val; p.fais=+p.fais;
         p.q = p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
       }
+      if((!p.deps||!p.deps.length)&&DEP_SEED[p.n]) p.deps=DEP_SEED[p.n].map(function(x){return {dep:x.dep,type:x.type,lag:x.lag};});
+      if(!p.deps)p.deps=[];
       return p;
     });
   }
+  if(d && Array.isArray(d.portfolios) && d.portfolios.length){
+    PORTFOLIOS = d.portfolios.map(function(pf){ return {name:String(pf.name||'').trim(), deadline:(pf.deadline==null?9:+pf.deadline), color:pf.color||'#2563EB'}; }).filter(function(pf){return pf.name;});
+    if(!PORTFOLIOS.length) PORTFOLIOS=[{name:'Portefeuille DSI',deadline:9,color:'#2563EB'}];
+  }
+  P.forEach(function(p){ if(!p.pf || !pfByName(p.pf)) p.pf=PORTFOLIOS[0].name; });
   if(d && d.charges && Object.keys(d.charges).length) MV    = d.charges;
   if(d && d.teams   && Object.keys(d.teams).length)   TEAMS = d.teams;
   if(d && Array.isArray(d.meetings)) meetings = d.meetings;
@@ -2343,6 +2431,26 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
       <div class="ma2">
         <button class="btn" onclick="closeDelModal({target:document.getElementById('del-overlay')})">Annuler</button>
         <button class="btn" style="background:#EF4444;color:#fff;border-color:transparent" onclick="executeDelete()"><i class="ti ti-trash"></i>Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Nouveau portefeuille -->
+<div class="overlay" id="pf-overlay" onclick="closePortfolioModal(event)">
+  <div class="modal" style="width:min(460px,94vw)">
+    <div class="mo-header">
+      <div class="mo-icon" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-folder-plus"></i></div>
+      <div><div class="mo-title">Nouveau portefeuille</div><div class="mo-sub">Nom + échéance cible</div></div>
+      <button class="mo-close" onclick="closePortfolioModal({target:document.getElementById('pf-overlay')})"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mo-body">
+      <div class="fld" style="margin-bottom:10px"><label>Nom du portefeuille</label><input type="text" id="pf-name" placeholder="ex. Portefeuille Sécurité"></div>
+      <div class="fld" style="margin-bottom:14px"><label>Échéance — dernier mois autorisé</label><select id="pf-deadline"></select></div>
+      <div id="pf-err" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:11px;color:#991B1B"></div>
+      <div class="ma2">
+        <button class="btn" onclick="closePortfolioModal({target:document.getElementById('pf-overlay')})">Annuler</button>
+        <button class="btn btn-acc" onclick="savePortfolio()"><i class="ti ti-check"></i>Créer</button>
       </div>
     </div>
   </div>
