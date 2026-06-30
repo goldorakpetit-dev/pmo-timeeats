@@ -963,7 +963,8 @@ function saveMeeting(){
   meetings.push(newM);apiMeeting(newM);
   document.getElementById('meeting-overlay').classList.remove('open');document.body.style.overflow='';
   const d=new Date(date+'T12:00');calYear=d.getFullYear();calMonth=d.getMonth();renderCalendar();
-  openCalExport(newM, true);
+  toast('✓ Réunion planifiée — '+title);
+  try{ openCalExport(newM, true); }catch(err){ /* la création ne doit jamais échouer à cause de l'export */ }
 }
 
 /* ── Export vers calendrier personnel (.ics + Google Agenda) ── */
@@ -997,13 +998,16 @@ function gcalOpen(m){
   window.open(url,'_blank','noopener');
 }
 function openCalExport(m, isNew){
+  if(!m) return;
   LAST_MEETING=m;
+  var ov=document.getElementById('cal-overlay');
+  if(!ov){ if(confirm('Ajouter « '+(m.title||'la réunion')+' » à Google Agenda ?\n(Annuler = télécharger un fichier .ics)')) gcalOpen(m); else downloadICS(m); return; }
   var sub=document.getElementById('cal-sub');
   if(sub) sub.textContent=(isNew?'Réunion planifiée — ':'')+'Ajoutez-la à votre agenda personnel';
-  document.getElementById('cal-overlay').classList.add('open'); document.body.style.overflow='hidden';
+  ov.classList.add('open'); document.body.style.overflow='hidden';
 }
-function closeCalModal(e){ if(e&&e.target!==document.getElementById('cal-overlay'))return; document.getElementById('cal-overlay').classList.remove('open'); document.body.style.overflow=''; }
-function exportMeeting(id){ var m=meetings.find(function(x){return x.id===id;}); if(m) openCalExport(m,false); }
+function closeCalModal(e){ var ov=document.getElementById('cal-overlay'); if(!ov)return; if(e&&e.target!==ov)return; ov.classList.remove('open'); document.body.style.overflow=''; }
+function exportMeeting(id){ var m=null; for(var i=0;i<meetings.length;i++){ if(meetings[i].id==id){ m=meetings[i]; break; } } if(m) openCalExport(m,false); else toast('Réunion introuvable'); }
 
 /* ═══════════════ NOUVEAU PROJET ═══════════════ */
 const NP_REQ=['np-name','np-cat','np-desc','np-startdate','np-enddate','np-budget','np-charge','np-strat','np-rent','np-mait'];
