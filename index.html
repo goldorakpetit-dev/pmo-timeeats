@@ -1871,12 +1871,13 @@ function renderG(f='all'){
       </div>`;
     }
     g.forEach((p,idx)=>{
-      const c=CAT[p.cat];
+      const c=CAT[p.cat]||{f:'#64748B'};
+      const ppf=pfByName(p.pf); const pdl=ppf?(+ppf.deadline):null; const pcol=ppf?ppf.color:'#64748B';
       const lp=(p.s/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
       const boundary=N>10?`<div style="position:absolute;top:0;bottom:0;left:${(10/N*100).toFixed(2)}%;width:1px;background:rgba(239,68,68,.4);z-index:4"></div>`:'';
-      const dlPos=(dl!=null)?((dl+1)/N*100):null;
-      const dlLine=(dlPos!=null&&dlPos<=100.5)?`<div title="Échéance ${pfName}" style="position:absolute;top:0;bottom:0;left:${dlPos.toFixed(2)}%;width:0;border-left:2px dashed ${col};z-index:6"></div>`:'';
-      const late=(dl!=null&&!projectFits(p,dl));
+      const dlPos=(pdl!=null)?((pdl+1)/N*100):null;
+      const dlLine=(dlPos!=null&&dlPos<=100.5)?`<div title="Échéance ${p.pf||''}" style="position:absolute;top:0;bottom:0;left:${dlPos.toFixed(2)}%;width:0;border-left:2px dashed ${pcol};z-index:6"></div>`:'';
+      const late=(pdl!=null&&!projectFits(p,pdl));
       h+=`<div class="gr"><div class="gl"><div class="gldot" style="background:${c.f}"></div><div><div class="gln">${p.n}${p.sel?`<span class="bsm" style="background:#EFF6FF;color:#2563EB">sélectionné</span>`:''}${late?`<span class="bsm" style="background:#FEF2F2;color:#EF4444">hors délai</span>`:''}</div><div class="gls">${p.b}K€ · ${p.dt}</div></div></div>
       <div class="gt" style="grid-template-columns:${gridCss}">${Array.from({length:N},(_,i)=>`<div class="gc${i===0?' cur':''}"></div>`).join('')}
         <div style="position:absolute;top:0;bottom:0;left:0%;width:1px;background:rgba(37,99,235,.35);z-index:5"></div>${boundary}${dlLine}
