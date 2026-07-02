@@ -413,6 +413,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i>Clôture &amp; REX</div>
     <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i>RH</div>
     <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i>Liste</div>
+    <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i>Détails</div>
   </div>
   <div class="tb-r">
     <button class="ib" onclick="toast('Recherche globale — bientôt disponible')"><i class="ti ti-search"></i></button>
@@ -548,6 +549,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril 2026 → Janvier 2027</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#334155;font-weight:600;cursor:pointer;padding:0 4px"><input type="checkbox" id="gantt-group" checked onchange="toggleGanttGroup(this.checked)" style="width:auto;margin:0;cursor:pointer">Grouper par portefeuille</label>
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
@@ -719,6 +721,15 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ct"><div class="lt" id="lst"></div></div>
 </div>
 
+<!-- PAGE DÉTAILS PROJET -->
+<div id="p-details" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Détails projet</div><div class="ab-bc"><div class="ab-dot"></div>Toutes les informations d'un projet</div></div>
+    <div class="ab-r"><select id="det-proj" onchange="renderDetails(this.value)" style="font-size:12px;padding:7px 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"></select></div>
+  </div>
+  <div class="ct"><div id="details-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
+</div>
+
 <!-- KPI Modal — team-style -->
 <div class="team-mo" id="kpi-overlay" onclick="closeKPIModal(event)">
   <div class="team-mc" id="kpi-modal" style="width:min(980px,96vw)">
@@ -790,8 +801,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div class="frow c2"><div class="fld"><label>Nom <span class="req">*</span></label><input type="text" id="np-name" placeholder="ex. Portail RH" oninput="updNP()"></div><div class="fld"><label>Catégorie <span class="req">*</span></label><select id="np-cat" onchange="npCatChange();updNP();npDefaultPct()"></select><input type="text" id="np-cat-new" placeholder="Nom de la nouvelle catégorie" style="display:none;margin-top:6px" oninput="updNP()"></div></div>
         <div class="fld" style="margin-bottom:8px"><label>Description / Objectifs <span class="req">*</span></label><textarea id="np-desc" placeholder="Objectifs et périmètre du projet..." oninput="updNP()"></textarea></div>
         <div class="fld" style="margin-bottom:8px"><label>Cahier des charges</label><textarea id="np-cdc" placeholder="Lien (SharePoint, Drive...) ou résumé du cahier des charges"></textarea></div>
-        <div class="frow c2"><div class="fld"><label>Chef de projet</label><select id="np-cp" onchange="updNP()"><option value="">-- Assigner (optionnel) --</option></select></div><div class="fld"><label>Sponsor</label><input type="text" id="np-sponsor" placeholder="ex. DSI, DG..." oninput="updNP()"></div></div>
-        <div class="frow c2"><div class="fld"><label>Statut</label><select id="np-st2" onchange="updNP()"><option value="Planifié">Planifié</option><option value="En cours">En cours</option></select></div><div class="fld"><label>Lien SharePoint</label><input type="text" id="np-sp" placeholder="https://sharepoint..."></div></div>
+        <div class="frow c2"><div class="fld"><label>Statut</label><select id="np-st2" onchange="updNP()"><option value="Planifié">Planifié</option><option value="En cours">En cours</option></select></div><div class="fld"></div></div>
         <div class="frow c2"><div class="fld"><label>Portefeuille</label><select id="np-pf"></select></div><div class="fld"><label>&nbsp;</label><div style="font-size:10px;color:#94A3B8;padding:8px 0">Le projet doit finir avant l'échéance du portefeuille (sinon refusé).</div></div></div>
         <div class="fld" style="margin-bottom:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="np-sel" style="width:auto;margin:0">Marquer comme projet sélectionné (mis en avant)</label></div>
       </div>
@@ -824,31 +834,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div id="np-pct-sum" style="font-size:10px;color:#94A3B8;margin-top:5px"></div>
       </div>
       <div class="form-section">
-        <div class="form-section-title"><i class="ti ti-star" style="font-size:12px;color:#F59E0B"></i>Priorisation — critères du brief /5</div>
-        <div class="frow c3"><div class="fld"><label>Importance strat. /5 <span class="req">*</span></label><select id="np-strat" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyen</option><option value="4">4</option><option value="5">5 — Critique</option></select></div><div class="fld"><label>Rentabilité /5 <span class="req">*</span></label><select id="np-rent" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyenne</option><option value="4">4</option><option value="5">5 — Élevée</option></select></div><div class="fld"><label>Maîtrise des risques /5 <span class="req">*</span></label><select id="np-mait" onchange="updNP()"><option value="">--</option><option value="1">1 — Faible</option><option value="2">2</option><option value="3">3 — Moyenne</option><option value="4">4</option><option value="5">5 — Élevée</option></select></div></div>
-        <div style="font-size:9.5px;color:#94A3B8;margin:-2px 2px 0">Les 3 critères cotés du brief. La matrice en dérive : Valeur = (Importance + Rentabilité) · Faisabilité = Maîtrise des risques.</div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(ajoute-en autant que nécessaire)</span></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">
-          <div class="fld" style="flex:2;min-width:150px"><label>Risque</label><input type="text" id="np-risk-desc" placeholder="ex. Dépendance technique"></div>
-          <div class="fld" style="width:120px"><label>Niveau</label><select id="np-risk-level"><option value="">-- Évaluer --</option><option>Faible</option><option>Modéré</option><option>Élevé</option><option>Critique</option></select></div>
-          <div class="fld" style="flex:1;min-width:120px"><label>Mitigation</label><input type="text" id="np-risk-mit" placeholder="ex. Renfort ESN"></div>
-          <button type="button" class="btn btn-acc" style="height:33px" onclick="npAddRisk()"><i class="ti ti-plus"></i>Ajouter</button>
-        </div>
-        <div id="np-risk-list" style="display:flex;flex-direction:column;gap:5px"></div>
-      </div>
-      <div class="form-section">
-        <div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Utilisateurs affectés <span style="font-size:9px;color:#94A3B8;font-weight:400">(plusieurs possibles)</span></div>
-        <div style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px">
-          <div class="fld" style="flex:2;min-width:150px"><label>Intervenant (vivier)</label><select id="np-team-user" onchange="npShowAvail()"></select></div>
-          <div class="fld" style="width:90px"><label>Part (%)</label><input type="number" id="np-team-share" min="0" max="100" placeholder="ex. 20"></div>
-          <button type="button" class="btn btn-acc" style="height:33px" onclick="npAddTeam()"><i class="ti ti-plus"></i>Ajouter</button>
-        </div>
-        <div id="np-team-avail" style="margin-bottom:8px"></div>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10.5px;color:#64748B;margin-bottom:8px"><input type="checkbox" id="np-team-new" style="width:auto;margin:0" onchange="npToggleNewUser()">Ajouter une personne hors vivier (nouvelle ressource)</label>
-        <div id="np-team-newfields" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:flex-end"></div>
-        <div id="np-team-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(probabilité × impact)</span></div>
+        <div id="np-risks-editor"></div>
       </div>
       <div class="form-section">
         <div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(projets requis avant celui-ci)</span></div>
@@ -1142,8 +1129,8 @@ function closeCalModal(e){ var ov=document.getElementById('cal-overlay'); if(!ov
 function exportMeeting(id){ var m=null; for(var i=0;i<meetings.length;i++){ if(meetings[i].id==id){ m=meetings[i]; break; } } if(m) openCalExport(m,false); else toast('Réunion introuvable'); }
 
 /* ═══════════════ NOUVEAU PROJET ═══════════════ */
-const NP_REQ=['np-name','np-cat','np-desc','np-startdate','np-enddate','np-budget','np-charge','np-strat','np-rent','np-mait'];
-const NP_LABELS={'np-name':'Nom','np-cat':'Catégorie','np-desc':'Description','np-startdate':'Date de début','np-enddate':'Date de fin','np-budget':'Budget','np-charge':'Charge','np-strat':'Importance strat.','np-rent':'Rentabilité','np-mait':'Maîtrise des risques'};
+const NP_REQ=['np-name','np-cat','np-desc','np-startdate','np-enddate','np-budget','np-charge'];
+const NP_LABELS={'np-name':'Nom','np-cat':'Catégorie','np-desc':'Description','np-startdate':'Date de début','np-enddate':'Date de fin','np-budget':'Budget','np-charge':'Charge'};
 let npTeam=[];
 let npRisks=[];
 const RISK_LC={'Faible':'#10B981','Modéré':'#F59E0B','Élevé':'#F97316','Critique':'#EF4444'};
@@ -1211,23 +1198,19 @@ function npPctSum(){
 function npUsers(){ return (typeof USERS!=='undefined'&&USERS.length)?USERS:Object.values(TEAMS).flatMap(t=>t.members).reduce((a,m)=>{if(!a.some(x=>x.name===m.name))a.push(m);return a;},[]); }
 function openNewProject(){
   resetNPForm();
-  const cp=document.getElementById('np-cp');
-  if(cp){ const cps=npUsers().filter(u=>/chef de projet/i.test(u.role||u.poste||'')); const list=cps.length?cps:npUsers(); cp.innerHTML='<option value="">-- Assigner --</option>'+list.map(u=>`<option>${u.name}</option>`).join(''); }
   npFillCat();
   const pfSel=document.getElementById('np-pf'); if(pfSel) pfSel.innerHTML=pfOptions(PORTFOLIOS[0]?PORTFOLIOS[0].name:'');
-  npTeam=[]; npRisks=[]; npFillStart(); npRenderTeam(); npRefreshUserSelect(); npRenderCharges(); npRenderRisks(); npPctSum(); npFillDeps();
+  var re=document.getElementById('np-risks-editor'); if(re){ re.innerHTML=risksEditorMarkup('np'); risksEditorOpen('np',[]); }
+  npFillStart(); npRenderCharges(); npPctSum(); npFillDeps();
   document.getElementById('np-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 function closeNPModal(e){if(e&&e.target!==document.getElementById('np-overlay'))return;document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow='';}
 function resetNPForm(){
   NP_REQ.forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('err');}});
-  ['np-cdc','np-sp','np-esn','np-lic','np-cat-new','np-team-share','np-risk-desc','np-risk-mit','np-risk-level'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['np-cdc','np-esn','np-lic','np-cat-new'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sel=document.getElementById('np-sel'); if(sel)sel.checked=false;
-  const nu=document.getElementById('np-team-new'); if(nu)nu.checked=false;
-  const box=document.getElementById('np-team-newfields'); if(box){box.style.display='none';box.innerHTML='';}
-  npTeam=[]; npRisks=[];
   document.getElementById('np-errors').style.display='none';
-  npRenderCharges(); npRenderTeam(); npRenderRisks();
+  npRenderCharges();
   updNP();
 }
 function updNP(){
@@ -1346,17 +1329,16 @@ function saveNewProject(){
     document.getElementById('np-errors-list').innerHTML='<li>Ce projet finit en '+monLabel(s+d-1)+' '+yearTag(s+d-1)+', après l\'échéance du portefeuille « '+pfName+' » ('+monLabel(dl)+' '+yearTag(dl)+'). Choisis un autre portefeuille, avance la date de début ou réduis la durée.</li>';
     return;
   }
-  const topRisk=npRisks.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
-  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+document.getElementById('np-strat').value,dt,note:document.getElementById('np-desc').value.trim(),st2:document.getElementById('np-st2').value||'Planifié',rent:+document.getElementById('np-rent').value,mait:+document.getElementById('np-mait').value,risks:npRisks.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRisks.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:document.getElementById('np-sponsor').value.trim(),methodo:document.getElementById('np-meth').value,cp:document.getElementById('np-cp').value,cdc:(document.getElementById('np-cdc')?document.getElementById('np-cdc').value.trim():''),sp:(document.getElementById('np-sp')?document.getElementById('np-sp').value.trim():''),sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+document.getElementById('np-pct-cp').value||0,pctDev:+document.getElementById('np-pct-dev').value||0,pctAdmin:+document.getElementById('np-pct-admin').value||0,pctTech:+document.getElementById('np-pct-tech').value||0,pctLic:+document.getElementById('np-lic').value||0,pctEsnB:+document.getElementById('np-esn').value||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
+  var npRk=(RISKS_STORE['np']||[]).slice();
+  const topRisk=npRk.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
+  var g2=function(id){var e=document.getElementById(id);return e?e.value:'';};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',rent:3,mait:3,risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
   scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
-  const team=npTeam.slice();
-  const risks=npRisks.slice();
-  P.push(newP);MV[newP.n]=charges;TEAMS[newP.n]={members:team};RISKS[newP.n]=risks;
-  if(newP.sp)SP_LINKS[newP.n]=newP.sp;
+  const risks=npRk;
+  P.push(newP);MV[newP.n]=charges;TEAMS[newP.n]={members:[]};RISKS[newP.n]=risks;
   apiPost({action:'create',project:newP,charges:charges,risks:risks});
-  team.forEach(m=>{ apiAddMember(newP.n,m); if(!npUsers().some(u=>u.name===m.name)) apiPost({action:'addUser',user:m}); });
   document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow='';
   buildHome();renderList();renderG();renderRisques();window.mReady=false;window.rReady=false;
   toast('✓ Projet "'+newP.n+'" ajouté au portefeuille !');
@@ -1554,6 +1536,7 @@ function goPage(id,el){
   if(id==='dash')renderDash();
   if(id==='budget')renderBudget();
   if(id==='rex')renderRex();
+  if(id==='details')renderDetails();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -1773,6 +1756,43 @@ function renderBudget(){
   body.innerHTML=h;
 }
 
+/* ── DÉTAILS PROJET (lecture complète) ── */
+var DET_SEL='';
+function renderDetails(name){
+  var body=document.getElementById('details-body'); if(!body)return;
+  if(name) DET_SEL=name;
+  if(!DET_SEL && P.length) DET_SEL=P[0].n;
+  var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  var sel=document.getElementById('det-proj'); if(sel) sel.innerHTML=P.map(function(p){return '<option'+(p.n===DET_SEL?' selected':'')+'>'+esc(p.n)+'</option>';}).join('');
+  var p=P.find(function(x){return x.n===DET_SEL;}); if(!p){ body.innerHTML='<div class="card">Aucun projet.</div>'; return; }
+  var col=(CAT[p.cat]&&CAT[p.cat].f)||'#64748B';
+  var kv=function(k,v){return '<div><div style="font-size:9.5px;color:#94A3B8;text-transform:uppercase;font-weight:700;letter-spacing:.4px">'+k+'</div><div style="font-size:13px;font-weight:700;color:#0F172A;margin-top:2px">'+v+'</div></div>';};
+  var h='<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px"><div style="width:12px;height:12px;border-radius:50%;background:'+col+'"></div><div style="font-size:18px;font-weight:800;color:#0F172A">'+esc(p.n)+'</div>'+(p.sel?'<span style="font-size:9px;font-weight:700;background:#EFF6FF;color:#2563EB;padding:2px 8px;border-radius:10px">sélectionné</span>':'')+'<button class="btn btn-acc" style="margin-left:auto" onclick="openProjectDetail('+jsArg(p.n)+')"><i class="ti ti-pencil"></i>Éditer</button></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 16px">'
+    + kv('Catégorie',esc(p.cat)) + kv('Portefeuille',esc(p.pf||'—')) + kv('Statut',esc(p.st2||'—')) + kv('Méthodologie',esc(p.methodo||'—'))
+    + kv('Budget',p.b+' K€') + kv('Charge',p.c+' j/h') + kv('Dates',esc(p.dt||'—')) + kv('Durée',p.d+' mois')
+    + kv('Importance',p.st+'/5') + kv('Rentabilité',p.rent+'/5') + kv('Maîtrise risques',p.mait+'/5') + kv('Score',(p.val+p.fais)+'/40')
+    + kv('Part licence',(p.pctLic||0)+'%') + kv('Part ESN',(p.pctEsnB||0)+'%') + kv('Sponsor',esc(p.sponsor||'—'))
+    +'</div></div>';
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Description / Objectifs</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.note)||'<span style="color:#CBD5E1">—</span>')+'</div>';
+  h+='<div style="font-size:13px;font-weight:800;color:#0F172A;margin:14px 0 8px">Cahier des charges</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.cdc)||'<span style="color:#CBD5E1">—</span>')+'</div></div>';
+  var rs=(RISKS[p.n]||[]);
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Risques ('+rs.length+')</div>';
+  if(!rs.length) h+='<div style="font-size:11px;color:#CBD5E1">Aucun risque.</div>';
+  rs.forEach(function(r){ var pi=riskPI(r); h+='<div style="font-size:11.5px;color:#475569;padding:5px 0;border-top:1px solid #F1F5F9"><strong style="color:#334155">'+esc(r.risk)+'</strong> <span style="color:#94A3B8">· '+(r.level||'')+' (P'+pi.p+'×I'+pi.i+')</span>'+(r.mitigation?'<br><span style="color:#94A3B8">Mitigation : '+esc(r.mitigation)+'</span>':'')+'</div>'; });
+  h+='</div>';
+  var deps=(p.deps||[]).map(function(d){return (typeof d==='string')?d:(d.dep+' ('+(d.type||'FS')+(d.lag?(' +'+d.lag+'m'):'')+')');});
+  var team=(TEAMS[p.n]&&TEAMS[p.n].members)?TEAMS[p.n].members:[];
+  h+='<div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Dépendances</div>'+(deps.length?deps.map(function(d){return '<div style="font-size:11.5px;color:#475569;padding:3px 0">• '+esc(d)+'</div>';}).join(''):'<div style="font-size:11px;color:#CBD5E1">Aucune</div>')+'</div>';
+  h+='<div><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Équipe affectée</div>'+(team.length?team.map(function(m){return '<div style="font-size:11.5px;color:#475569;padding:3px 0">• '+esc(m.name)+(m.type==='prestataire'?' <span style="color:#2563EB;font-weight:700">ESN</span>':'')+(m.share?' — '+Math.round(m.share*100)+'%':'')+'</div>';}).join(''):'<div style="font-size:11px;color:#CBD5E1">Aucune</div>')+'</div></div></div>';
+  var rx=REX_DATA[p.n];
+  if(rx&&(rx.ecarts||rx.diff||rx.bonnes||rx.lecons)){
+    var rr=function(l,v){return v?'<div style="font-size:11.5px;color:#475569;padding:3px 0;line-height:1.5"><strong>'+l+' :</strong> '+esc(v)+'</div>':'';};
+    h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Retour d\'expérience (REX)</div>'+rr('Écarts',rx.ecarts)+rr('Difficultés',rx.diff)+rr('Bonnes pratiques',rx.bonnes)+rr('Leçons apprises',rx.lecons)+'</div>';
+  }
+  body.innerHTML=h;
+}
+
 /* ── CLÔTURE & REX ── */
 var REX_DATA={};        /* projet -> {ecarts,diff,bonnes,lecons,date} */
 var REX_SEL='';
@@ -1802,33 +1822,19 @@ function renderRex(){
   h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Bonnes pratiques</div>'+ta('rex-bonnes','Ex. POC avant contractualisation ESN : bon choix',cur.bonnes)+'</div>';
   h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Leçons apprises (réutilisables)</div>'+ta('rex-lecons','Ex. prévoir +20% de charge sur toute reprise de données',cur.lecons)+'</div>';
   h+='</div><div class="ma2" style="margin-top:12px"><button class="btn btn-acc" onclick="saveRex()"><i class="ti ti-device-floppy"></i>Enregistrer le REX</button></div></div>';
-  // Projets capitalisés
+  // Projets capitalisés — affiche toutes les rubriques saisies
   var caps=Object.keys(REX_DATA).filter(function(k){var r=REX_DATA[k];return r&&(r.ecarts||r.diff||r.bonnes||r.lecons);});
   h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px">Projets capitalisés <span style="font-size:10px;font-weight:600;color:#94A3B8">('+caps.length+')</span></div>';
   if(!caps.length){ h+='<div style="font-size:11px;color:#CBD5E1">Aucun REX saisi pour l\'instant.</div>'; }
-  caps.forEach(function(k){ var r=REX_DATA[k]; h+='<div style="border-top:1px solid #F1F5F9;padding:8px 0"><div style="font-size:12px;font-weight:700;color:#0F172A;margin-bottom:3px">'+esc(k)+' <span style="font-size:9px;color:#94A3B8;font-weight:500">'+(r.date||'')+'</span></div>'+(r.lecons?'<div style="font-size:11px;color:#475569;line-height:1.5"><strong style="color:#10B981">Leçon :</strong> '+esc(r.lecons)+'</div>':'')+(r.ecarts?'<div style="font-size:10.5px;color:#94A3B8;line-height:1.5">Écarts : '+esc(r.ecarts)+'</div>':'')+'</div>'; });
-  h+='</div>';
-  // Documents de clôture (référence)
-  var docs=[['PV de recette','Interne + ESN','Acceptation du livrable conforme au CDC ; déclenche le transfert de responsabilité et le solde.'],
-    ['PV de réception définitive','ESN','Clôt la période de garantie / réserves ; libère la retenue de garantie.'],
-    ['Procès-verbal de fin de projet','Interne','Acte officiel de clôture validé par le sponsor et le comité de portefeuille.'],
-    ['Bilan financier de clôture','Interne','Compare l\'engagé au budget, solde les commandes, restitue le reste à engager.'],
-    ['Attestation de transfert en exploitation','Interne','Transfère la responsabilité vers l\'exploitation / le support.'],
-    ['Clôture contractuelle ESN (DGD)','ESN','Décompte général définitif ; clôt juridiquement et financièrement le marché.'],
-    ['PV de réversibilité / transfert de connaissances','ESN','Garantit l\'autonomie après le départ du prestataire (doc, accès, compétences).']];
-  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px"><i class="ti ti-file-certificate" style="color:#2563EB;margin-right:6px"></i>Documents contractuels de clôture</div>';
-  docs.forEach(function(d){ h+='<div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid #F1F5F9;padding:7px 0;font-size:11.5px"><div style="flex:1.4;font-weight:700;color:#334155">'+d[0]+'</div><div style="width:90px;flex-shrink:0"><span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:#EFF6FF;color:#2563EB">'+d[1]+'</span></div><div style="flex:2.4;color:#64748B;line-height:1.5">'+d[2]+'</div></div>'; });
-  h+='</div>';
-  // Template PV de recette
-  var pvr=[['En-tête','Projet, version du livrable, date, lieu, participants (MOA, MOE, ESN)'],
-    ['Objet & périmètre recetté','Référence au CDC et au plan de test, périmètre couvert'],
-    ['Résultats des tests','Synthèse par scénario : conforme / non conforme, taux de réussite'],
-    ['Réserves & anomalies','Anomalies par criticité, délai de levée et responsable'],
-    ['Décision','Recette prononcée / prononcée avec réserves / refusée'],
-    ['Engagements & suite','Plan de levée des réserves, date de réception définitive visée'],
-    ['Signatures','MOA, MOE, prestataire — avec dates']];
-  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px"><i class="ti ti-clipboard-check" style="color:#10B981;margin-right:6px"></i>Template — PV de recette</div>';
-  pvr.forEach(function(r){ h+='<div style="display:flex;gap:10px;border-top:1px solid #F1F5F9;padding:7px 0;font-size:11.5px"><div style="width:170px;flex-shrink:0;font-weight:700;color:#334155">'+r[0]+'</div><div style="flex:1;color:#64748B;line-height:1.5">'+r[1]+'</div></div>'; });
+  var rexRow=function(label,val,col){ return val?('<div style="font-size:11px;color:#475569;line-height:1.5;margin-top:3px"><strong style="color:'+col+'">'+label+' :</strong> '+esc(val)+'</div>'):''; };
+  caps.forEach(function(k){ var r=REX_DATA[k];
+    h+='<div style="border-top:1px solid #F1F5F9;padding:9px 0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><div style="font-size:12px;font-weight:700;color:#0F172A">'+esc(k)+'</div><span style="font-size:9px;color:#94A3B8;font-weight:500">'+(r.date||'')+'</span><button class="btn" style="margin-left:auto;padding:2px 9px;font-size:10px" onclick="rexSelect('+jsArg(k)+')"><i class="ti ti-pencil"></i>Éditer</button></div>'
+      + rexRow('Écarts',r.ecarts,'#F59E0B')
+      + rexRow('Difficultés',r.diff,'#EF4444')
+      + rexRow('Bonnes pratiques',r.bonnes,'#3B82F6')
+      + rexRow('Leçons apprises',r.lecons,'#10B981')
+    +'</div>';
+  });
   h+='</div>';
   body.innerHTML=h;
 }
@@ -1848,18 +1854,22 @@ function renderG(f='all'){
   mh.innerHTML=Array.from({length:N},(_,i)=>{var yt=yearTag(i);var showY=(i===0||yt!==yearTag(i-1));return `<div class="gm${i===0?' cur':''}" style="position:relative">${i===0?'<span class="now-pin">maintenant</span>':''}<div style="font-size:8px;font-weight:700;color:#2563EB;height:10px;line-height:10px">${showY?'année '+yt:''}</div>${monLabel(i)}</div>`;}).join('');
   let h='';
   // regroupe les projets visibles par portefeuille, dans l'ordre des PORTFOLIOS
-  const order=PORTFOLIOS.map(pf=>pf.name);
-  const groups={}; data.forEach(p=>{ const k=p.pf||PORTFOLIOS[0].name; (groups[k]=groups[k]||[]).push(p); });
-  Object.keys(groups).forEach(k=>{ if(order.indexOf(k)<0) order.push(k); });
+  // regroupement par portefeuille activable/désactivable
+  const order = GANTT_GROUP ? PORTFOLIOS.map(pf=>pf.name) : ['__all__'];
+  const groups={};
+  if(GANTT_GROUP){ data.forEach(p=>{ const k=p.pf||PORTFOLIOS[0].name; (groups[k]=groups[k]||[]).push(p); }); Object.keys(groups).forEach(k=>{ if(order.indexOf(k)<0) order.push(k); }); }
+  else { groups['__all__']=data.slice(); }
   order.forEach(pfName=>{
     const g=groups[pfName]; if(!g||!g.length) return;
-    const pf=pfByName(pfName); const dl=pf?(+pf.deadline):null; const col=pf?pf.color:'#64748B';
-    const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
-    const over=g.filter(p=>dl!=null&&!projectFits(p,dl)).length;
-    h+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin:10px 0 2px;background:${col}0F;border-left:3px solid ${col};border-radius:0 8px 8px 0">
-      <span style="font-size:12px;font-weight:800;color:${col};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${pfName}</span>
-      <span style="font-size:10.5px;color:#64748B">échéance : <strong style="color:#334155">${dlLabel}</strong> · ${g.length} projet${g.length>1?'s':''}${over?` · <span style="color:#EF4444;font-weight:700">⚠ ${over} hors délai</span>`:''}</span>
-    </div>`;
+    if(pfName!=='__all__'){
+      const pf=pfByName(pfName); const dl=pf?(+pf.deadline):null; const col=pf?pf.color:'#64748B';
+      const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
+      const over=g.filter(p=>dl!=null&&!projectFits(p,dl)).length;
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin:10px 0 2px;background:${col}0F;border-left:3px solid ${col};border-radius:0 8px 8px 0">
+        <span style="font-size:12px;font-weight:800;color:${col};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${pfName}</span>
+        <span style="font-size:10.5px;color:#64748B">échéance : <strong style="color:#334155">${dlLabel}</strong> · ${g.length} projet${g.length>1?'s':''}${over?` · <span style="color:#EF4444;font-weight:700">⚠ ${over} hors délai</span>`:''}</span>
+      </div>`;
+    }
     g.forEach((p,idx)=>{
       const c=CAT[p.cat];
       const lp=(p.s/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
@@ -1891,6 +1901,9 @@ function attachBars(){
           <div><div class="dp-k">Budget</div><div class="dp-v">${p.b} K€</div></div>
           <div><div class="dp-k">Charge</div><div class="dp-v">${p.c} j/h</div></div>
           <div><div class="dp-k">Durée</div><div class="dp-v">${p.d} mois</div></div>
+          <div><div class="dp-k">Méthodologie</div><div class="dp-v">${p.methodo||'—'}</div></div>
+          <div><div class="dp-k">Statut</div><div class="dp-v">${p.st2||'—'}</div></div>
+          <div><div class="dp-k">Portefeuille</div><div class="dp-v">${p.pf||'—'}</div></div>
           <div><div class="dp-k">Importance</div><div class="dp-v">${p.st}/5</div></div>
           <div><div class="dp-k">Rentabilité</div><div class="dp-v">${p.rent}/5</div></div>
           <div><div class="dp-k">Maîtrise risques</div><div class="dp-v">${p.mait}/5</div></div>
@@ -1901,6 +1914,8 @@ function attachBars(){
 }
 function fg(f,el){document.querySelectorAll('.gfi').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderG(f);}
 var GANTT_WINDOW=10; /* fenêtre cible : 10 mois (Avr → Jan) */
+var GANTT_GROUP=true; /* regrouper le Gantt par portefeuille */
+function toggleGanttGroup(on){ GANTT_GROUP=!!on; renderG(); }
 var SIM={active:false, backup:null, changed:[], tension:false};
 
 /* Calcule les dates au plus tôt selon les dépendances typées, bornées à l'échéance.
@@ -2484,8 +2499,9 @@ function openProjectDetail(name){
   pdName=name;
   document.getElementById('pd-title').textContent=name;
   document.getElementById('pd-sub').textContent=p.cat+(p.dt?' · '+p.dt:'');
-  var cats=['Socle IT','Dev applicatif','CRM / Métier','DevOps','Réglementaire'];
+  var cats=Object.keys(CAT);
   var opt=function(arr,sel){return arr.map(function(o){return '<option'+(String(o)===String(sel)?' selected':'')+'>'+o+'</option>';}).join('');};
+  var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
   var fld=function(label,inner){return '<div class="fld" style="flex:1;min-width:120px"><label>'+label+'</label>'+inner+'</div>';};
   var deps=p.deps||[];
   var depBoxes=P.filter(function(x){return x.n!==name;}).map(function(x){var ck=deps.indexOf(x.n)>=0?' checked':'';return '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;padding:3px 0;cursor:pointer"><input type="checkbox" class="pd-dep" value="'+x.n+'"'+ck+' style="width:auto;margin:0">'+x.n+'</label>';}).join('');
@@ -2500,6 +2516,11 @@ function openProjectDetail(name){
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Début','<input type="date" id="pd-startdate" value="'+idxToDate(+p.s||0)+'">')+fld('Fin','<input type="date" id="pd-enddate" value="'+idxToDate((+p.s||0)+(+p.d||1)-1)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Importance /5','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+fld('Rentabilité /5','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent)+'</select>')+fld('Maîtrise risques /5','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait)+'</select>')+'</div>';
   h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Critères cotés du brief. Position matrice : Valeur '+((p.st+p.rent)*2)+'/20 · Faisabilité '+(p.mait*4)+'/20.</div>';
+  h+='</div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-file-text" style="font-size:12px;color:#2563EB"></i>Description &amp; cahier des charges</div>';
+  h+='<div class="fld" style="margin-bottom:8px"><label>Description / Objectifs</label><textarea id="pd-desc" style="min-height:62px">'+esc(p.note)+'</textarea></div>';
+  h+='<div class="fld" style="margin-bottom:8px"><label>Cahier des charges (lien ou résumé)</label><textarea id="pd-cdc" style="min-height:62px">'+esc(p.cdc)+'</textarea></div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Méthodologie','<select id="pd-meth">'+opt(['','PMI / Waterfall','Scrum / Agile','Prince2','Hybride PMI/Agile'],p.methodo)+'</select>')+fld('Sponsor','<input type="text" id="pd-sponsor" value="'+esc(p.sponsor)+'">')+'</div>';
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
@@ -2521,6 +2542,7 @@ function saveProjectDetail(){
   if(ndl!=null && (ns+nd-1)>ndl){ toast('Impossible : ce projet finit en '+monLabel(ne)+' '+yearTag(ne)+', après l\'échéance de « '+newPf+' » ('+monLabel(ndl)+' '+yearTag(ndl)+').'); return; }
   p.pf=newPf; p.s=ns; p.d=nd; p.dt=monLabel(ns)+' '+yearTag(ns)+' → '+monLabel(ne)+' '+yearTag(ne);
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0;
+  p.note=g('pd-desc'); p.cdc=g('pd-cdc'); p.methodo=g('pd-meth')||p.methodo; p.sponsor=g('pd-sponsor');
   p.pctLic=Math.min(100,Math.max(0,+g('pd-lic')||0)); p.pctEsnB=Math.min(100,Math.max(0,+g('pd-esn')||0));
   p.st=+g('pd-strat')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
@@ -2529,7 +2551,7 @@ function saveProjectDetail(){
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
   apiPost({action:'update', project:p, charges:MV[p.n]||[], risks:manualRisks});
   closePD();
-  recalc(); buildHome(); renderList(); renderG(); renderRisques(); window.mReady=false; window.rReady=false;
+  recalc(); buildHome(); renderList(); renderG(); renderRisques(); renderDetails(); window.mReady=false; window.rReady=false;
   toast('✓ Projet "'+p.n+'" mis à jour');
 }
 function openSP(name){
