@@ -1376,17 +1376,17 @@ var CAT_PALETTE=['#0EA5E9','#F43F5E','#A855F7','#14B8A6','#EAB308','#F97316','#6
 function ensureCat(name){ name=(name||'').trim(); if(name && !CAT[name]){ var c=CAT_PALETTE[Object.keys(CAT).length % CAT_PALETTE.length]; CAT[name]={f:c,bg:c+'1A'}; } return name; }
 
 let P=[
-  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3},
-  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2},
-  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3},
-  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3},
-  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2},
-  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,sel:1},
-  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4},
-  {n:'Migration Azure',        cat:'Socle IT',      s:4,d:5,b:200,c:300,st:3,dt:'Août → Déc',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',rent:4,mait:1},
-  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',rent:1,mait:4},
-  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3},
-  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5},
+  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3,pctLic:60,pctEsnB:0},
+  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2,pctLic:10,pctEsnB:45},
+  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3,pctLic:25,pctEsnB:45},
+  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3,pctLic:5,pctEsnB:0},
+  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2,pctLic:5,pctEsnB:40},
+  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,sel:1,pctLic:45,pctEsnB:45},
+  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4,pctLic:40,pctEsnB:0},
+  {n:'Migration Azure',        cat:'Socle IT',      s:4,d:5,b:200,c:300,st:3,dt:'Août → Déc',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',rent:4,mait:1,pctLic:15,pctEsnB:35},
+  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',rent:1,mait:4,pctLic:30,pctEsnB:0},
+  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,pctLic:25,pctEsnB:0},
+  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,pctLic:35,pctEsnB:0},
 ];
 /* Priorisation alignée sur le brief : 3 critères cotés /5 (Importance=st, Rentabilité=rent, Maîtrise des risques=mait).
    Les 2 axes de la matrice en sont dérivés : Valeur=(Importance+Rentabilité)×2 /20 · Faisabilité=Maîtrise×4 /20. */
@@ -1744,12 +1744,21 @@ function renderBudget(){
   cats.sort(function(a,b){return byCat[b]-byCat[a];}).forEach(function(c){var col=(CAT[c]&&CAT[c].f)||'#64748B';h+=budgetBar(c,byCat[c],maxCat,col);});
   h+='</div></div>';
   h+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:12px">Détail par projet</div>';
-  h+='<div style="display:flex;font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;padding:0 4px 6px;border-bottom:1px solid #F1F5F9"><div style="flex:2">Projet</div><div style="flex:1.3">Portefeuille</div><div style="flex:1.2">Catégorie</div><div style="width:66px;text-align:right">Budget</div><div style="width:80px;text-align:right">Licence</div><div style="width:70px;text-align:right">ESN</div><div style="width:60px;text-align:right">Charge</div></div>';
-  P.slice().sort(function(a,b){return b.b-a.b;}).forEach(function(p){
-    var cc=(CAT[p.cat]&&CAT[p.cat].f)||'#64748B'; var lic=licOf(p), esn=esnOf(p);
-    h+='<div style="display:flex;align-items:center;font-size:11.5px;color:#334155;padding:7px 4px;border-bottom:1px solid #F8FAFC"><div style="flex:2;font-weight:600;color:#0F172A">'+p.n+'</div><div style="flex:1.3;color:#64748B">'+(p.pf||'—')+'</div><div style="flex:1.2;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+cc+';flex-shrink:0"></span>'+p.cat+'</div><div style="width:66px;text-align:right;font-weight:700">'+p.b+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+(lic?lic+' K€':'—')+(p.pctLic?' <span style="color:#CBD5E1;font-size:9px">('+p.pctLic+'%)</span>':'')+'</div><div style="width:70px;text-align:right;color:#EC4899">'+(esn?esn+' K€':'—')+'</div><div style="width:60px;text-align:right">'+p.c+' j/h</div></div>';
+  h+='<div style="display:flex;font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;padding:0 4px 6px;border-bottom:1px solid #F1F5F9"><div style="flex:2">Projet</div><div style="flex:1.2">Catégorie</div><div style="width:66px;text-align:right">Budget</div><div style="width:80px;text-align:right">Licence</div><div style="width:70px;text-align:right">ESN</div><div style="width:60px;text-align:right">Charge</div></div>';
+  var bOrder=PORTFOLIOS.map(function(pf){return pf.name;});
+  var bGroups={}; P.forEach(function(p){var k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(bGroups[k]=bGroups[k]||[]).push(p);});
+  Object.keys(bGroups).forEach(function(k){if(bOrder.indexOf(k)<0)bOrder.push(k);});
+  bOrder.forEach(function(name){
+    var g=bGroups[name]; if(!g||!g.length) return;
+    var pf=pfByName(name); var col=pf?pf.color:'#64748B';
+    var gB=g.reduce(function(s,p){return s+(+p.b||0);},0), gL=g.reduce(function(s,p){return s+licOf(p);},0), gE=g.reduce(function(s,p){return s+esnOf(p);},0), gC=g.reduce(function(s,p){return s+(+p.c||0);},0);
+    h+='<div style="display:flex;align-items:center;font-size:11px;font-weight:800;padding:10px 4px 5px;margin-top:4px;border-bottom:1px solid #E2E8F0"><div style="flex:2;color:'+col+'"><i class="ti ti-folder" style="margin-right:5px"></i>'+name+'</div><div style="flex:1.2"></div><div style="width:66px;text-align:right;color:#94A3B8">'+gB+' K€</div><div style="width:80px;text-align:right;color:#94A3B8">'+gL+' K€</div><div style="width:70px;text-align:right;color:#94A3B8">'+gE+' K€</div><div style="width:60px;text-align:right;color:#94A3B8">'+gC+'</div></div>';
+    g.slice().sort(function(a,b){return b.b-a.b;}).forEach(function(p){
+      var cc=(CAT[p.cat]&&CAT[p.cat].f)||'#64748B'; var lic=licOf(p), esn=esnOf(p);
+      h+='<div style="display:flex;align-items:center;font-size:11.5px;color:#334155;padding:7px 4px;border-bottom:1px solid #F8FAFC"><div style="flex:2;font-weight:600;color:#0F172A;padding-left:8px">'+p.n+'</div><div style="flex:1.2;display:flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:'+cc+';flex-shrink:0"></span>'+p.cat+'</div><div style="width:66px;text-align:right;font-weight:700">'+p.b+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+(lic?lic+' K€':'—')+(p.pctLic?' <span style="color:#CBD5E1;font-size:9px">('+p.pctLic+'%)</span>':'')+'</div><div style="width:70px;text-align:right;color:#EC4899">'+(esn?esn+' K€':'—')+'</div><div style="width:60px;text-align:right">'+p.c+' j/h</div></div>';
+    });
   });
-  h+='<div style="display:flex;align-items:center;font-size:11.5px;font-weight:800;color:#0F172A;padding:9px 4px;border-top:2px solid #E2E8F0;margin-top:2px"><div style="flex:2">Total</div><div style="flex:1.3"></div><div style="flex:1.2"></div><div style="width:66px;text-align:right">'+totB+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+totLic+' K€</div><div style="width:70px;text-align:right;color:#EC4899">'+totEsn+' K€</div><div style="width:60px;text-align:right">'+totC+' j/h</div></div></div>';
+  h+='<div style="display:flex;align-items:center;font-size:11.5px;font-weight:800;color:#0F172A;padding:9px 4px;border-top:2px solid #E2E8F0;margin-top:2px"><div style="flex:2">Total général</div><div style="flex:1.2"></div><div style="width:66px;text-align:right">'+totB+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+totLic+' K€</div><div style="width:70px;text-align:right;color:#EC4899">'+totEsn+' K€</div><div style="width:60px;text-align:right">'+totC+' j/h</div></div></div>';
   body.innerHTML=h;
 }
 
@@ -2405,6 +2414,7 @@ function openProjectDetail(name){
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-adjustments" style="font-size:12px;color:#2563EB"></i>Paramètres modifiables</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Catégorie','<select id="pd-cat">'+opt(cats,p.cat)+'</select>')+fld('Statut','<select id="pd-st2">'+opt(['En cours','Planifié'],p.st2)+'</select>')+fld('Portefeuille','<select id="pd-pf">'+pfOptions(p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:''))+'</select>')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Part licence (% budget)','<input type="number" id="pd-lic" min="0" max="100" value="'+(+p.pctLic||0)+'">')+fld('Part ESN (% budget)','<input type="number" id="pd-esn" min="0" max="100" value="'+(+p.pctEsnB||0)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Début','<input type="date" id="pd-startdate" value="'+idxToDate(+p.s||0)+'">')+fld('Fin','<input type="date" id="pd-enddate" value="'+idxToDate((+p.s||0)+(+p.d||1)-1)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Importance /5','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+fld('Rentabilité /5','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent)+'</select>')+fld('Maîtrise risques /5','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait)+'</select>')+'</div>';
   h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Critères cotés du brief. Position matrice : Valeur '+((p.st+p.rent)*2)+'/20 · Faisabilité '+(p.mait*4)+'/20.</div>';
@@ -2429,6 +2439,7 @@ function saveProjectDetail(){
   if(ndl!=null && (ns+nd-1)>ndl){ toast('Impossible : ce projet finit en '+monLabel(ne)+' '+yearTag(ne)+', après l\'échéance de « '+newPf+' » ('+monLabel(ndl)+' '+yearTag(ndl)+').'); return; }
   p.pf=newPf; p.s=ns; p.d=nd; p.dt=monLabel(ns)+' '+yearTag(ns)+' → '+monLabel(ne)+' '+yearTag(ne);
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0;
+  p.pctLic=Math.min(100,Math.max(0,+g('pd-lic')||0)); p.pctEsnB=Math.min(100,Math.max(0,+g('pd-esn')||0));
   p.st=+g('pd-strat')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
   if(!MV[p.n] || MV[p.n].length!==p.d){ var tot=p.c||0, bs=Math.floor(tot/p.d), rm=tot-bs*p.d; MV[p.n]=Array.from({length:p.d},function(_,i){return bs+(i<rm?1:0);}); }
