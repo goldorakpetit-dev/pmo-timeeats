@@ -450,7 +450,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <div>
         <div class="home-sec-eyebrow">Priorisation</div>
         <h2 style="font-family:Georgia,serif;font-size:30px;font-weight:800;color:#0F172A;line-height:1.15;margin:2px 0 14px;letter-spacing:-.5px">Décidez vite,<br>priorisez juste.</h2>
-        <p style="font-size:14px;color:#475569;line-height:1.7">Chaque projet est coté sur trois critères — importance stratégique, rentabilité et maîtrise des risques. La matrice de décision les répartit en Stars, quick wins, projets majeurs et projets à reconsidérer, pour arbitrer objectivement votre portefeuille.</p>
+        <p style="font-size:14px;color:#475569;line-height:1.7">Chaque projet est coté sur deux critères simples — sa <strong>valeur</strong> (impact business) et son <strong>effort</strong> (charge et complexité). La matrice Valeur × Effort les répartit en quick wins, projets majeurs, secondaires et projets à éviter, pour arbitrer objectivement votre portefeuille.</p>
       </div>
       <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 12px 34px rgba(15,23,42,.10);padding:14px">
         <div style="display:flex;gap:5px;margin-bottom:11px"><span style="width:9px;height:9px;border-radius:50%;background:#F87171"></span><span style="width:9px;height:9px;border-radius:50%;background:#FBBF24"></span><span style="width:9px;height:9px;border-radius:50%;background:#34D399"></span></div>
@@ -512,7 +512,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="home-sec-eyebrow">Méthodologie</div>
     <h2 class="home-sec-title">Le cycle de vie d'un projet, structuré</h2>
     <div style="max-width:1000px;display:flex;flex-direction:column;gap:9px">
-      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc1')"><div style="width:30px;height:30px;border-radius:8px;background:#ECFDF5;color:#10B981;display:flex;align-items:center;justify-content:center"><i class="ti ti-target-arrow"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">1 · Cadrage & priorisation</div><i class="ti ti-chevron-down" id="acc1-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc1-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet est qualifié (budget, charge, importance stratégique, rentabilité, maîtrise des risques) puis positionné sur la matrice de décision. On distingue les <strong>Stars</strong>, les <strong>quick wins</strong>, les projets <strong>majeurs</strong> à cadrer et ceux à reconsidérer.</div></div></div>
+      <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc1')"><div style="width:30px;height:30px;border-radius:8px;background:#ECFDF5;color:#10B981;display:flex;align-items:center;justify-content:center"><i class="ti ti-target-arrow"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">1 · Cadrage & priorisation</div><i class="ti ti-chevron-down" id="acc1-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc1-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet est qualifié (budget, charge, valeur et effort) puis positionné sur la matrice Valeur × Effort. On distingue les <strong>quick wins</strong>, les projets <strong>majeurs</strong> à cadrer, les <strong>secondaires</strong> et ceux <strong>à éviter</strong>.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc2')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#2563EB;display:flex;align-items:center;justify-content:center"><i class="ti ti-timeline"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">2 · Planification & dépendances</div><i class="ti ti-chevron-down" id="acc2-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc2-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Le Gantt multi-projets relie les projets par des dépendances typées (fin→début, début→début, fin→fin) avec décalage. La simulation recalcule le planning d'un portefeuille pour tenir l'échéance, sans toucher au plan de référence tant qu'on n'applique pas.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc3')"><div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;color:#3B82F6;display:flex;align-items:center;justify-content:center"><i class="ti ti-users-group"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">3 · Ressources & exécution</div><i class="ti ti-chevron-down" id="acc3-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc3-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">La charge est répartie mois par mois et par rôle (chef de projet, dev, admin, technicien), avec un plafond réaliste par personne et le recours à des prestataires ESN en dernier ressort.</div></div></div>
       <div class="acc-item"><div class="acc-head" onclick="toggleAcc('acc4')"><div style="width:30px;height:30px;border-radius:8px;background:#FEF2F2;color:#EF4444;display:flex;align-items:center;justify-content:center"><i class="ti ti-alert-triangle"></i></div><div style="flex:1;font-size:13px;font-weight:700;color:#0F172A">4 · Suivi des risques & des délais</div><i class="ti ti-chevron-down" id="acc4-chev" style="color:#94A3B8;transition:transform .2s"></i></div><div class="acc-body" id="acc4-body"><div style="padding:0 18px 15px 57px;font-size:12px;color:#475569;line-height:1.65">Chaque projet porte ses risques et plans de mitigation. Les dépendances génèrent des alertes de retard, et le dashboard signale les projets hors délai par rapport à l'échéance de leur portefeuille.</div></div></div>
@@ -579,7 +579,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l">
       <div class="ab-title">Matrice de décision</div>
-      <div class="ab-bc"><div class="ab-dot"></div>Valeur stratégique × Maîtrise des risques · taille des bulles = budget</div>
+      <div class="ab-bc"><div class="ab-dot"></div>Valeur / impact × Effort (simplicité) · taille des bulles = budget</div>
     </div>
     <div class="ab-r"><select id="matrix-pf" onchange="initMatrixReload()" style="font-size:11px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Tous les portefeuilles</option></select></div>
   </div>
@@ -805,6 +805,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div class="frow c2"><div class="fld"><label>Statut</label><select id="np-st2" onchange="updNP()"><option value="Planifié">Planifié</option><option value="En cours">En cours</option></select></div><div class="fld"></div></div>
         <div class="frow c2"><div class="fld"><label>Portefeuille</label><select id="np-pf"></select></div><div class="fld"><label>&nbsp;</label><div style="font-size:10px;color:#94A3B8;padding:8px 0">Le projet doit finir avant l'échéance du portefeuille (sinon refusé).</div></div></div>
         <div class="fld" style="margin-bottom:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="np-sel" style="width:auto;margin:0">Marquer comme projet sélectionné (mis en avant)</label></div>
+        <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Valeur / impact (/5)</label><select id="np-valeur"><option value="1">1 — faible</option><option value="2">2</option><option value="3" selected>3 — moyenne</option><option value="4">4</option><option value="5">5 — forte</option></select></div><div class="fld"><label>Effort / complexité (/5)</label><select id="np-effort"><option value="1">1 — léger</option><option value="2">2</option><option value="3" selected>3 — moyen</option><option value="4">4</option><option value="5">5 — lourd</option></select></div></div>
+        <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision : forte valeur + faible effort = « Quick win » à prioriser.</div>
       </div>
       <div class="form-section">
         <div class="form-section-title"><i class="ti ti-calendar" style="font-size:12px;color:#3B82F6"></i>Planning</div>
@@ -861,10 +863,10 @@ const KPI_DEFS={
   'nb-projets':{title:'Répartition du portefeuille',sub:'Par catégorie, statut et priorité',dot:'#64748B'},
   'budget':{title:'Analyse budgétaire',sub:'Répartition des 1 700 K€ engagés',dot:'#10B981'},
   'charge':{title:'Charge totale — Interne vs ESN',sub:'2 320 j/h répartis sur 10 mois',dot:'#3B82F6'},
-  'stars':{title:'Projets prioritaires — Stars',sub:'Valeur ≥ 10/20 ET Faisabilité ≥ 10/20',dot:'#10B981'},
-  'risque':{title:'Projets à risque élevé',sub:'Faisabilité < 10/20 — vigilance requise',dot:'#EF4444'},
+  'stars':{title:'Projets prioritaires — Quick wins',sub:'Forte valeur + faible effort (matrice Valeur × Effort)',dot:'#10B981'},
+  'risque':{title:'Projets à risque élevé',sub:'Risque Élevé ou Critique (matrice probabilité × impact)',dot:'#EF4444'},
   'esn':{title:'Prestataires ESN',sub:'Charge et budget externalisés',dot:'#2563EB'},
-  'score-max':{title:'Classement complet — Scores portefeuille',sub:'11 projets classés par score de priorisation',dot:'#F59E0B'},
+  'score-max':{title:'Classement complet — Scores de priorité',sub:'Projets classés par score Valeur + Simplicité',dot:'#F59E0B'},
   'actifs':{title:'Projets actifs — Avril 2026',sub:'3 projets actifs · détail charge et équipes',dot:'#10B981'},
 };
 
@@ -890,7 +892,7 @@ function buildKPIContent(id){
 
   if(id==='nb-projets'){
     const total=P.length,actif=P.filter(p=>p.st2==='En cours').length,plan=P.filter(p=>p.st2==='Planifié').length;
-    let h=kpiStats([{v:total,u:'',k:'Total'},{v:actif,u:'',k:'En cours',c:'#10B981'},{v:plan,u:'',k:'Planifiés',c:'#3B82F6'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Stars ⭐',c:'#2563EB'}]);
+    let h=kpiStats([{v:total,u:'',k:'Total'},{v:actif,u:'',k:'En cours',c:'#10B981'},{v:plan,u:'',k:'Planifiés',c:'#3B82F6'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Quick wins ⭐',c:'#2563EB'}]);
     h+=kpiSect('Projets par catégorie','#64748B');
     h+='<div class="tmo-grid">';
     Object.keys(CAT).forEach(cat=>{
@@ -940,26 +942,31 @@ function buildKPIContent(id){
 
   if(id==='stars'){
     const stars=[...P].filter(p=>p.q==='stars').sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));
-    let h=kpiStats([{v:stars.length,u:'',k:'Projets Stars'},{v:Math.max(...stars.map(p=>p.val+p.fais)),u:'/40',k:'Meilleur score',c:'#10B981'},{v:stars.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget Stars'},{v:Math.round(stars.length/P.length*100),u:'%',k:'Du portefeuille',c:'#2563EB'}]);
-    h+=kpiSect('Détail des projets Stars','#10B981');
+    let h=kpiStats([{v:stars.length,u:'',k:'Projets Quick wins'},{v:stars.length?Math.max(...stars.map(p=>p.val+p.fais)):0,u:'/40',k:'Meilleur score',c:'#10B981'},{v:stars.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget Quick wins'},{v:Math.round(stars.length/P.length*100),u:'%',k:'Du portefeuille',c:'#2563EB'}]);
+    h+=kpiSect('Détail des projets Quick wins','#10B981');
     h+='<div class="tmo-grid">';
     stars.forEach(p=>{
       const cp=TEAMS[p.n]?.members.find(m=>m.role==='Chef de projet');
       const sc=p.val+p.fais;const scCol=sc>=32?'#10B981':sc>=26?'#2563EB':'#64748B';
-      h+=`<div class="tmo-card"><div class="tmc-top"><div class="tmc-av" style="background:${CAT[p.cat].f}">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div><div style="font-size:18px;font-weight:800;color:${scCol};line-height:1">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/40</span></div></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Valeur</span>${kpiBar(p.val,20,'#3B82F6',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.val}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Faisab.</span>${kpiBar(p.fais,20,'#10B981',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.fais}</span></div></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:8px;border-top:1px solid #E2E8F0"><div style="font-size:9.5px;color:#64748B">${cp?'CP : '+cp.name:'—'}</div>${kpiPill(p.st2,p.st2==='En cours'?'#ECFDF5':'#EFF6FF',p.st2==='En cours'?'#10B981':'#3B82F6')}</div></div>`;
+      h+=`<div class="tmo-card"><div class="tmc-top"><div class="tmc-av" style="background:${CAT[p.cat].f}">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div><div style="font-size:18px;font-weight:800;color:${scCol};line-height:1">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/40</span></div></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Valeur</span>${kpiBar(p.val,20,'#3B82F6',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.val}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Simpl.</span>${kpiBar(p.fais,20,'#10B981',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.fais}</span></div></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:8px;border-top:1px solid #E2E8F0"><div style="font-size:9.5px;color:#64748B">${cp?'CP : '+cp.name:'—'}</div>${kpiPill(p.st2,p.st2==='En cours'?'#ECFDF5':'#EFF6FF',p.st2==='En cours'?'#10B981':'#3B82F6')}</div></div>`;
     });
     h+='</div>';return h;
   }
 
   if(id==='risque'){
-    const risky=[...P].filter(p=>p.fais<10).sort((a,b)=>a.fais-b.fais);
-    let h=kpiStats([{v:risky.length,u:'',k:'Projets à risque',c:'#EF4444'},{v:Math.min(...risky.map(p=>p.fais)),u:'/20',k:'Faisabilité min',c:'#EF4444'},{v:risky.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget exposé',c:'#2563EB'},{v:risky.reduce((s,p)=>s+p.c,0),u:' j/h',k:'Charge à risque'}]);
-    h+=`<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:10px 13px;margin-bottom:12px;font-size:11px;color:#991B1B;display:flex;align-items:center;gap:8px"><i class="ti ti-alert-triangle" style="font-size:14px;color:#EF4444;flex-shrink:0"></i>Ces projets ont une faisabilité inférieure au seuil de 10/20. Des actions correctives sont recommandées.</div>`;
+    const lvlColor={'Critique':'#EF4444','Élevé':'#F59E0B','Modéré':'#3B82F6','Faible':'#10B981'};
+    const topRiskOf=p=>((RISKS[p.n]||[]).slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0]||null);
+    const risky=[...P].filter(p=>(RISKS[p.n]||[]).some(r=>(RISK_ORDER[r.level]||0)>=3)).sort((a,b)=>(RISK_ORDER[(topRiskOf(b)||{}).level]||0)-(RISK_ORDER[(topRiskOf(a)||{}).level]||0));
+    const nCrit=risky.filter(p=>(RISK_ORDER[(topRiskOf(p)||{}).level]||0)===4).length;
+    let h=kpiStats([{v:risky.length,u:'',k:'Projets à risque',c:'#EF4444'},{v:nCrit,u:'',k:'Dont critiques',c:'#EF4444'},{v:risky.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget exposé',c:'#2563EB'},{v:risky.reduce((s,p)=>s+p.c,0),u:' j/h',k:'Charge exposée'}]);
+    h+=`<div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:9px;padding:10px 13px;margin-bottom:12px;font-size:11px;color:#991B1B;display:flex;align-items:center;gap:8px"><i class="ti ti-alert-triangle" style="font-size:14px;color:#EF4444;flex-shrink:0"></i>Projets portant au moins un risque Élevé ou Critique (matrice probabilité × impact). Des actions de mitigation sont recommandées.</div>`;
     h+=kpiSect('Analyse par projet à risque','#EF4444');
     h+='<div class="tmo-grid">';
+    if(!risky.length) h+='<div style="font-size:11px;color:#94A3B8;padding:8px 2px">Aucun projet à risque Élevé ou Critique pour le moment.</div>';
     risky.forEach(p=>{
-      const reco=p.n==='Migration Azure'?'Renfort CloudExperts · plan de rollback':'Renforcer les ressources · revoir le planning';
-      h+=`<div class="tmo-card" style="border-color:#FECACA;background:#FFFBFB"><div class="tmc-top"><div class="tmc-av" style="background:#EF4444">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div>${kpiPill('Risqué','#FEE2E2','#EF4444')}</div><div style="display:flex;flex-direction:column;gap:5px;margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Valeur</span>${kpiBar(p.val,20,'#3B82F6',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.val}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#EF4444;width:42px;flex-shrink:0">Faisab.</span>${kpiBar(p.fais,20,'#EF4444',8)}<span style="font-size:10px;font-weight:700;color:#EF4444;width:20px;text-align:right">${p.fais}</span></div></div><div style="margin-top:9px;padding-top:8px;border-top:1px solid #FECACA;font-size:9.5px;color:#7F1D1D;line-height:1.5"><strong>→</strong> ${reco}</div></div>`;
+      const tr=topRiskOf(p)||{}; const lc=lvlColor[tr.level]||'#EF4444';
+      const mit=tr.mitigation||'Définir un plan de mitigation';
+      h+=`<div class="tmo-card" style="border-color:#FECACA;background:#FFFBFB"><div class="tmc-top"><div class="tmc-av" style="background:${lc}">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div>${kpiPill(tr.level||'Risqué','#FEE2E2',lc)}</div><div style="margin-top:8px;font-size:10px;color:#334155;line-height:1.5"><strong>Risque :</strong> ${tr.risk||'—'}</div><div style="margin-top:6px;padding-top:7px;border-top:1px solid #FECACA;font-size:9.5px;color:#7F1D1D;line-height:1.5"><strong>→</strong> ${mit}</div></div>`;
     });
     h+='</div>';return h;
   }
@@ -996,7 +1003,7 @@ function buildKPIContent(id){
 
   if(id==='score-max'){
     const sorted=[...P].sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));const maxSc=sorted[0].val+sorted[0].fais;
-    let h=kpiStats([{v:maxSc,u:'/40',k:'Meilleur score',c:'#F59E0B'},{v:Math.round(P.reduce((s,p)=>s+(p.val+p.fais),0)/P.length),u:'/40',k:'Score moyen'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Stars ⭐',c:'#10B981'},{v:P.filter(p=>p.q==='reconsider').length,u:'',k:'À reconsidérer',c:'#EF4444'}]);
+    let h=kpiStats([{v:maxSc,u:'/40',k:'Meilleur score',c:'#F59E0B'},{v:Math.round(P.reduce((s,p)=>s+(p.val+p.fais),0)/P.length),u:'/40',k:'Score moyen'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Quick wins ⭐',c:'#10B981'},{v:P.filter(p=>p.q==='reconsider').length,u:'',k:'À éviter',c:'#EF4444'}]);
     h+=kpiSect('Classement complet des 11 projets','#F59E0B');
     h+='<div style="display:flex;flex-direction:column;gap:5px">';
     sorted.forEach((p,i)=>{
@@ -1333,7 +1340,7 @@ function saveNewProject(){
   var npRk=(RISKS_STORE['np']||[]).slice();
   const topRisk=npRk.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
   var g2=function(id){var e=document.getElementById(id);return e?e.value:'';};
-  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',rent:3,mait:3,risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,valeur:+g2('np-valeur')||3,effort:+g2('np-effort')||3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
   scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -1381,14 +1388,27 @@ let P=[
   {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,pctLic:25,pctEsnB:0},
   {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,pctLic:35,pctEsnB:0},
 ];
-/* Priorisation alignée sur le brief : 3 critères cotés /5 (Importance=st, Rentabilité=rent, Maîtrise des risques=mait).
-   Les 2 axes de la matrice en sont dérivés : Valeur=(Importance+Rentabilité)×2 /20 · Faisabilité=Maîtrise×4 /20. */
+/* Matrice de décision Valeur × Effort (matrice Impact/Effort, la référence en gestion de portefeuille).
+   2 critères cotés /5 : Valeur (impact business/stratégique) et Effort (charge/complexité).
+   Axes matrice : X = Valeur (valeur×4, 0-20) · Y = Simplicité = effort faible en haut ((6-effort)×4, 0-20).
+   Quadrants : Quick win (valeur haute + effort faible), Majeur (valeur haute + effort élevé),
+   Secondaire (valeur faible + effort faible), À éviter (valeur faible + effort élevé).
+   Score de priorité = Valeur + Simplicité (/40) : privilégie la forte valeur au moindre effort. */
 function scoreP(p){
-  p.st  =Math.min(5,Math.max(1,Math.round(+p.st||3)));
-  p.rent=Math.min(5,Math.max(1,Math.round(+p.rent||3)));
-  p.mait=Math.min(5,Math.max(1,Math.round(+p.mait||3)));
-  p.val =Math.min(20,Math.max(0,(p.st+p.rent)*2));
-  p.fais=Math.min(20,Math.max(0,p.mait*4));
+  /* rétro-compatibilité : si valeur/effort absents, on les reconstruit d'abord des axes persistés
+     (val/fais, colonnes du Sheet), sinon des anciens critères Importance/Rentabilité/Maîtrise. */
+  if(p.valeur==null||p.valeur===''){
+    if(+p.val>0) p.valeur=Math.round(p.val/4);
+    else if(p.st!=null||p.rent!=null) p.valeur=Math.round(((+p.st||3)+(+p.rent||3))/2);
+  }
+  if(p.effort==null||p.effort===''){
+    if(+p.fais>0) p.effort=6-Math.round(p.fais/4);
+    else if(p.mait!=null) p.effort=6-Math.min(5,Math.max(1,Math.round(+p.mait||3)));
+  }
+  p.valeur=Math.min(5,Math.max(1,Math.round(+p.valeur||3)));
+  p.effort=Math.min(5,Math.max(1,Math.round(+p.effort||3)));
+  p.val =p.valeur*4;         /* X : Valeur / impact (4-20) */
+  p.fais=(6-p.effort)*4;     /* Y : Simplicité — effort faible = haut (4-20) */
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
   return p;
 }
@@ -1529,9 +1549,11 @@ let TEAMS={
   ]},
 };
 
-const qBg   ={stars:'#ECFDF5',majeurs:'#EFF6FF',quickwins:'#EFF6FF',reconsider:'#FEF2F2'};
-const qColor ={stars:'#10B981',majeurs:'#2563EB',quickwins:'#3B82F6',reconsider:'#EF4444'};
-const qLabel ={stars:'⭐ Stars',majeurs:'⚠️ Majeur',quickwins:'✅ Quick',reconsider:'❌ Reconsid.'};
+/* Quadrants matrice Valeur × Effort — clés internes conservées :
+   stars=Quick win · majeurs=Majeur · quickwins=Secondaire · reconsider=À éviter */
+const qBg   ={stars:'#ECFDF5',majeurs:'#EFF6FF',quickwins:'#F8FAFC',reconsider:'#FEF2F2'};
+const qColor ={stars:'#10B981',majeurs:'#2563EB',quickwins:'#94A3B8',reconsider:'#EF4444'};
+const qLabel ={stars:'⭐ Quick win',majeurs:'⚙️ Majeur',quickwins:'· Secondaire',reconsider:'✕ À éviter'};
 let totB=P.reduce((s,p)=>s+p.b,0);
 let totC=P.reduce((s,p)=>s+p.c,0);
 let actif=P.filter(p=>p.st2==='En cours').length;
@@ -1573,13 +1595,13 @@ const totBudgetESN=Math.round(P.filter(p=>TEAMS[p.n]&&TEAMS[p.n].members.some(m=
 },0));
 const scoreMax=Math.max(...P.map(p=>p.val+p.fais));
 const projStars=P.filter(p=>p.q==='stars').length;
-const risqueEleve=P.filter(p=>p.fais<10).length;
+const risqueEleve=P.filter(p=>(RISKS[p.n]||[]).some(r=>(RISK_ORDER[r.level]||0)>=3)).length;
 
 const KPIS=[
   {v:P.length,     u:'',    id:'nb-projets', k:'Projets au portefeuille', d:'0s',   acc:0, icon:'ti-briefcase',     sub:actif+' en cours · '+planifie+' planifiés'},
   {v:totB,         u:' K€', id:'budget', k:'Budget total engagé',     d:'.06s', acc:0, icon:'ti-coin',           sub:'Coût prévisionnel année N'},
   {v:totC,         u:' j/h',id:'charge', k:'Charge totale estimée',   d:'.12s', acc:0, icon:'ti-clock',          sub:'Dont '+totBudgetESN+' K€ externalisés ESN'},
-  {v:risqueEleve,  u:'',    id:'risque', k:'Projets à risque élevé',  d:'.18s', acc:risqueEleve>0?2:0, icon:'ti-alert-triangle', sub:'Faisabilité < 10/20'},
+  {v:risqueEleve,  u:'',    id:'risque', k:'Projets à risque élevé',  d:'.18s', acc:risqueEleve>0?2:0, icon:'ti-alert-triangle', sub:'Risque Élevé ou Critique (matrice 5×5)'},
 ];
 document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
   <div class="hkpi" style="animation-delay:${k.d};cursor:pointer" onclick="openKPIModal('${k.id}')">
@@ -1610,8 +1632,8 @@ function dashMini(label,val,unit){
 }
 function renderDash(){
   var body=document.getElementById('dash-body'); if(!body)return;
-  var qCol={stars:'#10B981',quickwins:'#3B82F6',majeurs:'#2563EB',reconsider:'#EF4444'};
-  var qLab={stars:'Stars',quickwins:'Quick wins',majeurs:'Majeurs',reconsider:'À revoir'};
+  var qCol={stars:'#10B981',quickwins:'#94A3B8',majeurs:'#2563EB',reconsider:'#EF4444'};
+  var qLab={stars:'Quick wins',quickwins:'Secondaires',majeurs:'Majeurs',reconsider:'À éviter'};
   var totBud=P.reduce(function(s,p){return s+(+p.b||0);},0), totCh=P.reduce(function(s,p){return s+(+p.c||0);},0);
   var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'
     + dashStat('Portefeuilles',PORTFOLIOS.length,'','ti-folders','#2563EB')
@@ -1664,8 +1686,8 @@ function openPortfolioDetail(name){
   var over=g.filter(function(p){return dl!=null&&!projectFits(p,dl);}).length;
   var avg=g.length?Math.round(g.reduce(function(s,p){return s+(p.val+p.fais);},0)/g.length):0;
   var nRisks=g.reduce(function(s,p){return s+((RISKS[p.n]||[]).length);},0);
-  var qCol={stars:'#10B981',quickwins:'#3B82F6',majeurs:'#2563EB',reconsider:'#EF4444'};
-  var qLab={stars:'Stars',quickwins:'Quick wins',majeurs:'Majeurs',reconsider:'À revoir'};
+  var qCol={stars:'#10B981',quickwins:'#94A3B8',majeurs:'#2563EB',reconsider:'#EF4444'};
+  var qLab={stars:'Quick wins',quickwins:'Secondaires',majeurs:'Majeurs',reconsider:'À éviter'};
   var qc={stars:0,quickwins:0,majeurs:0,reconsider:0}; g.forEach(function(p){qc[p.q]=(qc[p.q]||0)+1;});
   document.getElementById('pfd-icon').style.background=col+'1A';
   document.getElementById('pfd-icon').style.color=col;
@@ -1786,7 +1808,7 @@ function renderDetails(name){
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 16px">'
     + kv('Catégorie',esc(p.cat)) + kv('Portefeuille',esc(p.pf||'—')) + kv('Statut',esc(p.st2||'—')) + kv('Méthodologie',esc(p.methodo||'—'))
     + kv('Budget',p.b+' K€') + kv('Charge',p.c+' j/h') + kv('Dates',esc(p.dt||'—')) + kv('Durée',p.d+' mois')
-    + kv('Importance',p.st+'/5') + kv('Rentabilité',p.rent+'/5') + kv('Maîtrise risques',p.mait+'/5') + kv('Score',(p.val+p.fais)+'/40')
+    + kv('Valeur',p.valeur+'/5') + kv('Effort',p.effort+'/5') + kv('Quadrant',qLabel[p.q]) + kv('Score',(p.val+p.fais)+'/40')
     + kv('Part licence',(p.pctLic||0)+'%') + kv('Part ESN',(p.pctEsnB||0)+'%') + kv('Sponsor',esc(p.sponsor||'—'))
     +'</div></div>';
   h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Description / Objectifs</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.note)||'<span style="color:#CBD5E1">—</span>')+'</div>';
@@ -1863,7 +1885,7 @@ var BASE_YEAR=2026; /* Avril N */
 function idxToDate(i){ var m=3+(+i||0); var y=BASE_YEAR+Math.floor(m/12); var mm=((m%12)+12)%12+1; return y+'-'+('0'+mm).slice(-2)+'-01'; }
 function dateToIdx(str){ if(!str)return null; var pr=String(str).split('-'); if(pr.length<2)return null; var y=+pr[0],mo=+pr[1]; if(!y||!mo)return null; return (y-BASE_YEAR)*12+(mo-1-3); }
 function renderG(f='all'){
-  let data=f==='s5'?P.filter(p=>p.st===5):f==='infra'?P.filter(p=>p.cat==='Socle IT'||p.cat==='DevOps'):f==='active'?P.filter(p=>p.st2==='En cours'):P;
+  let data=f==='s5'?P.filter(p=>p.valeur===5):f==='infra'?P.filter(p=>p.cat==='Socle IT'||p.cat==='DevOps'):f==='active'?P.filter(p=>p.st2==='En cours'):P;
   if(GANTT_PF){ data=data.filter(p=>(p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:''))===GANTT_PF); }
   const N=ganttMonths(); const gridCss='repeat('+N+',1fr)';
   const mh=document.getElementById('mhdr'); mh.style.gridTemplateColumns=gridCss;
@@ -1923,9 +1945,9 @@ function attachBars(){
           <div><div class="dp-k">Méthodologie</div><div class="dp-v">${p.methodo||'—'}</div></div>
           <div><div class="dp-k">Statut</div><div class="dp-v">${p.st2||'—'}</div></div>
           <div><div class="dp-k">Portefeuille</div><div class="dp-v">${p.pf||'—'}</div></div>
-          <div><div class="dp-k">Importance</div><div class="dp-v">${p.st}/5</div></div>
-          <div><div class="dp-k">Rentabilité</div><div class="dp-v">${p.rent}/5</div></div>
-          <div><div class="dp-k">Maîtrise risques</div><div class="dp-v">${p.mait}/5</div></div>
+          <div><div class="dp-k">Valeur</div><div class="dp-v">${p.valeur}/5</div></div>
+          <div><div class="dp-k">Effort</div><div class="dp-v">${p.effort}/5</div></div>
+          <div><div class="dp-k">Décision</div><div class="dp-v">${qLabel[p.q]}</div></div>
         </div>`;
     });
     b.addEventListener('mouseleave',()=>{const dp=document.getElementById('gdp');dp.className='gdp';dp.innerHTML='<div class="dp-hint"><i class="ti ti-hand-finger" style="font-size:16px"></i>Survolez une barre pour afficher les détails</div>';});
@@ -2013,12 +2035,12 @@ function resetSimulation(){
 /* ── EXPORT / IMPORT CSV du portefeuille ── */
 function depsToStr(deps){ return (deps||[]).map(function(d){ return (typeof d==='string')?(d+':FS:0'):((d.dep||'')+':'+(d.type||'FS')+':'+(+d.lag||0)); }).join(' | '); }
 function strToDeps(s){ s=String(s||'').trim(); if(!s) return []; return s.split(/\s*\|\s*/).filter(Boolean).map(function(tok){ var pr=tok.split(':'); return {dep:(pr[0]||'').trim(), type:(pr[1]||'FS').trim().toUpperCase(), lag:(+pr[2]||0)}; }); }
-var CSV_COLS=['Nom','Categorie','MoisDebut','DureeMois','BudgetKE','ChargeJH','ImportanceStrat','Rentabilite','MaitriseRisques','Dates','Note','Statut','Selectionne','Sponsor','Methodologie','ChefProjet','Dependances','Portefeuille','PctLicence','PctEsnBudget'];
+var CSV_COLS=['Nom','Categorie','MoisDebut','DureeMois','BudgetKE','ChargeJH','Valeur','Effort','Dates','Note','Statut','Selectionne','Sponsor','Methodologie','ChefProjet','Dependances','Portefeuille','PctLicence','PctEsnBudget'];
 function csvEsc(v){ v=(v==null)?'':String(v); return /[",\n;]/.test(v)?('"'+v.replace(/"/g,'""')+'"'):v; }
 function exportCSV(){
   var rows=[CSV_COLS.join(',')];
   P.forEach(function(p){
-    rows.push([p.n,p.cat,p.s,p.d,p.b,p.c,p.st,p.rent,p.mait,p.dt,p.note,p.st2,(p.sel?1:0),p.sponsor||'',p.methodo||'',p.cp||'',depsToStr(p.deps),p.pf||'',p.pctLic||0,p.pctEsnB||0].map(csvEsc).join(','));
+    rows.push([p.n,p.cat,p.s,p.d,p.b,p.c,p.valeur,p.effort,p.dt,p.note,p.st2,(p.sel?1:0),p.sponsor||'',p.methodo||'',p.cp||'',depsToStr(p.deps),p.pf||'',p.pctLic||0,p.pctEsnB||0].map(csvEsc).join(','));
   });
   var blob=new Blob(['﻿'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   var url=URL.createObjectURL(blob), a=document.createElement('a');
@@ -2050,8 +2072,8 @@ function importCSV(ev){
         var r=rows[i]; var get=function(name){ var k=ix(name); return k>=0?(r[k]||''):''; };
         var nm=get('Nom').trim(); if(!nm) continue;
         var p={ n:nm, cat:get('Categorie').trim()||'Socle IT', s:+get('MoisDebut')||0, d:+get('DureeMois')||1,
-          b:+get('BudgetKE')||0, c:+get('ChargeJH')||0, st:+get('ImportanceStrat')||3,
-          rent:+get('Rentabilite')||3, mait:+get('MaitriseRisques')||3,
+          b:+get('BudgetKE')||0, c:+get('ChargeJH')||0,
+          valeur:+get('Valeur')||+get('ImportanceStrat')||3, effort:+get('Effort')||(get('MaitriseRisques')?6-(+get('MaitriseRisques')||3):3),
           dt:get('Dates').trim(), note:get('Note').trim(), st2:get('Statut').trim()||'Planifié',
           sel:(get('Selectionne').trim()==='1'||get('Selectionne').toLowerCase()==='oui')?1:0,
           sponsor:get('Sponsor').trim(), methodo:get('Methodologie').trim(), cp:get('ChefProjet').trim(),
@@ -2105,19 +2127,18 @@ function initMatrix(){
     const{ctx,scales:{x,y}}=chart;
     const mx=x.getPixelForValue(10),my=y.getPixelForValue(10);
     const{left,right,top,bottom}={left:x.left,right:x.right,top:y.top,bottom:y.bottom};
-    [[mx,top,right-mx,my-top,'rgba(16,185,129,.06)'],[left,top,mx-left,my-top,'rgba(59,130,246,.05)'],
-     [left,my,mx-left,bottom-my,'rgba(239,68,68,.04)'],[mx,my,right-mx,bottom-my,'rgba(37,99,235,.06)']
+    [[mx,top,right-mx,my-top,'rgba(16,185,129,.07)'],[left,top,mx-left,my-top,'rgba(100,116,139,.05)'],
+     [left,my,mx-left,bottom-my,'rgba(239,68,68,.05)'],[mx,my,right-mx,bottom-my,'rgba(37,99,235,.06)']
     ].forEach(([x,y,w,h,c])=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);});
     ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
     ctx.beginPath();ctx.moveTo(mx,top);ctx.lineTo(mx,bottom);ctx.stroke();
     ctx.beginPath();ctx.moveTo(left,my);ctx.lineTo(right,my);ctx.stroke();
     ctx.setLineDash([]);
     ctx.font='700 8.5px system-ui';ctx.textAlign='center';
-    ['rgba(16,185,129,.45)','rgba(59,130,246,.4)','rgba(37,99,235,.45)','rgba(239,68,68,.4)'].forEach((c,i)=>{ctx.fillStyle=c;});
-    ctx.fillStyle='rgba(16,185,129,.45)';ctx.fillText('⭐ STARS',(mx+right)/2,top+14);
-    ctx.fillStyle='rgba(59,130,246,.4)'; ctx.fillText('✅ QUICK WINS',(left+mx)/2,top+14);
-    ctx.fillStyle='rgba(37,99,235,.45)';ctx.fillText('⚠️ MAJEURS',(mx+right)/2,bottom-6);
-    ctx.fillStyle='rgba(239,68,68,.4)';  ctx.fillText('❌ RECONSIDÉRER',(left+mx)/2,bottom-6);
+    ctx.fillStyle='rgba(16,185,129,.55)';ctx.fillText('⭐ QUICK WINS',(mx+right)/2,top+14);
+    ctx.fillStyle='rgba(100,116,139,.55)'; ctx.fillText('SECONDAIRES',(left+mx)/2,top+14);
+    ctx.fillStyle='rgba(37,99,235,.55)';ctx.fillText('⚙️ PROJETS MAJEURS',(mx+right)/2,bottom-6);
+    ctx.fillStyle='rgba(239,68,68,.5)';  ctx.fillText('✕ À ÉVITER',(left+mx)/2,bottom-6);
   }};
   const labelPlugin={id:'blabels',afterDatasetsDraw(chart){
     const ctx=chart.ctx; ctx.save(); ctx.font='700 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
@@ -2126,14 +2147,14 @@ function initMatrix(){
   }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
+    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,valeur:p.valeur,effort:p.effort,vx:p.val,vy:p.fais,qL:qLabel[p.q]}],
       backgroundColor:qColor[p.q]+'CC',borderColor:p.sel?'#1D4ED8':'#fff',borderWidth:p.sel?3:2,hoverBackgroundColor:qColor[p.q],hoverBorderColor:'#1D4ED8',hoverBorderWidth:2}))},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:14,top:8,left:4,bottom:4}},
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,displayColors:false,
-        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Importance : ${d.st}/5`,` Rentabilité : ${d.rent}/5`,` Maîtrise risques : ${d.mait}/5`,` → Valeur : ${d.vx}/20 · Faisabilité : ${d.vy}/20`,` Budget : ${d.budget}K€`];}}}},
+        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Valeur / impact : ${d.valeur}/5`,` Effort / complexité : ${d.effort}/5`,` → ${d.qL} · score ${d.vx+d.vy}/40`,` Budget : ${d.budget}K€`];}}}},
       scales:{
-        x:{min:-0.8,max:20.8,title:{display:true,text:'Valeur stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}},
-        y:{min:-0.8,max:20.8,title:{display:true,text:'Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}}
+        x:{min:-0.8,max:20.8,title:{display:true,text:'Valeur / impact →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}},
+        y:{min:-0.8,max:20.8,title:{display:true,text:'Simplicité (effort faible) →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}}
       }},plugins:[qPlugin,labelPlugin]
   });
   window.matrixChart=chart;
@@ -2536,8 +2557,8 @@ function openProjectDetail(name){
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Part licence (% budget)','<input type="number" id="pd-lic" min="0" max="100" value="'+(+p.pctLic||0)+'">')+fld('Part ESN (% budget)','<input type="number" id="pd-esn" min="0" max="100" value="'+(+p.pctEsnB||0)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Début','<input type="date" id="pd-startdate" value="'+idxToDate(+p.s||0)+'">')+fld('Fin','<input type="date" id="pd-enddate" value="'+idxToDate((+p.s||0)+(+p.d||1)-1)+'">')+'</div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Importance /5','<select id="pd-strat">'+opt(['1','2','3','4','5'],p.st)+'</select>')+fld('Rentabilité /5','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent)+'</select>')+fld('Maîtrise risques /5','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait)+'</select>')+'</div>';
-  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Critères cotés du brief. Position matrice : Valeur '+((p.st+p.rent)*2)+'/20 · Faisabilité '+(p.mait*4)+'/20.</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur / impact (/5)','<select id="pd-valeur">'+opt(['1','2','3','4','5'],p.valeur)+'</select>')+fld('Effort / complexité (/5)','<select id="pd-effort">'+opt(['1','2','3','4','5'],p.effort)+'</select>')+'</div>';
+  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision Valeur × Effort — quadrant actuel : <strong>'+qLabel[p.q]+'</strong> · score priorité '+(p.val+p.fais)+'/40.</div>';
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-file-text" style="font-size:12px;color:#2563EB"></i>Description &amp; cahier des charges</div>';
   h+='<div class="fld" style="margin-bottom:8px"><label>Description / Objectifs</label><textarea id="pd-desc" style="min-height:62px">'+esc(p.note)+'</textarea></div>';
@@ -2566,7 +2587,7 @@ function saveProjectDetail(){
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0;
   p.note=g('pd-desc'); p.cdc=g('pd-cdc'); p.methodo=g('pd-meth')||p.methodo; p.sponsor=g('pd-sponsor');
   p.pctLic=Math.min(100,Math.max(0,+g('pd-lic')||0)); p.pctEsnB=Math.min(100,Math.max(0,+g('pd-esn')||0));
-  p.st=+g('pd-strat')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; scoreP(p);
+  p.valeur=+g('pd-valeur')||p.valeur; p.effort=+g('pd-effort')||p.effort; scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
   if(!MV[p.n] || MV[p.n].length!==p.d){ var tot=p.c||0, bs=Math.floor(tot/p.d), rm=tot-bs*p.d; MV[p.n]=Array.from({length:p.d},function(_,i){return bs+(i<rm?1:0);}); }
   var manualRisks=(RISKS_STORE['pd']||[]).slice(); RISKS[p.n]=manualRisks;
@@ -2641,15 +2662,10 @@ function recalc(){
 function applyData(d){
   if(d && Array.isArray(d.projects) && d.projects.length){
     P = d.projects.map(p=>{
-      p.s=+p.s; p.d=+p.d; p.b=+p.b; p.c=+p.c; p.st=+p.st;
+      p.s=+p.s; p.d=+p.d; p.b=+p.b; p.c=+p.c;
       p.pctLic=+p.pctLic||0; p.pctEsnB=+p.pctEsnB||0; ensureCat(p.cat);
-      // Si le Sheet fournit Rentabilité/Maîtrise (>0), on dérive val/fais des 3 critères du brief ;
-      // sinon (ancien Sheet) on conserve les ValeurStrat/Faisabilite existantes.
-      if((+p.rent>0)&&(+p.mait>0)){ scoreP(p); }
-      else {
-        p.val=+p.val; p.fais=+p.fais;
-        p.q = p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
-      }
+      // scoreP gère Valeur/Effort et, à défaut, dérive des anciens critères (Importance/Rentabilité/Maîtrise).
+      scoreP(p);
       if((!p.deps||!p.deps.length)&&DEP_SEED[p.n]) p.deps=DEP_SEED[p.n].map(function(x){return {dep:x.dep,type:x.type,lag:x.lag};});
       if(!p.deps)p.deps=[];
       return p;
@@ -2750,7 +2766,7 @@ function renderRisques(){
         list+='<div style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:#475569;line-height:1.5;padding:4px 0;border-top:1px solid #F1F5F9"><span style="width:7px;height:7px;border-radius:50%;background:'+lc.c+';flex-shrink:0;margin-top:4px"></span><div style="flex:1"><strong style="color:#334155">'+r.risk+'</strong>'+mit+'</div><span style="font-size:9px;font-weight:700;color:'+lc.c+';flex-shrink:0">'+(r.level||'-')+'</span></div>';
       });
     } else { list='<div style="font-size:11px;color:#CBD5E1;padding:4px 0">Aucun risque renseigné</div>'; }
-    out+='<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+catf+'"></div><div style="font-size:12.5px;font-weight:700;color:#0F172A">'+p.n+'</div><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:10px;background:'+topLv.bg+';color:'+topLv.c+'">'+rs.length+' risque'+(rs.length>1?'s':'')+(top?' · '+top.level:'')+'</span><span style="margin-left:auto;font-size:10px;color:#94A3B8">Faisabilité '+p.fais+'/20</span></div>'+list+'</div>';
+    out+='<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+catf+'"></div><div style="font-size:12.5px;font-weight:700;color:#0F172A">'+p.n+'</div><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:10px;background:'+topLv.bg+';color:'+topLv.c+'">'+rs.length+' risque'+(rs.length>1?'s':'')+(top?' · '+top.level:'')+'</span><span style="margin-left:auto;font-size:10px;color:#94A3B8">Effort '+p.effort+'/5</span></div>'+list+'</div>';
   });
   // ── Matrice des risques 5×5 (Probabilité × Impact) ──
   function sevCol(s){ return s>=15?'#EF4444':s>=10?'#F97316':s>=5?'#F59E0B':'#10B981'; }
