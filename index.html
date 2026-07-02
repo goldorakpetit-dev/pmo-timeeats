@@ -549,7 +549,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril 2026 → Janvier 2027</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
-      <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#334155;font-weight:600;cursor:pointer;padding:0 4px"><input type="checkbox" id="gantt-group" checked onchange="toggleGanttGroup(this.checked)" style="width:auto;margin:0;cursor:pointer">Grouper par portefeuille</label>
+      <select id="gantt-pf" title="Portefeuille(s) affiché(s)" onchange="setGanttPf(this.value)" style="font-size:11px;padding:7px 9px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Afficher : tous les portefeuilles</option></select>
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#334155;font-weight:600;cursor:pointer;padding:0 4px"><input type="checkbox" id="gantt-group" checked onchange="toggleGanttGroup(this.checked)" style="width:auto;margin:0;cursor:pointer">Grouper</label>
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
@@ -1849,6 +1850,7 @@ function idxToDate(i){ var m=3+(+i||0); var y=BASE_YEAR+Math.floor(m/12); var mm
 function dateToIdx(str){ if(!str)return null; var pr=String(str).split('-'); if(pr.length<2)return null; var y=+pr[0],mo=+pr[1]; if(!y||!mo)return null; return (y-BASE_YEAR)*12+(mo-1-3); }
 function renderG(f='all'){
   let data=f==='s5'?P.filter(p=>p.st===5):f==='infra'?P.filter(p=>p.cat==='Socle IT'||p.cat==='DevOps'):f==='active'?P.filter(p=>p.st2==='En cours'):P;
+  if(GANTT_PF){ data=data.filter(p=>(p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:''))===GANTT_PF); }
   const N=ganttMonths(); const gridCss='repeat('+N+',1fr)';
   const mh=document.getElementById('mhdr'); mh.style.gridTemplateColumns=gridCss;
   mh.innerHTML=Array.from({length:N},(_,i)=>{var yt=yearTag(i);var showY=(i===0||yt!==yearTag(i-1));return `<div class="gm${i===0?' cur':''}" style="position:relative">${i===0?'<span class="now-pin">maintenant</span>':''}<div style="font-size:8px;font-weight:700;color:#2563EB;height:10px;line-height:10px">${showY?'année '+yt:''}</div>${monLabel(i)}</div>`;}).join('');
@@ -1890,6 +1892,8 @@ function renderG(f='all'){
   document.getElementById('gleg').innerHTML=cats.map(cat=>`<div class="gli"><div class="gld" style="background:${CAT[cat].f}"></div><span>${cat}</span></div>`).join('')+(data.some(p=>p.sel)?`<div class="gli"><div style="width:7px;height:7px;border-radius:50%;outline:2.5px solid #2563EB;outline-offset:1px;flex-shrink:0"></div><span>Projet sélectionné</span></div>`:'');
   var simSel=document.getElementById('sim-pf');
   if(simSel){ var keep=simSel.value; simSel.innerHTML='<option value="">Tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===keep?' selected':'')+'>'+pf.name+'</option>';}).join(''); }
+  var dispSel=document.getElementById('gantt-pf');
+  if(dispSel){ dispSel.innerHTML='<option value="">Afficher : tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===GANTT_PF?' selected':'')+'>Afficher : '+pf.name+'</option>';}).join(''); }
   attachBars();
 }
 function attachBars(){
@@ -1916,7 +1920,9 @@ function attachBars(){
 function fg(f,el){document.querySelectorAll('.gfi').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderG(f);}
 var GANTT_WINDOW=10; /* fenêtre cible : 10 mois (Avr → Jan) */
 var GANTT_GROUP=true; /* regrouper le Gantt par portefeuille */
+var GANTT_PF='';       /* portefeuille affiché ('' = tous) */
 function toggleGanttGroup(on){ GANTT_GROUP=!!on; renderG(); }
+function setGanttPf(v){ GANTT_PF=(v&&pfByName(v))?v:''; renderG(); }
 var SIM={active:false, backup:null, changed:[], tension:false};
 
 /* Calcule les dates au plus tôt selon les dépendances typées, bornées à l'échéance.
