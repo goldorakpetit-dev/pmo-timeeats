@@ -410,6 +410,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i>Budget</div>
     <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i>Agenda</div>
     <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i>Risques</div>
+    <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i>Clôture &amp; REX</div>
     <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i>RH</div>
     <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i>Liste</div>
   </div>
@@ -588,6 +589,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <span style="display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:#475569"><span style="width:9px;height:9px;border-radius:50%;background:#2563EB"></span>Majeurs — à cadrer</span>
         <span style="display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:#475569"><span style="width:9px;height:9px;border-radius:50%;background:#EF4444"></span>À reconsidérer</span>
       </div>
+      <div id="matrix-proj-legend" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px 16px;margin-top:14px;padding-top:12px;border-top:1px solid #F1F5F9"></div>
     </div>
   </div>
 </div>
@@ -673,6 +675,14 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
     <div class="ab-l"><div class="ab-title">Risques projets</div><div class="ab-bc"><div class="ab-dot"></div>Niveau · description · plan de mitigation — source : Google Sheet</div></div>
   </div>
   <div class="ct"><div id="risk-list"></div></div>
+</div>
+
+<!-- PAGE CLÔTURE & REX -->
+<div id="p-rex" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Clôture &amp; capitalisation</div><div class="ab-bc"><div class="ab-dot"></div>Documents de clôture · PV de recette · retour d'expérience (REX)</div></div>
+  </div>
+  <div class="ct"><div id="rex-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
 </div>
 
 <!-- PAGE RH -->
@@ -1543,6 +1553,7 @@ function goPage(id,el){
   if(id==='rh')renderRH();
   if(id==='dash')renderDash();
   if(id==='budget')renderBudget();
+  if(id==='rex')renderRex();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -1759,6 +1770,66 @@ function renderBudget(){
     });
   });
   h+='<div style="display:flex;align-items:center;font-size:11.5px;font-weight:800;color:#0F172A;padding:9px 4px;border-top:2px solid #E2E8F0;margin-top:2px"><div style="flex:2">Total général</div><div style="flex:1.2"></div><div style="width:66px;text-align:right">'+totB+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+totLic+' K€</div><div style="width:70px;text-align:right;color:#EC4899">'+totEsn+' K€</div><div style="width:60px;text-align:right">'+totC+' j/h</div></div></div>';
+  body.innerHTML=h;
+}
+
+/* ── CLÔTURE & REX ── */
+var REX_DATA={};        /* projet -> {ecarts,diff,bonnes,lecons,date} */
+var REX_SEL='';
+function rexSelect(v){ REX_SEL=v; renderRex(); }
+function saveRex(){
+  var proj=document.getElementById('rex-proj')?document.getElementById('rex-proj').value:REX_SEL;
+  if(!proj){ toast('Choisis un projet'); return; }
+  var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+  var rec={ecarts:g('rex-ecarts'),diff:g('rex-diff'),bonnes:g('rex-bonnes'),lecons:g('rex-lecons'),date:new Date().toISOString().slice(0,10)};
+  REX_DATA[proj]=rec; REX_SEL=proj;
+  apiPost({action:'saveRex', rex:{project:proj, ecarts:rec.ecarts, diff:rec.diff, bonnes:rec.bonnes, lecons:rec.lecons, date:rec.date}});
+  renderRex();
+  toast('✓ REX enregistré pour « '+proj+' »');
+}
+function renderRex(){
+  var body=document.getElementById('rex-body'); if(!body)return;
+  if(!REX_SEL && P.length) REX_SEL=P[0].n;
+  var cur=REX_DATA[REX_SEL]||{ecarts:'',diff:'',bonnes:'',lecons:'',date:''};
+  var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+  var ta=function(id,ph,val){return '<textarea id="'+id+'" placeholder="'+ph+'" style="width:100%;min-height:58px;padding:8px 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:11.5px;font-family:inherit;resize:vertical;line-height:1.5">'+esc(val)+'</textarea>';};
+  var opts=P.map(function(p){return '<option value="'+esc(p.n)+'"'+(p.n===REX_SEL?' selected':'')+'>'+esc(p.n)+'</option>';}).join('');
+  // Carte REX
+  var h='<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-bulb" style="color:#F59E0B;margin-right:6px"></i>Retour d\'expérience (REX)</div><select id="rex-proj" onchange="rexSelect(this.value)" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;font-family:inherit;cursor:pointer">'+opts+'</select>'+(cur.date?'<span style="font-size:10px;color:#94A3B8">dernière saisie : '+cur.date+'</span>':'')+'</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
+  h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Écarts (coût / délai / qualité)</div>'+ta('rex-ecarts','Ex. reprise de données sous-estimée : +15 j/h, +2 semaines',cur.ecarts)+'</div>';
+  h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Difficultés rencontrées</div>'+ta('rex-diff','Ex. disponibilité tardive des utilisateurs métier pour la recette',cur.diff)+'</div>';
+  h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Bonnes pratiques</div>'+ta('rex-bonnes','Ex. POC avant contractualisation ESN : bon choix',cur.bonnes)+'</div>';
+  h+='<div><div style="font-size:10.5px;font-weight:700;color:#475569;margin-bottom:4px">Leçons apprises (réutilisables)</div>'+ta('rex-lecons','Ex. prévoir +20% de charge sur toute reprise de données',cur.lecons)+'</div>';
+  h+='</div><div class="ma2" style="margin-top:12px"><button class="btn btn-acc" onclick="saveRex()"><i class="ti ti-device-floppy"></i>Enregistrer le REX</button></div></div>';
+  // Projets capitalisés
+  var caps=Object.keys(REX_DATA).filter(function(k){var r=REX_DATA[k];return r&&(r.ecarts||r.diff||r.bonnes||r.lecons);});
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px">Projets capitalisés <span style="font-size:10px;font-weight:600;color:#94A3B8">('+caps.length+')</span></div>';
+  if(!caps.length){ h+='<div style="font-size:11px;color:#CBD5E1">Aucun REX saisi pour l\'instant.</div>'; }
+  caps.forEach(function(k){ var r=REX_DATA[k]; h+='<div style="border-top:1px solid #F1F5F9;padding:8px 0"><div style="font-size:12px;font-weight:700;color:#0F172A;margin-bottom:3px">'+esc(k)+' <span style="font-size:9px;color:#94A3B8;font-weight:500">'+(r.date||'')+'</span></div>'+(r.lecons?'<div style="font-size:11px;color:#475569;line-height:1.5"><strong style="color:#10B981">Leçon :</strong> '+esc(r.lecons)+'</div>':'')+(r.ecarts?'<div style="font-size:10.5px;color:#94A3B8;line-height:1.5">Écarts : '+esc(r.ecarts)+'</div>':'')+'</div>'; });
+  h+='</div>';
+  // Documents de clôture (référence)
+  var docs=[['PV de recette','Interne + ESN','Acceptation du livrable conforme au CDC ; déclenche le transfert de responsabilité et le solde.'],
+    ['PV de réception définitive','ESN','Clôt la période de garantie / réserves ; libère la retenue de garantie.'],
+    ['Procès-verbal de fin de projet','Interne','Acte officiel de clôture validé par le sponsor et le comité de portefeuille.'],
+    ['Bilan financier de clôture','Interne','Compare l\'engagé au budget, solde les commandes, restitue le reste à engager.'],
+    ['Attestation de transfert en exploitation','Interne','Transfère la responsabilité vers l\'exploitation / le support.'],
+    ['Clôture contractuelle ESN (DGD)','ESN','Décompte général définitif ; clôt juridiquement et financièrement le marché.'],
+    ['PV de réversibilité / transfert de connaissances','ESN','Garantit l\'autonomie après le départ du prestataire (doc, accès, compétences).']];
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px"><i class="ti ti-file-certificate" style="color:#2563EB;margin-right:6px"></i>Documents contractuels de clôture</div>';
+  docs.forEach(function(d){ h+='<div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid #F1F5F9;padding:7px 0;font-size:11.5px"><div style="flex:1.4;font-weight:700;color:#334155">'+d[0]+'</div><div style="width:90px;flex-shrink:0"><span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:#EFF6FF;color:#2563EB">'+d[1]+'</span></div><div style="flex:2.4;color:#64748B;line-height:1.5">'+d[2]+'</div></div>'; });
+  h+='</div>';
+  // Template PV de recette
+  var pvr=[['En-tête','Projet, version du livrable, date, lieu, participants (MOA, MOE, ESN)'],
+    ['Objet & périmètre recetté','Référence au CDC et au plan de test, périmètre couvert'],
+    ['Résultats des tests','Synthèse par scénario : conforme / non conforme, taux de réussite'],
+    ['Réserves & anomalies','Anomalies par criticité, délai de levée et responsable'],
+    ['Décision','Recette prononcée / prononcée avec réserves / refusée'],
+    ['Engagements & suite','Plan de levée des réserves, date de réception définitive visée'],
+    ['Signatures','MOA, MOE, prestataire — avec dates']];
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:10px"><i class="ti ti-clipboard-check" style="color:#10B981;margin-right:6px"></i>Template — PV de recette</div>';
+  pvr.forEach(function(r){ h+='<div style="display:flex;gap:10px;border-top:1px solid #F1F5F9;padding:7px 0;font-size:11.5px"><div style="width:170px;flex-shrink:0;font-weight:700;color:#334155">'+r[0]+'</div><div style="flex:1;color:#64748B;line-height:1.5">'+r[1]+'</div></div>'; });
+  h+='</div>';
   body.innerHTML=h;
 }
 
@@ -2012,9 +2083,14 @@ function initMatrix(){
     ctx.fillStyle='rgba(37,99,235,.45)';ctx.fillText('⚠️ MAJEURS',(mx+right)/2,bottom-6);
     ctx.fillStyle='rgba(239,68,68,.4)';  ctx.fillText('❌ RECONSIDÉRER',(left+mx)/2,bottom-6);
   }};
+  const labelPlugin={id:'blabels',afterDatasetsDraw(chart){
+    const ctx=chart.ctx; ctx.save(); ctx.font='700 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
+    chart.data.datasets.forEach((ds,i)=>{ const m=chart.getDatasetMeta(i); const el=m&&m.data&&m.data[0]; if(!el)return; ctx.fillText(String(i+1), el.x, el.y); });
+    ctx.restore();
+  }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(8,Math.round(7+(p.b-50)/300*11)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
+    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,st:p.st,rent:p.rent,mait:p.mait,vx:p.val,vy:p.fais}],
       backgroundColor:qColor[p.q]+'CC',borderColor:p.sel?'#1D4ED8':'#fff',borderWidth:p.sel?3:2,hoverBackgroundColor:qColor[p.q],hoverBorderColor:'#1D4ED8',hoverBorderWidth:2}))},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:14,top:8,left:4,bottom:4}},
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,displayColors:false,
@@ -2022,11 +2098,11 @@ function initMatrix(){
       scales:{
         x:{min:-0.8,max:20.8,title:{display:true,text:'Valeur stratégique →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}},
         y:{min:-0.8,max:20.8,title:{display:true,text:'Maîtrise des risques →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}}
-      }},plugins:[qPlugin]
+      }},plugins:[qPlugin,labelPlugin]
   });
   window.matrixChart=chart;
-  var pli=document.getElementById('proj-list-items');
-  if(pli) pli.innerHTML=P.map((p,i)=>`<div class="proj-item" onclick="highlightBubble(${i})" id="pi-${i}"><div class="proj-num">${i+1}</div><div style="width:7px;height:7px;border-radius:50%;background:${qColor[p.q]};flex-shrink:0"></div><div class="proj-name">${p.n}</div><div class="proj-score" style="background:${qBg[p.q]};color:${qColor[p.q]}">${qLabel[p.q]}</div></div>`).join('');
+  var leg=document.getElementById('matrix-proj-legend');
+  if(leg) leg.innerHTML=LP.map((p,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#475569"><span style="width:17px;height:17px;border-radius:50%;background:${qColor[p.q]};color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</span><span style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</span></div>`).join('');
 }
 function highlightBubble(idx){
   const chart=window.matrixChart;if(!chart)return;
@@ -2369,24 +2445,30 @@ function depsRemove(prefix,i){ if(DEPS_STORE[prefix]){DEPS_STORE[prefix].splice(
 
 /* ─── Éditeur de risques (réutilisable) ─── */
 var RISKS_STORE={};
+var PI15='<option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>';
 function risksEditorMarkup(prefix){
   return '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">'
-    +'<div class="fld" style="flex:2;min-width:140px"><label>Risque</label><input type="text" id="'+prefix+'-rdesc" placeholder="ex. Compétences manquantes"></div>'
-    +'<div class="fld" style="width:110px"><label>Niveau</label><select id="'+prefix+'-rlevel"><option>Faible</option><option selected>Modéré</option><option>Élevé</option><option>Critique</option></select></div>'
-    +'<div class="fld" style="flex:1;min-width:120px"><label>Mitigation</label><input type="text" id="'+prefix+'-rmit" placeholder="ex. Renfort ESN"></div>'
+    +'<div class="fld" style="flex:2;min-width:130px"><label>Risque</label><input type="text" id="'+prefix+'-rdesc" placeholder="ex. Compétences manquantes"></div>'
+    +'<div class="fld" style="width:74px"><label>Probabilité</label><select id="'+prefix+'-rproba">'+PI15+'</select></div>'
+    +'<div class="fld" style="width:64px"><label>Impact</label><select id="'+prefix+'-rimpact">'+PI15+'</select></div>'
+    +'<div class="fld" style="flex:1;min-width:110px"><label>Mitigation</label><input type="text" id="'+prefix+'-rmit" placeholder="ex. Renfort ESN"></div>'
     +'<button type="button" class="btn btn-acc" style="height:33px" onclick="risksAdd(\''+prefix+'\')"><i class="ti ti-plus"></i></button></div>'
     +'<div id="'+prefix+'-rlist" style="display:flex;flex-direction:column;gap:4px"></div>';
 }
-function risksEditorOpen(prefix,cur){ RISKS_STORE[prefix]=(cur||[]).map(function(r){return {risk:r.risk,level:r.level||'Modéré',mitigation:r.mitigation||''};}); risksRender(prefix); }
+/* niveau dérivé de proba×impact si non fourni */
+function riskLevelFromPI(p,i){ var s=(+p||3)*(+i||3); return s>=15?'Critique':s>=10?'Élevé':s>=5?'Modéré':'Faible'; }
+function riskPI(r){ var p=+r.proba||0, i=+r.impact||0; if(p&&i) return {p:Math.min(5,Math.max(1,p)),i:Math.min(5,Math.max(1,i))}; var m=({'Faible':[2,2],'Modéré':[3,3],'Élevé':[4,4],'Critique':[5,5]})[r.level]||[3,3]; return {p:m[0],i:m[1]}; }
+function risksEditorOpen(prefix,cur){ RISKS_STORE[prefix]=(cur||[]).map(function(r){var pi=riskPI(r);return {risk:r.risk,level:r.level||riskLevelFromPI(pi.p,pi.i),mitigation:r.mitigation||'',proba:pi.p,impact:pi.i};}); risksRender(prefix); }
 function risksRender(prefix){
   var el=document.getElementById(prefix+'-rlist'); if(!el)return; var arr=RISKS_STORE[prefix]||[];
   var LC={'Faible':'#10B981','Modéré':'#F59E0B','Élevé':'#F97316','Critique':'#EF4444'};
-  el.innerHTML=arr.length?arr.map(function(r,i){return '<div style="display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:6px 10px;font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:'+(LC[r.level]||'#94A3B8')+';flex-shrink:0"></span><span style="flex:1;color:#334155">'+r.risk+(r.mitigation?' <span style="color:#94A3B8">· '+r.mitigation+'</span>':'')+'</span><span style="font-size:9px;font-weight:700;color:'+(LC[r.level]||'#94A3B8')+'">'+r.level+'</span><i class="ti ti-x" style="cursor:pointer;color:#94A3B8" onclick="risksRemove(\''+prefix+'\','+i+')"></i></div>';}).join(''):'<span style="font-size:10px;color:#CBD5E1">Aucun risque ajouté.</span>';
+  el.innerHTML=arr.length?arr.map(function(r,i){var pi=riskPI(r);return '<div style="display:flex;align-items:center;gap:8px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:6px 10px;font-size:11px"><span style="width:8px;height:8px;border-radius:50%;background:'+(LC[r.level]||'#94A3B8')+';flex-shrink:0"></span><span style="flex:1;color:#334155">'+r.risk+(r.mitigation?' <span style="color:#94A3B8">· '+r.mitigation+'</span>':'')+'</span><span style="font-size:8.5px;color:#94A3B8">P'+pi.p+'×I'+pi.i+'</span><span style="font-size:9px;font-weight:700;color:'+(LC[r.level]||'#94A3B8')+'">'+r.level+'</span><i class="ti ti-x" style="cursor:pointer;color:#94A3B8" onclick="risksRemove(\''+prefix+'\','+i+')"></i></div>';}).join(''):'<span style="font-size:10px;color:#CBD5E1">Aucun risque ajouté.</span>';
 }
 function risksAdd(prefix){
   var d=document.getElementById(prefix+'-rdesc').value.trim(); if(!d){toast('Décris le risque');return;}
-  var lv=document.getElementById(prefix+'-rlevel').value||'Modéré'; var mit=document.getElementById(prefix+'-rmit').value.trim();
-  if(!RISKS_STORE[prefix])RISKS_STORE[prefix]=[]; RISKS_STORE[prefix].push({risk:d,level:lv,mitigation:mit});
+  var pr=+document.getElementById(prefix+'-rproba').value||3, im=+document.getElementById(prefix+'-rimpact').value||3;
+  var mit=document.getElementById(prefix+'-rmit').value.trim();
+  if(!RISKS_STORE[prefix])RISKS_STORE[prefix]=[]; RISKS_STORE[prefix].push({risk:d,level:riskLevelFromPI(pr,im),mitigation:mit,proba:pr,impact:im});
   document.getElementById(prefix+'-rdesc').value='';document.getElementById(prefix+'-rmit').value=''; risksRender(prefix);
 }
 function risksRemove(prefix,i){ if(RISKS_STORE[prefix]){RISKS_STORE[prefix].splice(i,1);risksRender(prefix);} }
@@ -2540,6 +2622,7 @@ function applyData(d){
   if(d && Array.isArray(d.alerts) && d.alerts.length) ALERTS = d.alerts;
   if(d && Array.isArray(d.users)) USERS = d.users;
   if(d && d.risks && typeof d.risks==='object') RISKS = d.risks;
+  if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   P.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
   recalc();
   window.mReady=false; window.rReady=false;
@@ -2625,7 +2708,35 @@ function renderRisques(){
     } else { list='<div style="font-size:11px;color:#CBD5E1;padding:4px 0">Aucun risque renseigné</div>'; }
     out+='<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+catf+'"></div><div style="font-size:12.5px;font-weight:700;color:#0F172A">'+p.n+'</div><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:10px;background:'+topLv.bg+';color:'+topLv.c+'">'+rs.length+' risque'+(rs.length>1?'s':'')+(top?' · '+top.level:'')+'</span><span style="margin-left:auto;font-size:10px;color:#94A3B8">Faisabilité '+p.fais+'/20</span></div>'+list+'</div>';
   });
-  el.innerHTML=out;
+  // ── Matrice des risques 5×5 (Probabilité × Impact) ──
+  function sevCol(s){ return s>=15?'#EF4444':s>=10?'#F97316':s>=5?'#F59E0B':'#10B981'; }
+  var cells={};
+  P.forEach(function(p){ riskOf(p).forEach(function(r){ var pi=riskPI(r); var k=pi.p+'_'+pi.i; (cells[k]=cells[k]||[]).push(p.n+' — '+r.risk); }); });
+  var grid='<div class="card" style="margin-bottom:12px"><div style="font-size:12.5px;font-weight:800;color:#0F172A;margin-bottom:3px">Matrice des risques — Probabilité × Impact</div><div style="font-size:10px;color:#94A3B8;margin-bottom:12px">Chaque case indique le nombre de risques ; la couleur reflète la criticité (probabilité × impact). Survolez une case pour le détail.</div>';
+  grid+='<div style="display:flex;gap:8px;align-items:stretch">';
+  grid+='<div style="display:flex;align-items:center;font-size:10px;font-weight:700;color:#64748B;writing-mode:vertical-rl;transform:rotate(180deg);padding:0 2px">Impact →</div>';
+  grid+='<div style="flex:1;max-width:560px">';
+  for(var im=5;im>=1;im--){
+    grid+='<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">';
+    grid+='<div style="width:16px;text-align:center;font-size:10px;font-weight:700;color:#94A3B8">'+im+'</div>';
+    for(var pr=1;pr<=5;pr++){
+      var s=pr*im; var col=sevCol(s); var arr=cells[pr+'_'+im]||[]; var n=arr.length;
+      var tip=(arr.join(' · ').replace(/"/g,'\''))||('Probabilité '+pr+' × Impact '+im);
+      grid+='<div title="'+tip+'" style="flex:1;height:42px;border-radius:6px;background:'+col+'22;border:1px solid '+col+'55;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:'+col+'">'+(n||'')+'</div>';
+    }
+    grid+='</div>';
+  }
+  grid+='<div style="display:flex;gap:5px;margin-top:2px"><div style="width:16px"></div>';
+  for(var pr2=1;pr2<=5;pr2++) grid+='<div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#94A3B8">'+pr2+'</div>';
+  grid+='</div><div style="text-align:center;font-size:10px;font-weight:700;color:#64748B;margin-top:5px">Probabilité →</div>';
+  grid+='</div></div>';
+  grid+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #F1F5F9">'
+    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#10B98122;border:1px solid #10B98155"></span>Faible</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B22;border:1px solid #F59E0B55"></span>Modéré</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#F9731622;border:1px solid #F9731655"></span>Élevé</span>'
+    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#EF444422;border:1px solid #EF444455"></span>Critique</span></div>';
+  grid+='</div>';
+  el.innerHTML=grid+out;
 }
 
 /* Saisie d'équipe depuis le web */
