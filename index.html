@@ -1413,13 +1413,27 @@ function pfDeadline(n){ var pf=pfByName(n); return pf?(+pf.deadline):null; }
 function projectFits(p, deadline){ return ((+p.s||0)+(+p.d||0)-1) <= deadline; } /* fin du projet ≤ deadline */
 function pfMonthOptions(sel){ var h=''; for(var i=1;i<=15;i++){ h+='<option value="'+i+'"'+(i===sel?' selected':'')+'>'+monLabel(i)+' '+yearTag(i)+'</option>'; } return h; }
 function pfOptions(sel){ return PORTFOLIOS.map(function(pf){ var nm=pf.name; return '<option value="'+nm.replace(/"/g,'&quot;')+'"'+(nm===sel?' selected':'')+'>'+nm+' (éch. '+monLabel(pf.deadline)+' '+yearTag(pf.deadline)+')</option>'; }).join(''); }
-function openPortfolioModal(){ document.getElementById('pf-name').value=''; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(9); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+var PF_EDIT=null; /* nom du portefeuille en cours d'édition, ou null en création */
+function openPortfolioModal(){ PF_EDIT=null; document.getElementById('pf-modal-title').textContent='Nouveau portefeuille'; document.getElementById('pf-save-btn').innerHTML='<i class="ti ti-check"></i>Créer'; document.getElementById('pf-name').value=''; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(9); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function openPortfolioEdit(name){ var pf=pfByName(name); if(!pf){toast('Portefeuille introuvable');return;} PF_EDIT=name; document.getElementById('pf-modal-title').textContent='Modifier le portefeuille'; document.getElementById('pf-save-btn').innerHTML='<i class="ti ti-check"></i>Enregistrer'; document.getElementById('pf-name').value=pf.name; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(+pf.deadline); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
 function closePortfolioModal(e){ if(e&&e.target!==document.getElementById('pf-overlay'))return; document.getElementById('pf-overlay').classList.remove('open'); document.body.style.overflow=''; }
 function savePortfolio(){
   var name=document.getElementById('pf-name').value.trim();
   var dl=+document.getElementById('pf-deadline').value;
   var err=document.getElementById('pf-err');
   if(!name){ err.textContent='Donne un nom au portefeuille.'; err.style.display='block'; return; }
+  if(PF_EDIT){
+    var pf=pfByName(PF_EDIT); if(!pf){ err.textContent='Portefeuille introuvable.'; err.style.display='block'; return; }
+    if(name!==PF_EDIT && pfByName(name)){ err.textContent='Un portefeuille « '+name+' » existe déjà.'; err.style.display='block'; return; }
+    var oldName=PF_EDIT, renamed=(name!==oldName);
+    pf.name=name; pf.deadline=dl;
+    if(renamed){ P.forEach(function(p){ if((p.pf||'')===oldName){ p.pf=name; apiPost({action:'update', project:p, charges:MV[p.n]||[]}); } }); apiPost({action:'deletePortfolio', name:oldName}); }
+    apiPost({action:'addPortfolio', portfolio:{name:name,deadline:dl,color:pf.color}});
+    closePortfolioModal({target:document.getElementById('pf-overlay')});
+    window.mReady=false; renderList(); renderG(); buildHome(); if(typeof renderDash==='function')renderDash();
+    toast('✓ Portefeuille mis à jour — '+name+' · échéance '+monLabel(dl)+' '+yearTag(dl));
+    return;
+  }
   if(pfByName(name)){ err.textContent='Un portefeuille « '+name+' » existe déjà.'; err.style.display='block'; return; }
   var color=PF_COLORS[PORTFOLIOS.length%PF_COLORS.length];
   PORTFOLIOS.push({name:name,deadline:dl,color:color});
@@ -2404,7 +2418,8 @@ function renderList(){
     h+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 12px;margin:16px 0 6px;background:${col}14;border-left:3px solid ${col};border-radius:0 8px 8px 0">
       <span style="font-size:12.5px;font-weight:800;color:${col};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${name}</span>
       <span style="font-size:10.5px;color:#64748B">échéance ${dlLabel} · ${g.length} projet${g.length>1?'s':''}</span>
-      ${canDel?`<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px;color:#EF4444;border-color:#FECACA" onclick="deletePortfolio(${jsArg(name)})" title="Supprimer ce portefeuille — ses projets repassent au portefeuille par défaut"><i class="ti ti-trash"></i>Supprimer le portefeuille</button>`:''}
+      ${pf?`<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="openPortfolioEdit(${jsArg(name)})" title="Renommer / changer l'échéance"><i class="ti ti-pencil"></i>Modifier</button>`:''}
+      ${canDel?`<button class="btn" style="${pf?'':'margin-left:auto;'}padding:4px 10px;font-size:10px;color:#EF4444;border-color:#FECACA" onclick="deletePortfolio(${jsArg(name)})" title="Supprimer ce portefeuille — ses projets repassent au portefeuille par défaut"><i class="ti ti-trash"></i>Supprimer</button>`:''}
     </div>`+colHead+
     g.map(p=>`<div class="lr" onclick="openProjectDetail(${jsArg(p.n)})" title="Voir / modifier le projet">
       <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
@@ -3016,7 +3031,7 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
   <div class="modal" style="width:min(460px,94vw)">
     <div class="mo-header">
       <div class="mo-icon" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-folder-plus"></i></div>
-      <div><div class="mo-title">Nouveau portefeuille</div><div class="mo-sub">Nom + échéance cible</div></div>
+      <div><div class="mo-title" id="pf-modal-title">Nouveau portefeuille</div><div class="mo-sub">Nom + échéance cible</div></div>
       <button class="mo-close" onclick="closePortfolioModal({target:document.getElementById('pf-overlay')})"><i class="ti ti-x"></i></button>
     </div>
     <div class="mo-body">
@@ -3025,7 +3040,7 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
       <div id="pf-err" style="display:none;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 11px;margin-bottom:12px;font-size:11px;color:#991B1B"></div>
       <div class="ma2">
         <button class="btn" onclick="closePortfolioModal({target:document.getElementById('pf-overlay')})">Annuler</button>
-        <button class="btn btn-acc" onclick="savePortfolio()"><i class="ti ti-check"></i>Créer</button>
+        <button class="btn btn-acc" id="pf-save-btn" onclick="savePortfolio()"><i class="ti ti-check"></i>Créer</button>
       </div>
     </div>
   </div>
