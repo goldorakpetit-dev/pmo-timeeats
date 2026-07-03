@@ -125,8 +125,11 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 .gldot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4.5px}
 .gln{font-size:11px;font-weight:500;color:#334155;line-height:1.35}
 .gls{font-size:9px;color:#94A3B8;margin-top:1px}
-.gt{flex:1;position:relative;height:30px;display:grid;grid-template-columns:repeat(10,1fr)}
+.gt{flex:1;position:relative;height:30px;display:grid;grid-template-columns:repeat(10,1fr);overflow:hidden}
 .gc{border-left:1px solid #F1F5F9}
+.gb.simdrag{cursor:grab}
+.gb.simdrag:active{cursor:grabbing}
+.gb.dragging{filter:brightness(1.08);box-shadow:0 3px 10px rgba(0,0,0,.25);z-index:9}
 .gc:first-child{border-left:none}
 .gc.cur{background:rgba(37,99,235,.04)}
 .gb{position:absolute;top:4px;height:22px;border-radius:5px;display:flex;align-items:center;overflow:hidden;animation:barIn .5s cubic-bezier(.34,1.06,.64,1) both;transition:filter .12s;cursor:pointer}
@@ -566,6 +569,12 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
   </div>
   <div class="ct">
     <div class="gw">
+      <div id="gantt-nav" style="display:none;align-items:center;gap:8px;margin-bottom:10px">
+        <button class="btn" onclick="ganttShift(-3)" title="Mois précédents" style="padding:5px 10px"><i class="ti ti-chevron-left"></i></button>
+        <input type="range" id="gantt-range" min="0" max="0" value="0" step="1" oninput="ganttSetOff(this.value)" style="flex:1;accent-color:#2563EB;cursor:pointer">
+        <button class="btn" onclick="ganttShift(3)" title="Mois suivants" style="padding:5px 10px"><i class="ti ti-chevron-right"></i></button>
+        <span id="gantt-range-label" style="font-size:11px;font-weight:700;color:#475569;white-space:nowrap;min-width:150px;text-align:right"></span>
+      </div>
       <div class="gh"><div class="glh"></div><div class="gmh" id="mhdr"></div></div>
       <div id="grows"></div>
       <div class="gleg" id="gleg"></div>
@@ -1884,12 +1893,15 @@ function yearTag(i){ return String(BASE_YEAR+Math.floor((i+3)/12)); }
 var BASE_YEAR=2026; /* Avril N */
 function idxToDate(i){ var m=3+(+i||0); var y=BASE_YEAR+Math.floor(m/12); var mm=((m%12)+12)%12+1; return y+'-'+('0'+mm).slice(-2)+'-01'; }
 function dateToIdx(str){ if(!str)return null; var pr=String(str).split('-'); if(pr.length<2)return null; var y=+pr[0],mo=+pr[1]; if(!y||!mo)return null; return (y-BASE_YEAR)*12+(mo-1-3); }
-function renderG(f='all'){
+function renderG(f){
+  if(f===undefined) f=GANTT_LASTF; else GANTT_LASTF=f;
   let data=f==='s5'?P.filter(p=>p.valeur===5):f==='infra'?P.filter(p=>p.cat==='Socle IT'||p.cat==='DevOps'):f==='active'?P.filter(p=>p.st2==='En cours'):P;
   if(GANTT_PF){ data=data.filter(p=>(p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:''))===GANTT_PF); }
-  const N=ganttMonths(); const gridCss='repeat('+N+',1fr)';
+  const TOTAL=ganttTotal(); const maxOff=Math.max(0,TOTAL-GANTT_VIS);
+  if(GANTT_OFF>maxOff) GANTT_OFF=maxOff; if(GANTT_OFF<0) GANTT_OFF=0;
+  const N=GANTT_VIS; const gridCss='repeat('+N+',1fr)';
   const mh=document.getElementById('mhdr'); mh.style.gridTemplateColumns=gridCss;
-  mh.innerHTML=Array.from({length:N},(_,i)=>{var yt=yearTag(i);var showY=(i===0||yt!==yearTag(i-1));return `<div class="gm${i===0?' cur':''}" style="position:relative">${i===0?'<span class="now-pin">maintenant</span>':''}<div style="font-size:8px;font-weight:700;color:#2563EB;height:10px;line-height:10px">${showY?'année '+yt:''}</div>${monLabel(i)}</div>`;}).join('');
+  mh.innerHTML=Array.from({length:N},(_,i)=>{var A=GANTT_OFF+i;var yt=yearTag(A);var showY=(i===0||yt!==yearTag(A-1));return `<div class="gm${A===0?' cur':''}" style="position:relative">${A===0?'<span class="now-pin">maintenant</span>':''}<div style="font-size:8px;font-weight:700;color:#2563EB;height:10px;line-height:10px">${showY?'année '+yt:''}</div>${monLabel(A)}</div>`;}).join('');
   let h='';
   // regroupe les projets visibles par portefeuille, dans l'ordre des PORTFOLIOS
   // regroupement par portefeuille activable/désactivable
@@ -1911,15 +1923,16 @@ function renderG(f='all'){
     g.forEach((p,idx)=>{
       const c=CAT[p.cat]||{f:'#64748B'};
       const ppf=pfByName(p.pf); const pdl=ppf?(+ppf.deadline):null; const pcol=ppf?ppf.color:'#64748B';
-      const lp=(p.s/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
-      const boundary=N>10?`<div style="position:absolute;top:0;bottom:0;left:${(10/N*100).toFixed(2)}%;width:1px;background:rgba(239,68,68,.4);z-index:4"></div>`:'';
-      const dlPos=(pdl!=null)?((pdl+1)/N*100):null;
-      const dlLine=(dlPos!=null&&dlPos<=100.5)?`<div title="Échéance ${p.pf||''}" style="position:absolute;top:0;bottom:0;left:${dlPos.toFixed(2)}%;width:0;border-left:2px dashed ${pcol};z-index:6"></div>`:'';
+      const lp=((p.s-GANTT_OFF)/N*100).toFixed(2),wp=(p.d/N*100).toFixed(2),delay=(idx*.045).toFixed(2);
+      const nowPos=((0-GANTT_OFF)/N*100);
+      const nowLine=(nowPos>=0&&nowPos<=100)?`<div style="position:absolute;top:0;bottom:0;left:${nowPos.toFixed(2)}%;width:1px;background:rgba(37,99,235,.35);z-index:5"></div>`:'';
+      const dlPos=(pdl!=null)?((pdl+1-GANTT_OFF)/N*100):null;
+      const dlLine=(dlPos!=null&&dlPos>=-0.5&&dlPos<=100.5)?`<div title="Échéance ${p.pf||''}" style="position:absolute;top:0;bottom:0;left:${dlPos.toFixed(2)}%;width:0;border-left:2px dashed ${pcol};z-index:6"></div>`:'';
       const late=(pdl!=null&&!projectFits(p,pdl));
       h+=`<div class="gr"><div class="gl"><div class="gldot" style="background:${c.f}"></div><div><div class="gln">${p.n}${p.sel?`<span class="bsm" style="background:#EFF6FF;color:#2563EB">sélectionné</span>`:''}${late?`<span class="bsm" style="background:#FEF2F2;color:#EF4444">hors délai</span>`:''}</div><div class="gls">${p.b}K€ · ${p.dt}</div></div></div>
-      <div class="gt" style="grid-template-columns:${gridCss}">${Array.from({length:N},(_,i)=>`<div class="gc${i===0?' cur':''}"></div>`).join('')}
-        <div style="position:absolute;top:0;bottom:0;left:0%;width:1px;background:rgba(37,99,235,.35);z-index:5"></div>${boundary}${dlLine}
-        <div class="gb${p.sel?' sel':''}" style="left:${lp}%;width:${wp}%;background:${c.f};animation-delay:${delay}s;${late?'outline:2px solid #EF4444;outline-offset:1px':''}" data-i="${P.indexOf(p)}">${p.d>=3?`<span class="gb-txt">${p.b}K€</span>`:''}</div>
+      <div class="gt" style="grid-template-columns:${gridCss}">${Array.from({length:N},(_,i)=>`<div class="gc${(GANTT_OFF+i)===0?' cur':''}"></div>`).join('')}
+        ${nowLine}${dlLine}
+        <div class="gb${p.sel?' sel':''}${SIM.active?' simdrag':''}" style="left:${lp}%;width:${wp}%;background:${c.f};animation-delay:${delay}s;${late?'outline:2px solid #EF4444;outline-offset:1px':''}" data-i="${P.indexOf(p)}">${p.d>=3?`<span class="gb-txt">${p.b}K€</span>`:''}</div>
       </div></div>`;
     });
   });
@@ -1930,6 +1943,14 @@ function renderG(f='all'){
   if(simSel){ var keep=simSel.value; simSel.innerHTML='<option value="">Tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===keep?' selected':'')+'>'+pf.name+'</option>';}).join(''); }
   var dispSel=document.getElementById('gantt-pf');
   if(dispSel){ dispSel.innerHTML='<option value="">Afficher : tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===GANTT_PF?' selected':'')+'>Afficher : '+pf.name+'</option>';}).join(''); }
+  var nav=document.getElementById('gantt-nav');
+  if(nav){
+    if(maxOff>0){
+      nav.style.display='flex';
+      var rg=document.getElementById('gantt-range'); if(rg){ rg.max=maxOff; rg.value=GANTT_OFF; }
+      var lbl=document.getElementById('gantt-range-label'); if(lbl){ lbl.textContent=monLabel(GANTT_OFF)+' '+yearTag(GANTT_OFF)+' → '+monLabel(GANTT_OFF+N-1)+' '+yearTag(GANTT_OFF+N-1); }
+    } else { nav.style.display='none'; }
+  }
   attachBars();
 }
 function attachBars(){
@@ -1951,15 +1972,51 @@ function attachBars(){
         </div>`;
     });
     b.addEventListener('mouseleave',()=>{const dp=document.getElementById('gdp');dp.className='gdp';dp.innerHTML='<div class="dp-hint"><i class="ti ti-hand-finger" style="font-size:16px"></i>Survolez une barre pour afficher les détails</div>';});
+    if(SIM.active) b.addEventListener('mousedown',ganttBarDragStart);
   });
 }
+/* Glisser une barre (mode simulation) pour décaler le projet mois par mois. */
+function ganttBarDragStart(e){
+  if(!SIM.active) return;
+  e.preventDefault();
+  var bar=e.currentTarget, gt=bar.parentNode, p=P[+bar.dataset.i]; if(!p) return;
+  var monthW=gt.getBoundingClientRect().width/GANTT_VIS;
+  var startX=e.clientX, origS=p.s, pending=origS;
+  bar.classList.add('dragging');
+  function onMove(ev){
+    var d=Math.round((ev.clientX-startX)/monthW);
+    pending=Math.max(0,origS+d);
+    bar.style.left=(((pending-GANTT_OFF)/GANTT_VIS)*100).toFixed(2)+'%';
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp);
+    bar.classList.remove('dragging');
+    if(pending===origS){ renderG(); return; }
+    if(!SIM.backup) SIM.backup=P.map(function(x){return {n:x.n,s:x.s,dt:x.dt};});
+    p.s=pending; var end=p.s+p.d-1;
+    p.dt=monLabel(p.s)+' '+yearTag(p.s)+' → '+monLabel(end)+' '+yearTag(end);
+    if(SIM.changed.indexOf(p.n)<0) SIM.changed.push(p.n);
+    var pdl=pfDeadline(p.pf); if(pdl!=null && (p.s+p.d-1)>pdl) SIM.tension=true;
+    window.mReady=false; window.rReady=false;
+    buildHome(); renderList(); renderG(); refreshActiveView();
+    showSimBanner(SIM.changed.length, SIM.tension, SIM.scopeLabel);
+    toast('↔ '+p.n+' déplacé → '+p.dt);
+  }
+  document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+}
 function fg(f,el){document.querySelectorAll('.gfi').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderG(f);}
-var GANTT_WINDOW=10; /* fenêtre cible : 10 mois (Avr → Jan) */
+var GANTT_WINDOW=10; /* fenêtre de planification cible : 10 mois (Avr → Jan) — utilisée par le recalcul */
 var GANTT_GROUP=true; /* regrouper le Gantt par portefeuille */
 var GANTT_PF='';       /* portefeuille affiché ('' = tous) */
+var GANTT_VIS=10;      /* nombre de mois visibles à l'écran */
+var GANTT_OFF=0;       /* décalage : 1er mois affiché (0 = Avril N) */
+var GANTT_LASTF='all'; /* dernier filtre appliqué, conservé lors de la navigation */
+function ganttTotal(){ var mx=GANTT_VIS; P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0); if(e>mx) mx=e; }); return Math.min(mx,36); }
+function ganttShift(d){ ganttSetOff(GANTT_OFF+d); }
+function ganttSetOff(v){ var maxOff=Math.max(0,ganttTotal()-GANTT_VIS); v=Math.max(0,Math.min(maxOff,Math.round(+v||0))); if(v===GANTT_OFF)return; GANTT_OFF=v; renderG(); }
 function toggleGanttGroup(on){ GANTT_GROUP=!!on; renderG(); }
 function setGanttPf(v){ GANTT_PF=(v&&pfByName(v))?v:''; renderG(); }
-var SIM={active:false, backup:null, changed:[], tension:false};
+var SIM={active:false, backup:null, changed:[], tension:false, scopeLabel:''};
 
 /* Calcule les dates au plus tôt selon les dépendances typées, bornées à l'échéance.
    scopePf : si renseigné, seuls les projets de CE portefeuille sont déplacés ; les autres restent figés (références de dépendance). */
@@ -2005,14 +2062,14 @@ function rescheduleGantt(){
     }
   });
   if(!changed.length && !SIM.active){ SIM.backup=null; toast('✓ Simulation ('+scopeLabel+') : plan déjà conforme aux dépendances et aux échéances.'); return; }
-  SIM.active=true; SIM.changed=changed; SIM.tension=r.tension;
+  SIM.active=true; SIM.changed=changed; SIM.tension=r.tension; SIM.scopeLabel=scopeLabel;
   window.mReady=false; window.rReady=false;
   buildHome(); renderList(); renderG(); refreshActiveView();
   showSimBanner(changed.length, r.tension, scopeLabel);
 }
 function showSimBanner(n,tension,scopeLabel){
   var b=document.getElementById('sim-banner'); if(!b)return;
-  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> ('+(scopeLabel||'tous les portefeuilles')+') — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
+  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> ('+(scopeLabel||'tous les portefeuilles')+') — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. <span style="color:#2563EB;font-weight:700">↔ Glissez une barre</span> pour décaler un projet mois par mois. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
   b.style.display='flex';
 }
 function hideSimBanner(){ var b=document.getElementById('sim-banner'); if(b) b.style.display='none'; }
