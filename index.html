@@ -2134,11 +2134,6 @@ function initMatrix(){
     ctx.beginPath();ctx.moveTo(mx,top);ctx.lineTo(mx,bottom);ctx.stroke();
     ctx.beginPath();ctx.moveTo(left,my);ctx.lineTo(right,my);ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font='700 8.5px system-ui';ctx.textAlign='center';
-    ctx.fillStyle='rgba(16,185,129,.55)';ctx.fillText('⭐ QUICK WINS',(mx+right)/2,top+14);
-    ctx.fillStyle='rgba(100,116,139,.55)'; ctx.fillText('SECONDAIRES',(left+mx)/2,top+14);
-    ctx.fillStyle='rgba(37,99,235,.55)';ctx.fillText('⚙️ PROJETS MAJEURS',(mx+right)/2,bottom-6);
-    ctx.fillStyle='rgba(239,68,68,.5)';  ctx.fillText('✕ À ÉVITER',(left+mx)/2,bottom-6);
   }};
   const labelPlugin={id:'blabels',afterDatasetsDraw(chart){
     const ctx=chart.ctx; ctx.save(); ctx.font='700 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
