@@ -132,7 +132,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 .gb.dragging{filter:brightness(1.08);box-shadow:0 3px 10px rgba(0,0,0,.25);z-index:9}
 .gc:first-child{border-left:none}
 .gc.cur{background:rgba(37,99,235,.04)}
-.gb{position:absolute;top:4px;height:22px;border-radius:5px;display:flex;align-items:center;overflow:hidden;animation:barIn .5s cubic-bezier(.34,1.06,.64,1) both;transition:filter .12s;cursor:pointer}
+.gb{position:absolute;top:4px;height:22px;border-radius:5px;display:flex;align-items:center;overflow:hidden;transition:filter .12s;cursor:pointer}
 .gb:hover{filter:brightness(.92)}
 .gb.sel{top:2px;height:26px;border-radius:6px;outline:2.5px solid #2563EB;outline-offset:2px}
 .gb-txt{font-size:9px;font-weight:600;padding:0 7px;white-space:nowrap;color:rgba(255,255,255,.95)}
@@ -557,8 +557,8 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <button class="btn" onclick="exportCSV()" title="Exporter le portefeuille en CSV (sauvegarde)"><i class="ti ti-download"></i>Export CSV</button>
       <button class="btn" onclick="document.getElementById('csv-file').click()" title="Importer un CSV (charger un plan dans la vue)"><i class="ti ti-upload"></i>Import CSV</button>
       <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
-      <select id="sim-pf" title="Portefeuille à simuler" style="font-size:11px;padding:7px 9px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Tous les portefeuilles</option></select>
-      <button class="btn btn-acc" onclick="rescheduleGantt()" title="Aperçu : replanifie selon les dépendances et les échéances, sans modifier le Sheet"><i class="ti ti-refresh"></i>Simuler le planning</button>
+      <select id="sim-pf" title="Portefeuille concerné par la simulation" style="font-size:11px;padding:7px 9px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Tous les portefeuilles</option></select>
+      <button id="sim-toggle" class="btn btn-acc" onclick="toggleSimMode()" title="Active le mode simulation : réajuste les projets qui dépassent leur échéance si besoin, puis permet de glisser les barres mois par mois"><i class="ti ti-flask"></i>Activer la simulation</button>
     </div>
   </div>
   <div id="sim-banner" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;background:#FEF9C3;border:1px solid #FDE68A;border-radius:10px;padding:10px 14px;margin:0 0 12px;font-size:12px;color:#854D0E">
@@ -1945,11 +1945,9 @@ function renderG(f){
   if(dispSel){ dispSel.innerHTML='<option value="">Afficher : tous les portefeuilles</option>'+PORTFOLIOS.map(function(pf){return '<option value="'+pf.name.replace(/"/g,'&quot;')+'"'+(pf.name===GANTT_PF?' selected':'')+'>Afficher : '+pf.name+'</option>';}).join(''); }
   var nav=document.getElementById('gantt-nav');
   if(nav){
-    if(maxOff>0){
-      nav.style.display='flex';
-      var rg=document.getElementById('gantt-range'); if(rg){ rg.max=maxOff; rg.value=GANTT_OFF; }
-      var lbl=document.getElementById('gantt-range-label'); if(lbl){ lbl.textContent=monLabel(GANTT_OFF)+' '+yearTag(GANTT_OFF)+' → '+monLabel(GANTT_OFF+N-1)+' '+yearTag(GANTT_OFF+N-1); }
-    } else { nav.style.display='none'; }
+    nav.style.display='flex';
+    var rg=document.getElementById('gantt-range'); if(rg){ rg.max=maxOff; rg.value=GANTT_OFF; rg.disabled=(maxOff===0); rg.style.opacity=(maxOff===0)?'.4':'1'; }
+    var lbl=document.getElementById('gantt-range-label'); if(lbl){ lbl.textContent=monLabel(GANTT_OFF)+' '+yearTag(GANTT_OFF)+' → '+monLabel(GANTT_OFF+N-1)+' '+yearTag(GANTT_OFF+N-1); }
   }
   attachBars();
 }
@@ -2047,7 +2045,39 @@ function computeSchedule(scopePf){
   return {starts:starts, tension:tension};
 }
 
-/* APERÇU (mode simulation) : applique le recalcul à la vue, SANS écrire dans le Sheet. */
+/* Réajuste UNIQUEMENT les projets qui dépassent l'échéance de leur portefeuille (les autres restent tels quels). */
+function fitDeadlines(scope){
+  var changed=[], tension=false;
+  P.forEach(function(p){
+    if(scope && p.pf!==scope) return;
+    var dl=pfDeadline(p.pf); if(dl==null) return;
+    if(p.d>dl+1) tension=true;                         /* projet trop long pour tenir avant l'échéance */
+    var maxStart=Math.max(0, dl+1-p.d);
+    if(p.s>maxStart){
+      p.s=maxStart; var end=p.s+p.d-1;
+      p.dt=monLabel(p.s)+' '+yearTag(p.s)+' → '+monLabel(end)+' '+yearTag(end);
+      changed.push(p.n);
+    }
+  });
+  return {changed:changed, tension:tension};
+}
+/* Interrupteur du mode simulation : on l'active quand on veut. */
+function toggleSimMode(){ if(SIM.active) resetSimulation(); else activateSimMode(); }
+function activateSimMode(){
+  var sel=document.getElementById('sim-pf'); var scope=sel?sel.value:''; if(scope&&!pfByName(scope))scope='';
+  var scopeLabel=scope?('« '+scope+' »'):'tous les portefeuilles';
+  SIM.backup=P.map(function(p){return {n:p.n,s:p.s,dt:p.dt};});
+  var r=fitDeadlines(scope);
+  SIM.active=true; SIM.changed=r.changed; SIM.tension=r.tension; SIM.scopeLabel=scopeLabel;
+  setSimToggle(true);
+  window.mReady=false; window.rReady=false;
+  buildHome(); renderList(); renderG(); refreshActiveView();
+  showSimBanner(r.changed.length, r.tension, scopeLabel);
+  toast(r.changed.length ? ('✓ Simulation activée — '+r.changed.length+' projet(s) réajusté(s) pour tenir l\'échéance. Glissez les barres pour ajuster.') : '✓ Simulation activée — aucun réajustement nécessaire. Glissez les projets librement.');
+}
+function setSimToggle(active){ var b=document.getElementById('sim-toggle'); if(!b)return; b.innerHTML=active?'<i class="ti ti-x"></i>Quitter la simulation':'<i class="ti ti-flask"></i>Activer la simulation'; if(active) b.classList.remove('btn-acc'); else b.classList.add('btn-acc'); }
+
+/* APERÇU au plus tôt selon les dépendances (recalcul complet) — conservé mais non lié à un bouton. */
 function rescheduleGantt(){
   var sel=document.getElementById('sim-pf'); var scope=sel?sel.value:''; if(scope&&!pfByName(scope))scope='';
   var scopeLabel=scope?('« '+scope+' »'):'tous les portefeuilles';
@@ -2069,7 +2099,7 @@ function rescheduleGantt(){
 }
 function showSimBanner(n,tension,scopeLabel){
   var b=document.getElementById('sim-banner'); if(!b)return;
-  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> ('+(scopeLabel||'tous les portefeuilles')+') — aperçu non enregistré · '+n+' projet(s) replanifié(s)'+(tension?' · ⚠ chevauchements (voir Risques)':'')+'. <span style="color:#2563EB;font-weight:700">↔ Glissez une barre</span> pour décaler un projet mois par mois. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
+  document.getElementById('sim-msg').innerHTML='<strong>Mode simulation</strong> ('+(scopeLabel||'tous les portefeuilles')+') — aperçu non enregistré'+(n?(' · '+n+' projet(s) réajusté(s) à l\'échéance'):'')+(tension?' · ⚠ certains projets ne tiennent pas avant l\'échéance':'')+'. <span style="color:#2563EB;font-weight:700">↔ Glissez une barre</span> pour décaler un projet mois par mois. « Appliquer » écrit dans le Sheet ; « Réinitialiser » restaure le plan.';
   b.style.display='flex';
 }
 function hideSimBanner(){ var b=document.getElementById('sim-banner'); if(b) b.style.display='none'; }
@@ -2077,16 +2107,17 @@ function applySimulation(){
   if(!SIM.active) return;
   var n=SIM.changed.length;
   SIM.changed.forEach(function(nm){ var p=P.find(function(x){return x.n===nm;}); if(p) apiPost({action:'update', project:p, charges:MV[p.n]||[]}); });
-  SIM={active:false,backup:null,changed:[],tension:false}; hideSimBanner();
+  SIM={active:false,backup:null,changed:[],tension:false,scopeLabel:''}; hideSimBanner(); setSimToggle(false);
+  renderG();
   toast('✓ Plan appliqué au Sheet : '+n+' projet(s) replanifié(s).');
 }
 function resetSimulation(){
   if(!SIM.active) return;
   if(SIM.backup){ var map={}; SIM.backup.forEach(function(b){map[b.n]=b;}); P.forEach(function(p){ var b=map[p.n]; if(b){ p.s=b.s; p.dt=b.dt; } }); }
-  SIM={active:false,backup:null,changed:[],tension:false}; hideSimBanner();
+  SIM={active:false,backup:null,changed:[],tension:false,scopeLabel:''}; hideSimBanner(); setSimToggle(false);
   window.mReady=false; window.rReady=false;
   buildHome(); renderList(); renderG(); refreshActiveView();
-  toast('Plan restauré — simulation annulée.');
+  toast('Simulation désactivée — plan restauré.');
 }
 
 /* ── EXPORT / IMPORT CSV du portefeuille ── */
