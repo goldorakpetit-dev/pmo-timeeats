@@ -1910,7 +1910,20 @@ function renderG(f){
   if(GANTT_GROUP){ data.forEach(p=>{ const k=p.pf||PORTFOLIOS[0].name; (groups[k]=groups[k]||[]).push(p); }); Object.keys(groups).forEach(k=>{ if(order.indexOf(k)<0) order.push(k); }); }
   else { groups['__all__']=data.slice(); }
   order.forEach(pfName=>{
-    const g=groups[pfName]; if(!g||!g.length) return;
+    const g=groups[pfName];
+    if(!g||!g.length){
+      // portefeuille sans projet : on affiche quand même son bandeau (sauf en mode « aplati » ou s'il est masqué par le filtre)
+      const epf=(pfName!=='__all__')?pfByName(pfName):null;
+      if(!epf) return;
+      if(GANTT_PF && GANTT_PF!==pfName) return;
+      const edl=(+epf.deadline); const ecol=epf.color||'#64748B';
+      const edlLabel=(edl!=null)?(monLabel(edl)+' '+yearTag(edl)):'libre';
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;margin:10px 0 2px;background:${ecol}0F;border-left:3px solid ${ecol};border-radius:0 8px 8px 0">
+        <span style="font-size:12px;font-weight:800;color:${ecol};display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>${pfName}</span>
+        <span style="font-size:10.5px;color:#94A3B8">échéance : <strong style="color:#475569">${edlLabel}</strong> · aucun projet pour l'instant</span>
+      </div>`;
+      return;
+    }
     if(pfName!=='__all__'){
       const pf=pfByName(pfName); const dl=pf?(+pf.deadline):null; const col=pf?pf.color:'#64748B';
       const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
@@ -2515,8 +2528,10 @@ function renderList(){
   const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /40</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`;
   let h='';
   order.forEach(name=>{
-    const g=groups[name]; if(!g||!g.length) return;
-    const pf=pfByName(name); const col=pf?pf.color:'#64748B'; const dl=pf?(+pf.deadline):null;
+    const g=groups[name]||[];
+    const pf=pfByName(name);
+    if(!g.length && !pf) return; // groupe résiduel sans portefeuille réel
+    const col=pf?pf.color:'#64748B'; const dl=pf?(+pf.deadline):null;
     const dlLabel=(dl!=null)?(monLabel(dl)+' '+yearTag(dl)):'libre';
     const canDel=pf&&PORTFOLIOS.length>1;
     h+=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 12px;margin:16px 0 6px;background:${col}14;border-left:3px solid ${col};border-radius:0 8px 8px 0">
@@ -2524,7 +2539,7 @@ function renderList(){
       <span style="font-size:10.5px;color:#64748B">échéance ${dlLabel} · ${g.length} projet${g.length>1?'s':''}</span>
       ${pf?`<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="openPortfolioEdit(${jsArg(name)})" title="Renommer / changer l'échéance"><i class="ti ti-pencil"></i>Modifier</button>`:''}
       ${canDel?`<button class="btn" style="${pf?'':'margin-left:auto;'}padding:4px 10px;font-size:10px;color:#EF4444;border-color:#FECACA" onclick="deletePortfolio(${jsArg(name)})" title="Supprimer ce portefeuille — ses projets repassent au portefeuille par défaut"><i class="ti ti-trash"></i>Supprimer</button>`:''}
-    </div>`+colHead+
+    </div>`+(g.length?colHead:`<div style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic">Aucun projet dans ce portefeuille pour l'instant.</div>`)+
     g.map(p=>`<div class="lr" onclick="openProjectDetail(${jsArg(p.n)})" title="Voir / modifier le projet">
       <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
       <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
@@ -3070,7 +3085,9 @@ function persistTeams(teams){
   apiPost({action:'setTeams', rows:rows});
 }
 
-/* Démarrage + rafraîchissement automatique au retour sur l'onglet */
+/* Démarrage : on affiche IMMÉDIATEMENT les données locales (aucune attente réseau),
+   puis on charge le Google Sheet en arrière-plan et on re-rend quand il répond. */
+boot();
 loadFromSheet();
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) loadFromSheet(); });
 if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
