@@ -2022,7 +2022,12 @@ var GANTT_PF='';       /* portefeuille affiché ('' = tous) */
 var GANTT_VIS=10;      /* nombre de mois visibles à l'écran */
 var GANTT_OFF=0;       /* décalage : 1er mois affiché (0 = Avril N) */
 var GANTT_LASTF='all'; /* dernier filtre appliqué, conservé lors de la navigation */
-function ganttTotal(){ var mx=GANTT_VIS; P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0); if(e>mx) mx=e; }); return Math.min(mx,36); }
+function ganttTotal(){
+  var mx=GANTT_VIS+3;   /* au moins 3 mois d'horizon au-delà de la fenêtre → flèches/curseur toujours utilisables */
+  P.forEach(function(p){ var e=(+p.s||0)+(+p.d||0)+1; if(e>mx) mx=e; });                 /* jusqu'après la fin du projet le plus tardif */
+  PORTFOLIOS.forEach(function(pf){ var d=(+pf.deadline||0)+2; if(d>mx) mx=d; });          /* jusqu'aux échéances de portefeuille (+marge) */
+  return Math.min(mx,36);
+}
 function ganttShift(d){ ganttSetOff(GANTT_OFF+d); }
 function ganttSetOff(v){ var maxOff=Math.max(0,ganttTotal()-GANTT_VIS); v=Math.max(0,Math.min(maxOff,Math.round(+v||0))); if(v===GANTT_OFF)return; GANTT_OFF=v; renderG(); }
 function toggleGanttGroup(on){ GANTT_GROUP=!!on; renderG(); }
