@@ -418,13 +418,13 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <div id="login-overlay" class="login-ov">
   <div class="login-card">
     <div class="login-logo"><div class="logo-box"><i class="ti ti-layout-dashboard"></i></div><span>PMO Suite</span></div>
-    <div class="login-title">Connexion</div>
-    <div class="login-sub">Accédez à votre espace de gestion de portefeuille</div>
+    <div class="login-title" data-i18n="login.title">Connexion</div>
+    <div class="login-sub" data-i18n="login.sub">Accédez à votre espace de gestion de portefeuille</div>
     <form onsubmit="return doLogin(event)" autocomplete="on">
-      <div class="login-fld"><label>Identifiant</label><input type="text" id="login-user" autocomplete="username" placeholder="ex. admin"></div>
-      <div class="login-fld"><label>Mot de passe</label><input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••"></div>
+      <div class="login-fld"><label data-i18n="login.user">Identifiant</label><input type="text" id="login-user" autocomplete="username" placeholder="ex. admin"></div>
+      <div class="login-fld"><label data-i18n="login.pass">Mot de passe</label><input type="password" id="login-pass" autocomplete="current-password" placeholder="••••••••"></div>
       <div id="login-err" class="login-err"></div>
-      <button type="submit" class="login-btn"><i class="ti ti-login"></i>Se connecter</button>
+      <button type="submit" class="login-btn"><i class="ti ti-login"></i><span data-i18n="login.btn">Se connecter</span></button>
     </form>
     <div class="login-hint">Démonstration — identifiant <strong>admin</strong> · mot de passe <strong>pmo2026</strong></div>
   </div>
@@ -488,26 +488,26 @@ pmoShowLogin(!pmoIsAuthed());
     <div class="logo-box"><i class="ti ti-layout-dashboard"></i></div>
     <span class="logo-name">PMO Suite</span>
     <div class="logo-sep"></div>
-    <span class="logo-tag">Gestion de portefeuille projets</span>
+    <span class="logo-tag" data-i18n="logo.tag">Gestion de portefeuille projets</span>
   </div>
   <div class="nav">
-    <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i>Accueil</div>
-    <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i>Dashboard</div>
-    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i>Gantt</div>
-    <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i>Matrice</div>
-    <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i>Ressources</div>
-    <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i>Budget</div>
-    <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i>Agenda</div>
-    <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i>Risques</div>
-    <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i>Clôture &amp; REX</div>
-    <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i>RH</div>
-    <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i>Liste</div>
-    <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i>Détails</div>
+    <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i><span data-i18n="nav.home">Accueil</span></div>
+    <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i><span data-i18n="nav.dash">Dashboard</span></div>
+    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i><span data-i18n="nav.gantt">Gantt</span></div>
+    <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i><span data-i18n="nav.matrix">Matrice</span></div>
+    <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.res">Ressources</span></div>
+    <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i><span data-i18n="nav.budget">Budget</span></div>
+    <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i><span data-i18n="nav.agenda">Agenda</span></div>
+    <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i><span data-i18n="nav.risks">Risques</span></div>
+    <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i><span data-i18n="nav.rex">Clôture &amp; REX</span></div>
+    <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.rh">RH</span></div>
+    <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i><span data-i18n="nav.list">Liste</span></div>
+    <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i><span data-i18n="nav.details">Détails</span></div>
   </div>
   <div class="tb-r">
     <button class="ib" onclick="toast('Recherche globale — bientôt disponible')"><i class="ti ti-search"></i></button>
     <button class="ib" onclick="toast('2 alertes · Office 365 prérequis · Migration Azure risque élevé')"><i class="ti ti-bell"></i></button>
-    <button class="ib" onclick="toast('Paramètres du compte')"><i class="ti ti-settings"></i></button>
+    <button class="ib" onclick="openSettings()" title="Paramètres"><i class="ti ti-settings"></i></button>
     <div class="av" id="tb-avatar" onclick="pmoLogout()" title="Se déconnecter">PM</div>
   </div>
 </div>
@@ -3262,6 +3262,107 @@ if(CONFIG.POLL_MS>0) setInterval(loadFromSheet, CONFIG.POLL_MS);
     <div class="mo-body" id="pd-body"></div>
   </div>
 </div>
+
+<!-- Paramètres -->
+<style>
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 2px;border-bottom:1px solid #F1F5F9}
+.set-row:last-of-type{border-bottom:none}
+.set-k{font-size:13px;font-weight:700;color:#0F172A}
+.set-d{font-size:10.5px;color:#94A3B8;margin-top:2px}
+.set-sel,.set-inp{font-size:12px;padding:7px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit}
+.set-sel{cursor:pointer}
+.set-inp{min-width:140px}
+.switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .sl{position:absolute;inset:0;background:#CBD5E1;border-radius:24px;transition:.2s;cursor:pointer}
+.switch .sl::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked + .sl{background:#2563EB}
+.switch input:checked + .sl::before{transform:translateX(20px)}
+/* Mode sombre : inversion globale (préserve les teintes) + désinversion des médias/canvas */
+html.dark{filter:invert(0.925) hue-rotate(180deg);background:#0e1116}
+html.dark canvas,html.dark img,html.dark video,html.dark .no-invert{filter:invert(1) hue-rotate(180deg)}
+/* Densité compacte */
+body.compact .ct{padding:9px 16px}
+body.compact .card{padding:10px}
+body.compact .tb{padding-top:6px;padding-bottom:6px}
+</style>
+<div class="overlay" id="set-overlay" onclick="closeSettings(event)">
+  <div class="modal" style="width:min(470px,94vw)">
+    <div class="mo-header">
+      <div class="mo-icon" style="background:#EFF6FF;color:#2563EB"><i class="ti ti-settings"></i></div>
+      <div><div class="mo-title" data-i18n="set.title">Paramètres</div><div class="mo-sub" data-i18n="set.sub">Personnalisez votre espace</div></div>
+      <button class="mo-close" onclick="closeSettings({target:document.getElementById('set-overlay')})"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="mo-body">
+      <div class="set-row">
+        <div><div class="set-k" data-i18n="set.dark">Mode sombre</div><div class="set-d" data-i18n="set.darkD">Thème foncé, plus reposant le soir</div></div>
+        <label class="switch"><input type="checkbox" id="set-dark" onchange="setTheme(this.checked?'dark':'light')"><span class="sl"></span></label>
+      </div>
+      <div class="set-row">
+        <div><div class="set-k" data-i18n="set.density">Densité d'affichage</div><div class="set-d" data-i18n="set.densityD">Compact = plus d'infos à l'écran</div></div>
+        <select id="set-density" class="set-sel" onchange="setDensity(this.value)"><option value="comfort" data-i18n="set.comfort">Confortable</option><option value="compact" data-i18n="set.compact">Compact</option></select>
+      </div>
+      <div class="set-row">
+        <div><div class="set-k" data-i18n="set.lang">Langue</div><div class="set-d" data-i18n="set.langD">Interface en français ou anglais</div></div>
+        <select id="set-lang" class="set-sel" onchange="setLang(this.value)"><option value="fr">Français</option><option value="en">English</option></select>
+      </div>
+      <div class="set-row">
+        <div style="flex:1"><div class="set-k" data-i18n="set.name">Nom affiché</div><div class="set-d" data-i18n="set.nameD">Affiché sur votre avatar</div></div>
+        <input type="text" id="set-name" class="set-inp" oninput="setDisplayName(this.value)" placeholder="—">
+      </div>
+      <div style="margin-top:18px;display:flex;justify-content:space-between;gap:10px">
+        <button class="btn" onclick="resetPrefs()"><i class="ti ti-arrow-back-up"></i><span data-i18n="set.reset">Réinitialiser</span></button>
+        <button class="btn btn-acc" onclick="closeSettings({target:document.getElementById('set-overlay')})"><i class="ti ti-check"></i><span data-i18n="set.done">Terminé</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ═══════════ PRÉFÉRENCES : thème, langue, densité, profil (persistées dans le navigateur) ═══════════ */
+var I18N={
+  fr:{'nav.home':'Accueil','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrice','nav.res':'Ressources','nav.budget':'Budget','nav.agenda':'Agenda','nav.risks':'Risques','nav.rex':'Clôture & REX','nav.rh':'RH','nav.list':'Liste','nav.details':'Détails','logo.tag':'Gestion de portefeuille projets',
+    'set.title':'Paramètres','set.sub':'Personnalisez votre espace','set.dark':'Mode sombre','set.darkD':'Thème foncé, plus reposant le soir','set.density':"Densité d'affichage",'set.densityD':"Compact = plus d'infos à l'écran",'set.comfort':'Confortable','set.compact':'Compact','set.lang':'Langue','set.langD':'Interface en français ou anglais','set.name':'Nom affiché','set.nameD':'Affiché sur votre avatar','set.reset':'Réinitialiser','set.done':'Terminé',
+    'login.title':'Connexion','login.sub':'Accédez à votre espace de gestion de portefeuille','login.user':'Identifiant','login.pass':'Mot de passe','login.btn':'Se connecter'},
+  en:{'nav.home':'Home','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrix','nav.res':'Resources','nav.budget':'Budget','nav.agenda':'Calendar','nav.risks':'Risks','nav.rex':'Closure & Lessons','nav.rh':'HR','nav.list':'List','nav.details':'Details','logo.tag':'Project portfolio management',
+    'set.title':'Settings','set.sub':'Personalize your workspace','set.dark':'Dark mode','set.darkD':'Darker theme, easier on the eyes','set.density':'Display density','set.densityD':'Compact = more on screen','set.comfort':'Comfortable','set.compact':'Compact','set.lang':'Language','set.langD':'Interface in French or English','set.name':'Display name','set.nameD':'Shown on your avatar','set.reset':'Reset','set.done':'Done',
+    'login.title':'Sign in','login.sub':'Access your portfolio management workspace','login.user':'Username','login.pass':'Password','login.btn':'Sign in'}
+};
+var PREFS_DEFAULT={theme:'light',lang:'fr',density:'comfort',displayName:''};
+function loadPrefs(){ try{ return Object.assign({},PREFS_DEFAULT,JSON.parse(localStorage.getItem('pmo_prefs')||'{}')); }catch(e){ return Object.assign({},PREFS_DEFAULT); } }
+var PREFS=loadPrefs();
+function savePrefs(){ try{ localStorage.setItem('pmo_prefs',JSON.stringify(PREFS)); }catch(e){} }
+function applyTheme(t){ document.documentElement.classList.toggle('dark', t==='dark'); }
+function applyDensity(d){ document.body.classList.toggle('compact', d==='compact'); }
+function applyLang(lang){
+  lang=(lang==='en')?'en':'fr'; document.documentElement.setAttribute('lang',lang);
+  var dict=I18N[lang]||{};
+  document.querySelectorAll('[data-i18n]').forEach(function(el){ var t=dict[el.getAttribute('data-i18n')]; if(t!=null) el.textContent=t; });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){ var t=dict[el.getAttribute('data-i18n-ph')]; if(t!=null) el.setAttribute('placeholder',t); });
+}
+function profileName(){ var nm=PREFS.displayName||''; if(!nm){ try{ nm=sessionStorage.getItem('pmo_user')||''; }catch(e){} } return nm; }
+function applyProfile(){ var nm=profileName(); var av=document.getElementById('tb-avatar'); if(av){ av.textContent=((nm||'PM').slice(0,2)||'PM').toUpperCase(); av.setAttribute('title',(nm?nm+' · ':'')+'Se déconnecter'); } }
+function setTheme(t){ PREFS.theme=t; applyTheme(t); savePrefs(); }
+function setDensity(d){ PREFS.density=d; applyDensity(d); savePrefs(); }
+function setLang(l){ PREFS.lang=l; applyLang(l); savePrefs(); }
+function setDisplayName(v){ PREFS.displayName=(v||'').trim(); applyProfile(); savePrefs(); }
+function applyAllPrefs(){ applyTheme(PREFS.theme); applyDensity(PREFS.density); applyLang(PREFS.lang); applyProfile(); }
+function openSettings(){
+  var o=document.getElementById('set-overlay'); if(!o) return;
+  document.getElementById('set-dark').checked=(PREFS.theme==='dark');
+  document.getElementById('set-density').value=PREFS.density;
+  document.getElementById('set-lang').value=PREFS.lang;
+  document.getElementById('set-name').value=profileName();
+  o.classList.add('open'); document.body.style.overflow='hidden';
+}
+function closeSettings(e){ if(e&&e.target!==document.getElementById('set-overlay'))return; document.getElementById('set-overlay').classList.remove('open'); document.body.style.overflow=''; }
+function resetPrefs(){
+  if(!confirm('Réinitialiser toutes les préférences (thème, langue, densité, nom) ?')) return;
+  PREFS=Object.assign({},PREFS_DEFAULT); savePrefs(); applyAllPrefs();
+  if(document.getElementById('set-overlay').classList.contains('open')) openSettings();
+  if(typeof toast==='function') toast('✓ Préférences réinitialisées');
+}
+applyAllPrefs();
+</script>
 
 </body>
 </html>
