@@ -1500,6 +1500,46 @@ let P=[
   {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,pctLic:25,pctEsnB:0},
   {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,pctLic:35,pctEsnB:0},
 ];
+/* Objectifs détaillés + cahier des charges des 11 projets du cas (contexte Time'Eats : plateforme
+   d'intermédiation traiteurs/chefs ↔ clients). Injectés côté client, comme les dépendances seedées,
+   pour alimenter l'onglet Détails et la fiche projet quel que soit l'état du Sheet. */
+var PROJECT_INFO={
+  "Office 365":{
+    note:"Déployer la suite collaborative Microsoft 365 (messagerie, Teams, SharePoint, OneDrive) pour l'ensemble des collaborateurs Time'Eats. Ce socle est un prérequis bloquant : il doit être opérationnel avant le CRM et les applications mobiles, qui s'appuient sur l'annuaire et l'authentification unifiés.",
+    cdc:"• Migration des boîtes mail et calendriers vers Exchange Online, sans perte de données.\n• Déploiement de Teams et SharePoint pour la collaboration inter-équipes.\n• Création et synchronisation de l'annuaire (Azure AD) pour tous les employés.\n• Politique de licences par profil et formation des utilisateurs clés.\n• Recette : connexion effective de 100% des collaborateurs avant fin juin."},
+  "Refonte app web":{
+    note:"Refondre le portail web Time'Eats pour offrir une expérience moderne et responsive aux comptes clients et fournisseurs. L'application s'interface avec le nouveau CRM et sert de point d'entrée à l'écosystème (commandes, suivi, facturation).",
+    cdc:"• Interface responsive (desktop, tablette, mobile) et accessible.\n• Espaces distincts compte client et compte fournisseur (traiteurs/chefs).\n• Interfaçage temps réel avec le CRM (comptes, commandes, historique).\n• Refonte du tunnel de commande et du suivi de statut.\n• Recette : parcours client et fournisseur validés de bout en bout."},
+  "Livraison continue":{
+    note:"Moderniser la chaîne de développement de la DSI via l'intégration et la livraison continues (CI/CD), afin de fiabiliser et d'accélérer les mises en production des applications web et mobiles en réduisant les erreurs manuelles.",
+    cdc:"• Pipelines CI/CD (build, tests et déploiement automatisés).\n• Tests unitaires et d'intégration exécutés à chaque commit.\n• Environnements séparés (dev, recette, production) et déploiements traçables.\n• Gestion des versions et rollback rapide en cas d'incident.\n• Recette : déploiement automatisé d'une application pilote validé."},
+  "App mobile clients":{
+    note:"Développer l'application mobile des clients (établissements, entreprises) : commande de prestations traiteurs, réservation de chefs et suivi en temps réel. Pilier de la stratégie de croissance de Time'Eats.",
+    cdc:"• Applications iOS et Android (native ou hybride).\n• Catalogue des prestations, prise de commande et réservation de chefs.\n• Paiement en ligne sécurisé et suivi de commande en temps réel.\n• Notifications push (confirmation, rappels, statut).\n• Interfaçage CRM ; mise en service conditionnée à celle du CRM.\n• Recette : commande complète réalisée en conditions réelles."},
+  "App mobile fournisseurs":{
+    note:"Développer l'application mobile des fournisseurs (traiteurs et chefs) : gestion des disponibilités, réception et traitement des commandes, suivi d'activité. Elle assure l'intermédiation au cœur du modèle Time'Eats.",
+    cdc:"• Gestion du profil, du catalogue et des disponibilités du prestataire.\n• Réception, acceptation et suivi des commandes en temps réel.\n• Tableau de bord d'activité et de revenus.\n• Notifications et messagerie avec le client.\n• Interfaçage CRM et cohérence avec l'app clients.\n• Recette : cycle commande reçue → traitée validé."},
+  "CRM":{
+    note:"Déployer un progiciel CRM pour centraliser la relation client et fournisseur (comptes, contacts, commandes, facturation). Colonne vertébrale du SI, il doit être opérationnel avant la mise en service des applications web et mobiles.",
+    cdc:"• Paramétrage du progiciel (comptes clients, fournisseurs, contacts, opportunités).\n• Reprise et nettoyage des données existantes.\n• API d'interfaçage pour les applications web et mobiles.\n• Gestion des droits et des rôles par population.\n• Formation des équipes commerciales et support.\n• Recette : référentiel unique partagé et synchronisé validé."},
+  "Auth forte (MFA)":{
+    note:"Renforcer la sécurité des accès en déployant l'authentification multi-facteurs (MFA) pour l'ensemble des employés et des applications sensibles, afin de réduire le risque de compromission des comptes.",
+    cdc:"• Déploiement MFA sur Microsoft 365 et les applications métier.\n• Application mobile d'authentification et/ou code à usage unique (OTP).\n• Politique d'accès conditionnel (appareils, localisation).\n• Procédures de secours et de réinitialisation.\n• Sensibilisation des utilisateurs.\n• Recette : MFA actif et testé pour 100% des comptes."},
+  "Migration Azure":{
+    note:"Migrer les applications héritées (.NET 4.6.2 sur Windows Server 2016) vers Microsoft Azure pour moderniser l'hébergement, améliorer la disponibilité et sortir d'une infrastructure vieillissante.",
+    cdc:"• Audit et cartographie des applications et de leurs dépendances.\n• Choix des services cibles Azure (App Service, VM, base managée).\n• Migration progressive avec environnement de recette.\n• Plan de bascule, tests de charge et rollback.\n• Décommissionnement des serveurs obsolètes.\n• Recette : applications opérationnelles sur Azure sans régression."},
+  "MAJ paie réglementaire":{
+    note:"Mettre à jour le système de paie pour intégrer les évolutions réglementaires en vigueur. Obligation légale à échéance non négociable : projet prioritaire dont le délai est impératif.",
+    cdc:"• Intégration des évolutions légales et conventionnelles de paie.\n• Mise à jour des taux, cotisations et éditions réglementaires.\n• Tests sur un cycle de paie complet en environnement de recette.\n• Conformité et traçabilité des calculs.\n• Recette : bulletin de paie conforme validé avant l'échéance légale."},
+  "Stockage / fichiers":{
+    note:"Mettre en place une solution de stockage de fichiers centralisée avec une gestion fine des droits d'accès par population (services, rôles), afin de rationaliser le partage documentaire et de sécuriser les accès.",
+    cdc:"• Espace de stockage centralisé (arborescence par service).\n• Gestion des droits d'accès par population et par rôle.\n• Versionnement et corbeille de récupération.\n• Intégration avec l'annuaire (SSO) et Microsoft 365.\n• Recette : matrice des droits appliquée et vérifiée."},
+  "Sauvegarde Cloud":{
+    note:"Déployer une solution de sauvegarde dans le cloud garantissant la continuité de service en cas de sinistre, avec des objectifs de perte de données (RPO) et de reprise (RTO) définis et testés.",
+    cdc:"• Sauvegarde automatisée et chiffrée des données et systèmes critiques.\n• Définition et respect des objectifs RPO / RTO.\n• Externalisation cloud et rétention conforme à la politique.\n• Tests de restauration réguliers et plan de reprise (PRA).\n• Recette : restauration complète testée avec succès."}
+};
+function enrichInfo(p){ var i=PROJECT_INFO[p.n]; if(!i) return; if(i.note) p.note=i.note; if(i.cdc) p.cdc=i.cdc; }
+P.forEach(enrichInfo);
 /* Matrice de décision Valeur × Effort (matrice Impact/Effort, la référence en gestion de portefeuille).
    2 critères cotés /5 : Valeur (impact business/stratégique) et Effort (charge/complexité).
    Axes matrice : X = Valeur (valeur×4, 0-20) · Y = Simplicité = effort faible en haut ((6-effort)×4, 0-20).
@@ -2874,6 +2914,7 @@ function applyData(d){
       scoreP(p);
       if((!p.deps||!p.deps.length)&&DEP_SEED[p.n]) p.deps=DEP_SEED[p.n].map(function(x){return {dep:x.dep,type:x.type,lag:x.lag};});
       if(!p.deps)p.deps=[];
+      enrichInfo(p);
       return p;
     });
   }
