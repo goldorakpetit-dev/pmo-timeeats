@@ -550,7 +550,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 <!-- PAGE GANTT -->
 <div id="p-gantt" class="page">
   <div class="ab">
-    <div class="ab-l"><div class="ab-title">Gantt multi-projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets · Avril 2026 → Janvier 2027</div></div>
+    <div class="ab-l"><div class="ab-title">Gantt multi-projets</div></div>
     <div class="ab-r" style="display:flex;gap:8px;flex-wrap:wrap">
       <select id="gantt-pf" title="Portefeuille(s) affiché(s)" onchange="setGanttPf(this.value)" style="font-size:11px;padding:7px 9px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"><option value="">Afficher : tous les portefeuilles</option></select>
       <label style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#334155;font-weight:600;cursor:pointer;padding:0 4px"><input type="checkbox" id="gantt-group" checked onchange="toggleGanttGroup(this.checked)" style="width:auto;margin:0;cursor:pointer">Grouper</label>
@@ -573,7 +573,6 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <button class="btn" onclick="ganttShift(-3)" title="Mois précédents" style="padding:5px 10px"><i class="ti ti-chevron-left"></i></button>
         <input type="range" id="gantt-range" min="0" max="0" value="0" step="1" oninput="ganttSetOff(this.value)" style="flex:1;accent-color:#2563EB;cursor:pointer">
         <button class="btn" onclick="ganttShift(3)" title="Mois suivants" style="padding:5px 10px"><i class="ti ti-chevron-right"></i></button>
-        <span id="gantt-range-label" style="font-size:11px;font-weight:700;color:#475569;white-space:nowrap;min-width:150px;text-align:right"></span>
       </div>
       <div class="gh"><div class="glh"></div><div class="gmh" id="mhdr"></div></div>
       <div id="grows"></div>
