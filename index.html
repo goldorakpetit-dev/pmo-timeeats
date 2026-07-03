@@ -2763,35 +2763,7 @@ function renderRisques(){
     } else { list='<div style="font-size:11px;color:#CBD5E1;padding:4px 0">Aucun risque renseigné</div>'; }
     out+='<div class="card" style="margin-bottom:9px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:'+catf+'"></div><div style="font-size:12.5px;font-weight:700;color:#0F172A">'+p.n+'</div><span style="font-size:9px;font-weight:700;padding:2px 9px;border-radius:10px;background:'+topLv.bg+';color:'+topLv.c+'">'+rs.length+' risque'+(rs.length>1?'s':'')+(top?' · '+top.level:'')+'</span><span style="margin-left:auto;font-size:10px;color:#94A3B8">Effort '+p.effort+'/5</span></div>'+list+'</div>';
   });
-  // ── Matrice des risques 5×5 (Probabilité × Impact) ──
-  function sevCol(s){ return s>=15?'#EF4444':s>=10?'#F97316':s>=5?'#F59E0B':'#10B981'; }
-  var cells={};
-  P.forEach(function(p){ riskOf(p).forEach(function(r){ var pi=riskPI(r); var k=pi.p+'_'+pi.i; (cells[k]=cells[k]||[]).push(p.n+' — '+r.risk); }); });
-  var grid='<div class="card" style="margin-bottom:12px"><div style="font-size:12.5px;font-weight:800;color:#0F172A;margin-bottom:3px">Matrice des risques — Probabilité × Impact</div><div style="font-size:10px;color:#94A3B8;margin-bottom:12px">Chaque case indique le nombre de risques ; la couleur reflète la criticité (probabilité × impact). Survolez une case pour le détail.</div>';
-  grid+='<div style="display:flex;gap:8px;align-items:stretch">';
-  grid+='<div style="display:flex;align-items:center;font-size:10px;font-weight:700;color:#64748B;writing-mode:vertical-rl;transform:rotate(180deg);padding:0 2px">Impact →</div>';
-  grid+='<div style="flex:1;max-width:560px">';
-  for(var im=5;im>=1;im--){
-    grid+='<div style="display:flex;gap:5px;margin-bottom:5px;align-items:center">';
-    grid+='<div style="width:16px;text-align:center;font-size:10px;font-weight:700;color:#94A3B8">'+im+'</div>';
-    for(var pr=1;pr<=5;pr++){
-      var s=pr*im; var col=sevCol(s); var arr=cells[pr+'_'+im]||[]; var n=arr.length;
-      var tip=(arr.join(' · ').replace(/"/g,'\''))||('Probabilité '+pr+' × Impact '+im);
-      grid+='<div title="'+tip+'" style="flex:1;height:42px;border-radius:6px;background:'+col+'22;border:1px solid '+col+'55;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:'+col+'">'+(n||'')+'</div>';
-    }
-    grid+='</div>';
-  }
-  grid+='<div style="display:flex;gap:5px;margin-top:2px"><div style="width:16px"></div>';
-  for(var pr2=1;pr2<=5;pr2++) grid+='<div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:#94A3B8">'+pr2+'</div>';
-  grid+='</div><div style="text-align:center;font-size:10px;font-weight:700;color:#64748B;margin-top:5px">Probabilité →</div>';
-  grid+='</div></div>';
-  grid+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #F1F5F9">'
-    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#10B98122;border:1px solid #10B98155"></span>Faible</span>'
-    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#F59E0B22;border:1px solid #F59E0B55"></span>Modéré</span>'
-    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#F9731622;border:1px solid #F9731655"></span>Élevé</span>'
-    +'<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#64748B"><span style="width:10px;height:10px;border-radius:3px;background:#EF444422;border:1px solid #EF444455"></span>Critique</span></div>';
-  grid+='</div>';
-  el.innerHTML=grid+out;
+  el.innerHTML=out;
 }
 
 /* Saisie d'équipe depuis le web */
