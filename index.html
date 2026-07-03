@@ -802,7 +802,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
         <div style="font-size:13px;font-weight:800;color:#0F172A" id="np-pct">0%</div>
         <div class="progress-bar"><div class="progress-fill" id="np-progress" style="width:0%"></div></div>
       </div>
-      <button class="mo-close" onclick="document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow=''"><i class="ti ti-x"></i></button>
+      <button class="mo-close" onclick="tryCloseNP()"><i class="ti ti-x"></i></button>
     </div>
     <div class="mo-body">
       <div class="form-section">
@@ -855,7 +855,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <div class="form-errors" id="np-errors"><strong>Champs obligatoires manquants :</strong><ul id="np-errors-list"></ul></div>
       <div class="ma2">
         <button class="btn" onclick="resetNPForm()"><i class="ti ti-refresh"></i>Réinitialiser</button>
-        <button class="btn" onclick="document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow=''">Annuler</button>
+        <button class="btn" onclick="tryCloseNP()">Annuler</button>
         <button class="btn btn-acc" onclick="saveNewProject()"><i class="ti ti-check"></i>Ajouter au portefeuille</button>
       </div>
     </div>
@@ -1220,7 +1220,19 @@ function openNewProject(){
   npFillStart(); npRenderCharges(); npPctSum(); npFillDeps();
   document.getElementById('np-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
-function closeNPModal(e){if(e&&e.target!==document.getElementById('np-overlay'))return;document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow='';}
+function npHasContent(){
+  var ids=['np-name','np-desc','np-cdc','np-budget','np-charge','np-startdate','np-enddate','np-cat-new'];
+  for(var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if(el && String(el.value||'').trim()!=='') return true; }
+  var cat=document.getElementById('np-cat'); if(cat && cat.value && cat.value!=='' && cat.value!=='__new__') return true;
+  if(typeof DEPS_STORE!=='undefined' && (DEPS_STORE['np']||[]).length) return true;
+  if(typeof RISKS_STORE!=='undefined' && (RISKS_STORE['np']||[]).length) return true;
+  return false;
+}
+function tryCloseNP(){
+  if(npHasContent() && !confirm('Quitter sans enregistrer ? Les informations saisies pour ce projet seront perdues.')) return;
+  document.getElementById('np-overlay').classList.remove('open'); document.body.style.overflow='';
+}
+function closeNPModal(e){ if(e&&e.target!==document.getElementById('np-overlay'))return; tryCloseNP(); }
 function resetNPForm(){
   NP_REQ.forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.classList.remove('err');}});
   ['np-cdc','np-esn','np-lic','np-cat-new'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1362,7 +1374,7 @@ function saveNewProject(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){
   document.getElementById('kpi-overlay').classList.remove('open');
   document.getElementById('meeting-overlay').classList.remove('open');
-  document.getElementById('np-overlay').classList.remove('open');
+  if(document.getElementById('np-overlay').classList.contains('open')){ tryCloseNP(); return; }
   if(document.getElementById('del-overlay'))document.getElementById('del-overlay').classList.remove('open');
   if(document.getElementById('pf-overlay'))document.getElementById('pf-overlay').classList.remove('open');
   if(document.getElementById('cal-overlay'))document.getElementById('cal-overlay').classList.remove('open');
