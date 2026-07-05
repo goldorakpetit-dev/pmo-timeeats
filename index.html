@@ -904,6 +904,9 @@ pmoShowLogin(!pmoIsAuthed());
         <div class="fld" style="margin-bottom:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="np-sel" style="width:auto;margin:0">Marquer comme projet sélectionné (mis en avant)</label></div>
         <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Valeur / impact (/5)</label><select id="np-valeur"><option value="1">1 — faible</option><option value="2">2</option><option value="3" selected>3 — moyenne</option><option value="4">4</option><option value="5">5 — forte</option></select></div><div class="fld"><label>Effort / complexité (/5)</label><select id="np-effort"><option value="1">1 — léger</option><option value="2">2</option><option value="3" selected>3 — moyen</option><option value="4">4</option><option value="5">5 — lourd</option></select></div></div>
         <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision : forte valeur + faible effort = « Quick win » à prioriser.</div>
+        <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Importance stratégique (/5) · 40 %</label><select id="np-imp"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Rentabilité attendue (/5) · 30 %</label><select id="np-rent"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
+        <div class="frow c2" style="margin-top:8px"><div class="fld"><label>Maîtrise des risques (/5) · 10 %</label><select id="np-mait"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Urgence / dépendance (/5) · 10 %</label><select id="np-urg"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
+        <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Score pondéré /100 (dossier) = Σ(note × poids) × 20 — l'effort maîtrisé (10 %) est calculé automatiquement d'après la charge (≤ 80 j/h = 5 · 81-150 = 4 · 151-250 = 3 · 251-320 = 2 · &gt; 320 = 1).</div>
       </div>
       <div class="form-section">
         <div class="form-section-title"><i class="ti ti-calendar" style="font-size:12px;color:#3B82F6"></i>Planning</div>
@@ -963,7 +966,7 @@ const KPI_DEFS={
   'stars':{title:'Projets prioritaires — Quick wins',sub:'Forte valeur + faible effort (matrice Valeur × Effort)',dot:'#10B981'},
   'risque':{title:'Projets à risque élevé',sub:'Risque Élevé ou Critique (matrice probabilité × impact)',dot:'#EF4444'},
   'esn':{title:'Prestataires ESN',sub:'Charge et budget externalisés',dot:'#2563EB'},
-  'score-max':{title:'Classement complet — Scores de priorité',sub:'Projets classés par score Valeur + Simplicité',dot:'#F59E0B'},
+  'score-max':{title:'Classement complet — Scores de priorité',sub:'Score pondéré /100 : Importance 40 % · Rentabilité 30 % · Maîtrise 10 % · Effort 10 % · Urgence 10 %',dot:'#F59E0B'},
   'actifs':{title:'Projets actifs — Avril 2026',sub:'3 projets actifs · détail charge et équipes',dot:'#10B981'},
 };
 
@@ -1039,13 +1042,13 @@ function buildKPIContent(id){
 
   if(id==='stars'){
     const stars=[...P].filter(p=>p.q==='stars').sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));
-    let h=kpiStats([{v:stars.length,u:'',k:'Projets Quick wins'},{v:stars.length?Math.max(...stars.map(p=>p.val+p.fais)):0,u:'/40',k:'Meilleur score',c:'#10B981'},{v:stars.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget Quick wins'},{v:Math.round(stars.length/P.length*100),u:'%',k:'Du portefeuille',c:'#2563EB'}]);
+    let h=kpiStats([{v:stars.length,u:'',k:'Projets Quick wins'},{v:stars.length?Math.max(...stars.map(p=>p.sc)):0,u:'/100',k:'Meilleur score',c:'#10B981'},{v:stars.reduce((s,p)=>s+p.b,0),u:' K€',k:'Budget Quick wins'},{v:Math.round(stars.length/P.length*100),u:'%',k:'Du portefeuille',c:'#2563EB'}]);
     h+=kpiSect('Détail des projets Quick wins','#10B981');
     h+='<div class="tmo-grid">';
     stars.forEach(p=>{
       const cp=TEAMS[p.n]?.members.find(m=>m.role==='Chef de projet');
-      const sc=p.val+p.fais;const scCol=sc>=32?'#10B981':sc>=26?'#2563EB':'#64748B';
-      h+=`<div class="tmo-card"><div class="tmc-top"><div class="tmc-av" style="background:${CAT[p.cat].f}">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div><div style="font-size:18px;font-weight:800;color:${scCol};line-height:1">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/40</span></div></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Valeur</span>${kpiBar(p.val,20,'#3B82F6',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.val}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Simpl.</span>${kpiBar(p.fais,20,'#10B981',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.fais}</span></div></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:8px;border-top:1px solid #E2E8F0"><div style="font-size:9.5px;color:#64748B">${cp?'CP : '+cp.name:'—'}</div>${kpiPill(p.st2,p.st2==='En cours'?'#ECFDF5':'#EFF6FF',p.st2==='En cours'?'#10B981':'#3B82F6')}</div></div>`;
+      const sc=p.sc;const scCol=sc>=84?'#10B981':sc>=70?'#2563EB':'#64748B';
+      h+=`<div class="tmo-card"><div class="tmc-top"><div class="tmc-av" style="background:${CAT[p.cat].f}">${p.n.slice(0,2).toUpperCase()}</div><div style="flex:1;min-width:0"><div class="tmc-name">${p.n}</div><div class="tmc-role">${p.cat} · ${p.b}K€</div></div><div style="font-size:18px;font-weight:800;color:${scCol};line-height:1">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/100</span></div></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Valeur</span>${kpiBar(p.val,20,'#3B82F6',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.val}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#64748B;width:42px;flex-shrink:0">Simpl.</span>${kpiBar(p.fais,20,'#10B981',8)}<span style="font-size:10px;font-weight:700;color:#334155;width:20px;text-align:right">${p.fais}</span></div></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:8px;border-top:1px solid #E2E8F0"><div style="font-size:9.5px;color:#64748B">${cp?'CP : '+cp.name:'—'}</div>${kpiPill(p.st2,p.st2==='En cours'?'#ECFDF5':'#EFF6FF',p.st2==='En cours'?'#10B981':'#3B82F6')}</div></div>`;
     });
     h+='</div>';return h;
   }
@@ -1099,13 +1102,13 @@ function buildKPIContent(id){
   }
 
   if(id==='score-max'){
-    const sorted=[...P].sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));const maxSc=sorted[0].val+sorted[0].fais;
-    let h=kpiStats([{v:maxSc,u:'/40',k:'Meilleur score',c:'#F59E0B'},{v:Math.round(P.reduce((s,p)=>s+(p.val+p.fais),0)/P.length),u:'/40',k:'Score moyen'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Quick wins ⭐',c:'#10B981'},{v:P.filter(p=>p.q==='reconsider').length,u:'',k:'À éviter',c:'#EF4444'}]);
+    const sorted=[...P].sort((a,b)=>b.sc-a.sc);const maxSc=sorted[0].sc;
+    let h=kpiStats([{v:maxSc,u:'/100',k:'Meilleur score',c:'#F59E0B'},{v:Math.round(P.reduce((s,p)=>s+p.sc,0)/P.length),u:'/100',k:'Score moyen'},{v:P.filter(p=>p.q==='stars').length,u:'',k:'Quick wins ⭐',c:'#10B981'},{v:P.filter(p=>p.q==='reconsider').length,u:'',k:'À éviter',c:'#EF4444'}]);
     h+=kpiSect('Classement complet des 11 projets','#F59E0B');
     h+='<div style="display:flex;flex-direction:column;gap:5px">';
     sorted.forEach((p,i)=>{
-      const sc=p.val+p.fais;const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-      h+=`<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><div style="width:22px;font-size:10px;font-weight:800;color:${i<3?'#F59E0B':'#CBD5E1'};text-align:center;flex-shrink:0">${medal||(i+1)}</div><div style="width:7px;height:7px;border-radius:50%;background:${CAT[p.cat].f};flex-shrink:0"></div><div style="flex:1;font-size:11px;font-weight:600;color:#334155;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}${p.sel?'<span style="font-size:7px;background:#EFF6FF;color:#2563EB;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:5px">✓</span>':''}</div><div style="font-size:13px;font-weight:800;color:${sc>=30?'#10B981':sc>=24?'#2563EB':'#64748B'};flex-shrink:0">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/40</span></div>${kpiPill(qLabel[p.q],qBg[p.q],qColor[p.q])}</div>${kpiBar(sc,40,sc>=30?'#10B981':sc>=24?'#2563EB':'#94A3B8',7)}</div>`;
+      const sc=p.sc;const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      h+=`<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px"><div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><div style="width:22px;font-size:10px;font-weight:800;color:${i<3?'#F59E0B':'#CBD5E1'};text-align:center;flex-shrink:0">${medal||(i+1)}</div><div style="width:7px;height:7px;border-radius:50%;background:${CAT[p.cat].f};flex-shrink:0"></div><div style="flex:1;font-size:11px;font-weight:600;color:#334155;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}${p.sel?'<span style="font-size:7px;background:#EFF6FF;color:#2563EB;padding:1px 4px;border-radius:3px;font-weight:700;margin-left:5px">✓</span>':''}</div><div style="font-size:13px;font-weight:800;color:${sc>=84?'#10B981':sc>=70?'#2563EB':'#64748B'};flex-shrink:0">${sc}<span style="font-size:8px;font-weight:400;color:#94A3B8">/100</span></div>${kpiPill(qLabel[p.q],qBg[p.q],qColor[p.q])}</div>${kpiBar(sc,100,sc>=84?'#10B981':sc>=70?'#2563EB':'#94A3B8',7)}</div>`;
     });
     h+='</div>';return h;
   }
@@ -1452,7 +1455,7 @@ function saveNewProject(){
   var npRk=(RISKS_STORE['np']||[]).slice();
   const topRisk=npRk.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
   var g2=function(id){var e=document.getElementById(id);return e?e.value:'';};
-  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,valeur:+g2('np-valeur')||3,effort:+g2('np-effort')||3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,valeur:+g2('np-valeur')||3,effort:+g2('np-effort')||3,st:+g2('np-imp')||3,rent:+g2('np-rent')||3,mait:+g2('np-mait')||3,urg:+g2('np-urg')||3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
   scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -1488,17 +1491,17 @@ var CAT_PALETTE=['#0EA5E9','#F43F5E','#A855F7','#14B8A6','#EAB308','#F97316','#6
 function ensureCat(name){ name=(name||'').trim(); if(name && !CAT[name]){ var c=CAT_PALETTE[Object.keys(CAT).length % CAT_PALETTE.length]; CAT[name]={f:c,bg:c+'1A'}; } return name; }
 
 let P=[
-  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3,pctLic:60,pctEsnB:0},
-  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2,pctLic:10,pctEsnB:45},
-  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3,pctLic:25,pctEsnB:45},
-  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3,pctLic:5,pctEsnB:0},
-  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2,pctLic:5,pctEsnB:40},
-  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,sel:1,pctLic:45,pctEsnB:45},
-  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4,pctLic:40,pctEsnB:0},
-  {n:'Migration Azure',        cat:'Socle IT',      s:4,d:5,b:200,c:300,st:3,dt:'Août → Déc',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',rent:4,mait:1,pctLic:15,pctEsnB:35},
-  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',rent:1,mait:4,pctLic:30,pctEsnB:0},
-  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,pctLic:25,pctEsnB:0},
-  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,pctLic:35,pctEsnB:0},
+  {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3,urg:5,pctLic:60,pctEsnB:0},
+  {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2,urg:4,pctLic:10,pctEsnB:45},
+  {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3,urg:2,pctLic:25,pctEsnB:45},
+  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3,urg:4,sel:1,pctLic:5,pctEsnB:40,methodo:'Hybride — Cycle en V + Scrum',sponsor:'Direction Générale / DSI'},
+  {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2,urg:4,pctLic:5,pctEsnB:40},
+  {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,urg:4,pctLic:45,pctEsnB:45},
+  {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4,urg:3,pctLic:40,pctEsnB:0},
+  {n:'Migration Azure',        cat:'Socle IT',      s:3,d:5,b:200,c:300,st:3,dt:'Juil → Nov',note:'Migration apps .NET 4.6.2 hébergées sur Windows Server 2016',st2:'Planifié',rent:4,mait:1,urg:2,pctLic:15,pctEsnB:35},
+  {n:'MAJ paie réglementaire', cat:'Réglementaire', s:5,d:3,b:50, c:50, st:5,dt:'Sep → Nov', note:'Obligation légale — délai non négociable · cotation 5/5 automatique',st2:'Planifié',rent:1,mait:4,urg:5,pctLic:30,pctEsnB:0},
+  {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,urg:2,pctLic:25,pctEsnB:0},
+  {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,urg:3,pctLic:35,pctEsnB:0},
 ];
 /* Objectifs détaillés + cahier des charges des 11 projets du cas (contexte Time'Eats : plateforme
    d'intermédiation traiteurs/chefs ↔ clients). Injectés côté client, comme les dépendances seedées,
@@ -1545,7 +1548,17 @@ P.forEach(enrichInfo);
    Axes matrice : X = Valeur (valeur×4, 0-20) · Y = Simplicité = effort faible en haut ((6-effort)×4, 0-20).
    Quadrants : Quick win (valeur haute + effort faible), Majeur (valeur haute + effort élevé),
    Secondaire (valeur faible + effort faible), À éviter (valeur faible + effort élevé).
-   Score de priorité = Valeur + Simplicité (/40) : privilégie la forte valeur au moindre effort. */
+   Les quadrants restent portés par Valeur × Effort ; le SCORE affiché est le score pondéré /100 du dossier :\n   Importance 40 % + Rentabilité 30 % + Maîtrise 10 % + Effort maîtrisé 10 % (barème de charge) + Urgence 10 %. */
+/* ── Score pondéré /100 (aligné dossier PMO) : 5 critères — Importance 40 %, Rentabilité 30 %,
+   Maîtrise 10 %, Effort maîtrisé 10 % (barème de charge), Urgence 10 %. Score = Σ(note×poids)×20. ── */
+function effortNote(c){ c=+c||0; return c<=80?5:(c<=150?4:(c<=250?3:(c<=320?2:1))); }
+var URG_SEED={'Office 365':5,'Refonte app web':4,'Livraison continue':2,'App mobile clients':4,'App mobile fournisseurs':4,'CRM':4,'Auth forte (MFA)':3,'Migration Azure':2,'MAJ paie réglementaire':5,'Stockage / fichiers':2,'Sauvegarde Cloud':3};
+function sc100(p){
+  var imp=+p.st||0, rent=+p.rent||0, mait=+p.mait||0;
+  var urg=+p.urg||URG_SEED[p.n]||3;
+  if(!imp&&!rent) return Math.round((p.val+p.fais)*2.5); /* repli si critères absents */
+  return Math.round((imp*0.4+rent*0.3+mait*0.1+effortNote(p.c)*0.1+urg*0.1)*20);
+}
 function scoreP(p){
   /* rétro-compatibilité : si valeur/effort absents, on les reconstruit d'abord des axes persistés
      (val/fais, colonnes du Sheet), sinon des anciens critères Importance/Rentabilité/Maîtrise. */
@@ -1562,6 +1575,7 @@ function scoreP(p){
   p.val =p.valeur*4;         /* X : Valeur / impact (4-20) */
   p.fais=(6-p.effort)*4;     /* Y : Simplicité — effort faible = haut (4-20) */
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
+  p.sc=sc100(p);           /* score pondéré /100 (aligné dossier) */
   return p;
 }
 P.forEach(scoreP);
@@ -1620,7 +1634,7 @@ let MV={
   'Office 365':             [81, 70, 69],
   'Refonte app web':        [78, 65, 75, 62, 55, 65],
   'Livraison continue':     [108,92,100],
-  'App mobile clients':     [26, 24, 25, 26, 22, 25, 26, 26],
+  'App mobile clients':     [15, 22, 30, 34, 32, 28, 22, 17], /* profil du dossier — pic été (dev+intégrations) */
   'App mobile fournisseurs':[32, 31, 32, 30, 31, 32, 31, 31],
   'CRM':                    [55, 48, 52, 55, 46, 44],
   'Auth forte (MFA)':       [32, 28, 35, 25],
@@ -1654,8 +1668,9 @@ let TEAMS={
   ]},
   'App mobile clients':{members:[
     {name:'Sarah',   role:'Chef de projet',      type:'interne',color:'#3B82F6',share:.15},
-    {name:'Yasmine', role:'Développeuse Mobile', type:'interne',color:'#10B981',share:.40},
-    {name:'Anaïs',   role:'Développeuse Mobile', type:'interne',color:'#8B5CF6',share:.45},
+    {name:'Yasmine', role:'Développeuse Mobile', type:'interne',color:'#10B981',share:.25},
+    {name:'Anaïs',   role:'Développeuse Mobile', type:'interne',color:'#8B5CF6',share:.20},
+    {name:'TechMob', role:'ESN · Mobile iOS/Android',type:'prestataire',color:'#2563EB',share:.40},
   ]},
   'App mobile fournisseurs':{members:[
     {name:'Thomas',   role:'Chef de projet',    type:'interne',   color:'#3B82F6',share:.14},
@@ -1745,7 +1760,7 @@ const totBudgetESN=Math.round(P.filter(p=>TEAMS[p.n]&&TEAMS[p.n].members.some(m=
   const esnShare=TEAMS[p.n].members.filter(m=>m.type==='prestataire').reduce((a,m)=>a+m.share,0);
   return s+p.b*esnShare;
 },0));
-const scoreMax=Math.max(...P.map(p=>p.val+p.fais));
+const scoreMax=Math.max(...P.map(p=>p.sc));
 const projStars=P.filter(p=>p.q==='stars').length;
 const risqueEleve=P.filter(p=>(RISKS[p.n]||[]).some(r=>(RISK_ORDER[r.level]||0)>=3)).length;
 
@@ -1768,8 +1783,8 @@ document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
     <div class="hkpi-hint"><i class="ti ti-zoom-in" style="font-size:9px"></i> Voir détail</div>
   </div>`).join('');
 
-const sortedP=[...P].sort((a,b)=>(b.val+b.fais)-(a.val+a.fais));
-document.getElementById('top5').innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.val+p.fais}/40</div></div>`).join('');
+const sortedP=[...P].sort((a,b)=>b.sc-a.sc);
+document.getElementById('top5').innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.sc}/100</div></div>`).join('');
 document.getElementById('alerts').innerHTML=ALERTS.map(a=>{const s=alertStyle(a);return `<div class="alert-row"><div class="alert-icon" style="background:${s.bg};color:${s.c}"><i class="ti ${s.ic}" style="font-size:11px"></i></div><div class="alert-txt">${a.text||a.t||''}</div></div>`;}).join('');
 }
 
@@ -1803,7 +1818,7 @@ function renderDash(){
     var bud=g.reduce(function(s,p){return s+(+p.b||0);},0), ch=g.reduce(function(s,p){return s+(+p.c||0);},0);
     var enCours=g.filter(function(p){return p.st2==='En cours';}).length;
     var over=g.filter(function(p){return dl!=null&&!projectFits(p,dl);}).length;
-    var avg=Math.round(g.reduce(function(s,p){return s+(p.val+p.fais);},0)/g.length);
+    var avg=Math.round(g.reduce(function(s,p){return s+p.sc;},0)/g.length);
     var qc={stars:0,quickwins:0,majeurs:0,reconsider:0}; g.forEach(function(p){qc[p.q]=(qc[p.q]||0)+1;});
     var bar='',leg='';
     ['stars','quickwins','majeurs','reconsider'].forEach(function(q){ if(qc[q]>0){ bar+='<div style="flex:'+qc[q]+';background:'+qCol[q]+'"></div>'; leg+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;color:#64748B"><span style="width:8px;height:8px;border-radius:2px;background:'+qCol[q]+'"></span>'+qLab[q]+' '+qc[q]+'</span>'; } });
@@ -1817,7 +1832,7 @@ function renderDash(){
         + dashMini('Budget',bud,' K€')
         + dashMini('Charge',ch,' j/h')
         + dashMini('En cours',enCours,'/'+g.length)
-        + dashMini('Score moy.',avg,'/40')
+        + dashMini('Score moy.',avg,'/100')
       +'</div>'
       +'<div style="font-size:10px;color:#94A3B8;margin-bottom:5px">Répartition priorisation (matrice)</div>'
       +'<div style="display:flex;height:10px;border-radius:6px;overflow:hidden;background:#F1F5F9;margin-bottom:7px">'+bar+'</div>'
@@ -1836,7 +1851,7 @@ function openPortfolioDetail(name){
   var bud=g.reduce(function(s,p){return s+(+p.b||0);},0), ch=g.reduce(function(s,p){return s+(+p.c||0);},0);
   var enCours=g.filter(function(p){return p.st2==='En cours';}).length, planif=g.length-enCours;
   var over=g.filter(function(p){return dl!=null&&!projectFits(p,dl);}).length;
-  var avg=g.length?Math.round(g.reduce(function(s,p){return s+(p.val+p.fais);},0)/g.length):0;
+  var avg=g.length?Math.round(g.reduce(function(s,p){return s+p.sc;},0)/g.length):0;
   var nRisks=g.reduce(function(s,p){return s+((RISKS[p.n]||[]).length);},0);
   var qCol={stars:'#10B981',quickwins:'#94A3B8',majeurs:'#2563EB',reconsider:'#EF4444'};
   var qLab={stars:'Quick wins',quickwins:'Secondaires',majeurs:'Majeurs',reconsider:'À éviter'};
@@ -1853,7 +1868,7 @@ function openPortfolioDetail(name){
     + dashStat('Projets',g.length,'','ti-briefcase','#2563EB')
     + dashStat('Budget',bud,' K€','ti-coin','#F59E0B')
     + dashStat('Charge',ch,' j/h','ti-clock','#8B5CF6')
-    + dashStat('Score moyen',avg,'/40','ti-star','#10B981')
+    + dashStat('Score moyen',avg,'/100','ti-star','#10B981')
     + dashStat('En cours',enCours,'','ti-player-play','#3B82F6')
     + dashStat('Planifiés',planif,'','ti-calendar','#94A3B8')
     + dashStat('Hors délai',over,'','ti-alert-triangle',over>0?'#EF4444':'#10B981')
@@ -1886,7 +1901,7 @@ function openPortfolioDetail(name){
       +'<div style="flex:1;min-width:120px"><div style="font-size:12px;font-weight:700;color:#0F172A">'+p.n+(late?' <span style="font-size:8.5px;color:#EF4444;font-weight:700">HORS DÉLAI</span>':'')+'</div><div style="font-size:9.5px;color:#94A3B8">'+p.dt+' · '+p.st2+'</div></div>'
       +'<div style="font-size:10.5px;color:#475569;width:60px;text-align:right">'+p.b+' K€</div>'
       +'<div style="font-size:10.5px;color:#475569;width:60px;text-align:right">'+p.c+' j/h</div>'
-      +'<div style="font-size:10.5px;font-weight:700;color:#0F172A;width:46px;text-align:right">'+(p.val+p.fais)+'/40</div>'
+      +'<div style="font-size:10.5px;font-weight:700;color:#0F172A;width:46px;text-align:right">'+p.sc+'/100</div>'
       +'<i class="ti ti-chevron-right" style="color:#CBD5E1"></i>'
     +'</div>';
   });
@@ -1960,7 +1975,7 @@ function renderDetails(name){
   h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px 16px">'
     + kv('Catégorie',esc(p.cat)) + kv('Portefeuille',esc(p.pf||'—')) + kv('Statut',esc(p.st2||'—')) + kv('Méthodologie',esc(p.methodo||'—'))
     + kv('Budget',p.b+' K€') + kv('Charge',p.c+' j/h') + kv('Dates',esc(p.dt||'—')) + kv('Durée',p.d+' mois')
-    + kv('Valeur',p.valeur+'/5') + kv('Effort',p.effort+'/5') + kv('Quadrant',qLabel[p.q]) + kv('Score',(p.val+p.fais)+'/40')
+    + kv('Valeur',p.valeur+'/5') + kv('Effort',p.effort+'/5') + kv('Quadrant',qLabel[p.q]) + kv('Score',p.sc+'/100')
     + kv('Part licence',(p.pctLic||0)+'%') + kv('Part ESN',(p.pctEsnB||0)+'%') + kv('Sponsor',esc(p.sponsor||'—'))
     +'</div></div>';
   h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Description / Objectifs</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.note)||'<span style="color:#CBD5E1">—</span>')+'</div>';
@@ -2323,6 +2338,7 @@ function importCSV(ev){
         var p={ n:nm, cat:get('Categorie').trim()||'Socle IT', s:+get('MoisDebut')||0, d:+get('DureeMois')||1,
           b:+get('BudgetKE')||0, c:+get('ChargeJH')||0,
           valeur:+get('Valeur')||+get('ImportanceStrat')||3, effort:+get('Effort')||(get('MaitriseRisques')?6-(+get('MaitriseRisques')||3):3),
+          st:+get('ImportanceStrat')||3, rent:+get('Rentabilite')||3, mait:+get('MaitriseRisques')||3, urg:+get('Urgence')||3,
           dt:get('Dates').trim(), note:get('Note').trim(), st2:get('Statut').trim()||'Planifié',
           sel:(get('Selectionne').trim()==='1'||get('Selectionne').toLowerCase()==='oui')?1:0,
           sponsor:get('Sponsor').trim(), methodo:get('Methodologie').trim(), cp:get('ChefProjet').trim(),
@@ -2391,11 +2407,11 @@ function initMatrix(){
   }};
   const chart=new Chart(document.getElementById('matrixChart'),{
     type:'bubble',
-    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,valeur:p.valeur,effort:p.effort,vx:p.val,vy:p.fais,qL:qLabel[p.q]}],
+    data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,valeur:p.valeur,effort:p.effort,vx:p.val,vy:p.fais,sc:p.sc,qL:qLabel[p.q]}],
       backgroundColor:qColor[p.q]+'CC',borderColor:p.sel?'#1D4ED8':'#fff',borderWidth:p.sel?3:2,hoverBackgroundColor:qColor[p.q],hoverBorderColor:'#1D4ED8',hoverBorderWidth:2}))},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:14,top:8,left:4,bottom:4}},
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,displayColors:false,
-        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Valeur / impact : ${d.valeur}/5`,` Effort / complexité : ${d.effort}/5`,` → ${d.qL} · score ${d.vx+d.vy}/40`,` Budget : ${d.budget}K€`];}}}},
+        callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Valeur / impact : ${d.valeur}/5`,` Effort / complexité : ${d.effort}/5`,` → ${d.qL} · score ${d.sc}/100`,` Budget : ${d.budget}K€`];}}}},
       scales:{
         x:{min:-0.8,max:20.8,title:{display:true,text:'Valeur / impact →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}},
         y:{min:-0.8,max:20.8,title:{display:true,text:'Simplicité (effort faible) →',color:'#94A3B8',font:{size:10,weight:'700'}},grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#94A3B8',font:{size:9},stepSize:2,callback:function(v){return (v>=0&&v<=20)?v:'';}},border:{color:'#E2E8F0'}}
@@ -2403,7 +2419,7 @@ function initMatrix(){
   });
   window.matrixChart=chart;
   var leg=document.getElementById('matrix-proj-legend');
-  if(leg) leg.innerHTML=LP.map((p,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#475569"><span style="width:17px;height:17px;border-radius:50%;background:${qColor[p.q]};color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</span><span style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</span></div>`).join('');
+  if(leg) leg.innerHTML=LP.map((p,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#475569"><span style="width:17px;height:17px;border-radius:50%;background:${qColor[p.q]};color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</span><span style="font-weight:700;color:#0F172A">${p.sc}/100</span></div>`).join('');
 }
 function highlightBubble(idx){
   const chart=window.matrixChart;if(!chart)return;
@@ -2673,7 +2689,7 @@ function renderList(){
   const order=PORTFOLIOS.map(pf=>pf.name);
   const groups={}; P.forEach(p=>{const k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(groups[k]=groups[k]||[]).push(p);});
   Object.keys(groups).forEach(k=>{if(order.indexOf(k)<0)order.push(k);});
-  const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /40</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`;
+  const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /100</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`;
   let h='';
   order.forEach(name=>{
     const g=groups[name]||[];
@@ -2692,7 +2708,7 @@ function renderList(){
       <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
       <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
       <div class="lc">${p.b}K€</div>
-      <div class="lc" style="font-weight:700;color:#0F172A">${p.val+p.fais}/40</div>
+      <div class="lc" style="font-weight:700;color:#0F172A">${p.sc}/100</div>
       <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
       <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP(${jsArg(p.n)})"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject(${jsArg(p.n)})" title="Supprimer ce projet"></i></div>
     </div>`).join('');
@@ -2804,12 +2820,19 @@ function openProjectDetail(name){
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Part licence (% budget)','<input type="number" id="pd-lic" min="0" max="100" value="'+(+p.pctLic||0)+'">')+fld('Part ESN (% budget)','<input type="number" id="pd-esn" min="0" max="100" value="'+(+p.pctEsnB||0)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Début','<input type="date" id="pd-startdate" value="'+idxToDate(+p.s||0)+'">')+fld('Fin','<input type="date" id="pd-enddate" value="'+idxToDate((+p.s||0)+(+p.d||1)-1)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur / impact (/5)','<select id="pd-valeur">'+opt(['1','2','3','4','5'],p.valeur)+'</select>')+fld('Effort / complexité (/5)','<select id="pd-effort">'+opt(['1','2','3','4','5'],p.effort)+'</select>')+'</div>';
-  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision Valeur × Effort — quadrant actuel : <strong>'+qLabel[p.q]+'</strong> · score priorité '+(p.val+p.fais)+'/40.</div>';
+  h+='<div class="form-section-title" style="margin-top:12px"><i class="ti ti-calculator" style="font-size:12px;color:#F97316"></i>Critères du score pondéré /100 (dossier PMO)</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
+    +fld('Importance (/5) · 40 %','<select id="pd-imp">'+opt(['1','2','3','4','5'],p.st||3)+'</select>')
+    +fld('Rentabilité (/5) · 30 %','<select id="pd-rent">'+opt(['1','2','3','4','5'],p.rent||3)+'</select>')
+    +fld('Maîtrise (/5) · 10 %','<select id="pd-mait">'+opt(['1','2','3','4','5'],p.mait||3)+'</select>')
+    +fld('Urgence (/5) · 10 %','<select id="pd-urg">'+opt(['1','2','3','4','5'],p.urg||URG_SEED[p.n]||3)+'</select>')+'</div>';
+  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Effort maîtrisé (10 %) automatique d\'après la charge : <strong>'+effortNote(p.c)+'/5</strong> · Score actuel : <strong>'+p.sc+'/100</strong>. Le score se recalcule à l\'enregistrement.</div>';
+  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision Valeur × Effort — quadrant actuel : <strong>'+qLabel[p.q]+'</strong> · score pondéré '+p.sc+'/100 (5 critères du dossier).</div>';
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-file-text" style="font-size:12px;color:#2563EB"></i>Description &amp; cahier des charges</div>';
   h+='<div class="fld" style="margin-bottom:8px"><label>Description / Objectifs</label><textarea id="pd-desc" style="min-height:62px">'+esc(p.note)+'</textarea></div>';
   h+='<div class="fld" style="margin-bottom:8px"><label>Cahier des charges (lien ou résumé)</label><textarea id="pd-cdc" style="min-height:62px">'+esc(p.cdc)+'</textarea></div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Méthodologie','<select id="pd-meth">'+opt(['','PMI / Waterfall','Scrum / Agile','Prince2','Hybride PMI/Agile'],p.methodo)+'</select>')+fld('Sponsor','<input type="text" id="pd-sponsor" value="'+esc(p.sponsor)+'">')+'</div>';
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap">'+fld('Méthodologie','<select id="pd-meth">'+opt(['','PMI / Waterfall','Scrum / Agile','Prince2','Hybride PMI/Agile','Hybride — Cycle en V + Scrum'],p.methodo)+'</select>')+fld('Sponsor','<input type="text" id="pd-sponsor" value="'+esc(p.sponsor)+'">')+'</div>';
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
@@ -2833,7 +2856,9 @@ function saveProjectDetail(){
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0;
   p.note=g('pd-desc'); p.cdc=g('pd-cdc'); p.methodo=g('pd-meth')||p.methodo; p.sponsor=g('pd-sponsor');
   p.pctLic=Math.min(100,Math.max(0,+g('pd-lic')||0)); p.pctEsnB=Math.min(100,Math.max(0,+g('pd-esn')||0));
-  p.valeur=+g('pd-valeur')||p.valeur; p.effort=+g('pd-effort')||p.effort; scoreP(p);
+  p.valeur=+g('pd-valeur')||p.valeur; p.effort=+g('pd-effort')||p.effort;
+  p.st=+g('pd-imp')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; p.urg=+g('pd-urg')||p.urg||0;
+  scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
   if(!MV[p.n] || MV[p.n].length!==p.d){ var tot=p.c||0, bs=Math.floor(tot/p.d), rm=tot-bs*p.d; MV[p.n]=Array.from({length:p.d},function(_,i){return bs+(i<rm?1:0);}); }
   var manualRisks=(RISKS_STORE['pd']||[]).slice(); RISKS[p.n]=manualRisks;
@@ -2985,7 +3010,7 @@ let ALERTS=[
   {level:'attention', text:'<strong>Office 365</strong> prérequis bloquant — doit terminer avant CRM et apps mobiles.'},
   {level:'risque', text:'<strong>Migration Azure</strong> — faisabilité 9/20. Risque élevé · renforcement ressources recommandé.'},
   {level:'info', text:'<strong>3 projets simultanés</strong> en avril · pic de charge DSI (Office 365 + Refonte web + CI/CD).'},
-  {level:'succes', text:'<strong>CRM</strong> projet référence soutenance — 28/40 · quadrant Stars.'}
+  {level:'succes', text:'<strong>App mobile clients</strong> — projet blueprint de la soutenance — score 90/100 · priorité n°1 du portefeuille.'}
 ];
 function alertStyle(a){
   const M={info:{ic:'ti-clock',bg:'#EFF6FF',c:'#3B82F6'},attention:{ic:'ti-alert-circle',bg:'#EFF6FF',c:'#2563EB'},risque:{ic:'ti-trending-down',bg:'#FEF2F2',c:'#EF4444'},danger:{ic:'ti-trending-down',bg:'#FEF2F2',c:'#EF4444'},succes:{ic:'ti-check',bg:'#ECFDF5',c:'#10B981'}};
