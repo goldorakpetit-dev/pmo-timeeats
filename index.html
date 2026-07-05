@@ -916,8 +916,7 @@ pmoShowLogin(!pmoIsAuthed());
         <div class="frow c2"><div class="fld"><label>Statut</label><select id="np-st2" onchange="updNP()"><option value="Planifié">Planifié</option><option value="En cours">En cours</option></select></div><div class="fld"></div></div>
         <div class="frow c2"><div class="fld"><label>Portefeuille</label><select id="np-pf"></select></div><div class="fld"><label>&nbsp;</label><div style="font-size:10px;color:#94A3B8;padding:8px 0">Le projet doit finir avant l'échéance du portefeuille (sinon refusé).</div></div></div>
         <div class="fld" style="margin-bottom:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer"><input type="checkbox" id="np-sel" style="width:auto;margin:0">Marquer comme projet sélectionné (mis en avant)</label></div>
-        <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Valeur / impact (/5)</label><select id="np-valeur"><option value="1">1 — faible</option><option value="2">2</option><option value="3" selected>3 — moyenne</option><option value="4">4</option><option value="5">5 — forte</option></select></div><div class="fld"><label>Effort / complexité (/5)</label><select id="np-effort"><option value="1">1 — léger</option><option value="2">2</option><option value="3" selected>3 — moyen</option><option value="4">4</option><option value="5">5 — lourd</option></select></div></div>
-        <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Matrice de décision : forte valeur + faible effort = « Quick win » à prioriser.</div>
+        <div style="font-size:9.5px;color:#94A3B8;margin-top:6px">Position dans la matrice dérivée automatiquement des critères : Valeur = (Importance + Rentabilité) ÷ 2 · Effort = 6 − Maîtrise. Une seule saisie, zéro incohérence.</div>
         <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Importance stratégique (/5) · 40 %</label><select id="np-imp"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Rentabilité attendue (/5) · 30 %</label><select id="np-rent"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div class="frow c2" style="margin-top:8px"><div class="fld"><label>Maîtrise des risques (/5) · 10 %</label><select id="np-mait"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Urgence / dépendance (/5) · 10 %</label><select id="np-urg"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Score pondéré /100 (dossier) = Σ(note × poids) × 20 — l'effort maîtrisé (10 %) est calculé automatiquement d'après la charge (≤ 80 j/h = 5 · 81-150 = 4 · 151-250 = 3 · 251-320 = 2 · &gt; 320 = 1).</div>
@@ -1469,7 +1468,7 @@ function saveNewProject(){
   var npRk=(RISKS_STORE['np']||[]).slice();
   const topRisk=npRk.slice().sort((a,b)=>(RISK_ORDER[b.level]||0)-(RISK_ORDER[a.level]||0))[0];
   var g2=function(id){var e=document.getElementById(id);return e?e.value:'';};
-  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,valeur:+g2('np-valeur')||3,effort:+g2('np-effort')||3,st:+g2('np-imp')||3,rent:+g2('np-rent')||3,mait:+g2('np-mait')||3,urg:+g2('np-urg')||3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
+  const newP={n:document.getElementById('np-name').value.trim(),cat:cat,s,d,b:+document.getElementById('np-budget').value,c:+document.getElementById('np-charge').value,st:+g2('np-imp')||3,rent:+g2('np-rent')||3,mait:+g2('np-mait')||3,urg:+g2('np-urg')||3,dt,note:document.getElementById('np-desc').value.trim(),st2:g2('np-st2')||'Planifié',risks:npRk.map(r=>r.risk).join(' · '),riskLevel:(topRisk?topRisk.level:''),mitigation:npRk.map(r=>r.mitigation).filter(Boolean).join(' · '),sponsor:'',methodo:g2('np-meth'),cp:'',cdc:g2('np-cdc').trim(),sp:'',sel:(document.getElementById('np-sel')&&document.getElementById('np-sel').checked)?1:0,pctCP:+g2('np-pct-cp')||0,pctDev:+g2('np-pct-dev')||0,pctAdmin:+g2('np-pct-admin')||0,pctTech:+g2('np-pct-tech')||0,pctLic:+g2('np-lic')||0,pctEsnB:+g2('np-esn')||0,deps:(DEPS_STORE['np']||[]).slice(),pf:pfName};
   scoreP(newP);
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
@@ -2844,7 +2843,7 @@ function openProjectDetail(name){
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Budget (K€)','<input type="number" id="pd-budget" value="'+p.b+'">')+fld('Charge (j/h)','<input type="number" id="pd-charge" value="'+p.c+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Part licence (% budget)','<input type="number" id="pd-lic" min="0" max="100" value="'+(+p.pctLic||0)+'">')+fld('Part ESN (% budget)','<input type="number" id="pd-esn" min="0" max="100" value="'+(+p.pctEsnB||0)+'">')+'</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Début','<input type="date" id="pd-startdate" value="'+idxToDate(+p.s||0)+'">')+fld('Fin','<input type="date" id="pd-enddate" value="'+idxToDate((+p.s||0)+(+p.d||1)-1)+'">')+'</div>';
-  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'+fld('Valeur / impact (/5)','<select id="pd-valeur">'+opt(['1','2','3','4','5'],p.valeur)+'</select>')+fld('Effort / complexité (/5)','<select id="pd-effort">'+opt(['1','2','3','4','5'],p.effort)+'</select>')+'</div>';
+  h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:8px">Position matrice (dérivée des critères) : <strong>Valeur '+p.valeur+'/5 · Effort '+p.effort+'/5</strong> — recalculée à l\'enregistrement.</div>';
   h+='<div class="form-section-title" style="margin-top:12px"><i class="ti ti-calculator" style="font-size:12px;color:#F97316"></i>Critères du score pondéré /100 (dossier PMO)</div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'
     +fld('Importance (/5) · 40 %','<select id="pd-imp">'+opt(['1','2','3','4','5'],p.st||3)+'</select>')
@@ -2881,8 +2880,9 @@ function saveProjectDetail(){
   p.cat=g('pd-cat')||p.cat; p.st2=g('pd-st2')||p.st2; p.b=+g('pd-budget')||0; p.c=+g('pd-charge')||0;
   p.note=g('pd-desc'); p.cdc=g('pd-cdc'); p.methodo=g('pd-meth')||p.methodo; p.sponsor=g('pd-sponsor');
   p.pctLic=Math.min(100,Math.max(0,+g('pd-lic')||0)); p.pctEsnB=Math.min(100,Math.max(0,+g('pd-esn')||0));
-  p.valeur=+g('pd-valeur')||p.valeur; p.effort=+g('pd-effort')||p.effort;
   p.st=+g('pd-imp')||p.st; p.rent=+g('pd-rent')||p.rent; p.mait=+g('pd-mait')||p.mait; p.urg=+g('pd-urg')||p.urg||0;
+  p.valeur=Math.round(((+p.st||3)+(+p.rent||3))/2);            /* dérivé des critères */
+  p.effort=6-Math.min(5,Math.max(1,Math.round(+p.mait||3)));   /* dérivé de la maîtrise */
   scoreP(p);
   p.deps=(DEPS_STORE['pd']||[]).slice();
   if(!MV[p.n] || MV[p.n].length!==p.d){ var tot=p.c||0, bs=Math.floor(tot/p.d), rm=tot-bs*p.d; MV[p.n]=Array.from({length:p.d},function(_,i){return bs+(i<rm?1:0);}); }
@@ -3023,11 +3023,12 @@ function renderPilot(){
   var rows='',sumSpi=0,sumCpi=0,nS=0,nC=0,red=0,amber=0;
   started.forEach(function(p){
     var d=pilotData(p), pv=pvPct(p,m), ev=Math.min(100,d.av), ac=d.ac;
-    var spi=pv>0?ev/pv:null;
-    var cpi=ac>0?((ev/100*(p.b||0))/ac):null;
+    var noData=(ev===0&&ac===0);   /* pas encore renseigné : neutre, pas rouge */
+    var spi=(!noData&&pv>0)?ev/pv:null;
+    var cpi=(!noData&&ac>0)?((ev/100*(p.b||0))/ac):null;
     if(spi!=null){sumSpi+=spi;nS++;}
     if(cpi!=null){sumCpi+=cpi;nC++;}
-    var worst=Math.min(spi==null?9:spi,cpi==null?9:cpi);
+    var worst=noData?9:Math.min(spi==null?9:spi,cpi==null?9:cpi);
     if(worst<0.9)red++; else if(worst<1)amber++;
     var sC=spi==null?'#CBD5E1':(spi<0.9?'#EF4444':(spi<1?'#F59E0B':'#10B981'));
     var cC=cpi==null?'#CBD5E1':(cpi<0.9?'#EF4444':(cpi<1?'#F59E0B':'#10B981'));
@@ -3036,8 +3037,8 @@ function renderPilot(){
       +'<div style="text-align:center"><input type="number" min="0" max="100" value="'+ev+'" id="pl-av-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">avancement %</div></div>'
       +'<div style="text-align:center"><input type="number" min="0" value="'+ac+'" id="pl-ac-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">consommé K€</div></div>'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+pv+'%<div class="pl-lbl">planifié (courbe S)</div></div>'
-      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl">SPI · '+(spi==null?'':'')+'</div><div style="margin-top:1px">'+ragBadge(spi)+'</div></div>'
-      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+cC+'">'+(cpi==null?'—':cpi.toFixed(2))+'<div class="pl-lbl">CPI</div><div style="margin-top:1px">'+ragBadge(cpi)+'</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl">SPI</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(spi))+'</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+cC+'">'+(cpi==null?'—':cpi.toFixed(2))+'<div class="pl-lbl">CPI</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(cpi))+'</div></div>'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+(p.b?Math.round(ac/p.b*100):0)+'%<div class="pl-lbl">budget consommé</div></div>'
       +'<button class="btn" style="font-size:10.5px;justify-content:center" onclick="savePilot(\''+p.n.replace(/'/g,"\\'")+'\')"><i class="ti ti-check"></i>Enregistrer</button>'
       +'</div>';
