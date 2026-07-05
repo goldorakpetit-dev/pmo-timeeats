@@ -393,6 +393,7 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
 .btn-blue{background:#3B82F6;color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(59,130,246,.2)}
 .btn-blue:hover{background:#2563EB;border-color:transparent;color:#fff}
 
+.pl-lbl{font-size:8.5px;color:#94A3B8;margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
 </style>
 </head>
 <body>
@@ -500,6 +501,7 @@ pmoShowLogin(!pmoIsAuthed());
     <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i><span data-i18n="nav.matrix">Matrice</span></div>
     <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.res">Ressources</span></div>
     <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i><span data-i18n="nav.budget">Budget</span></div>
+    <div class="nt"     onclick="goPage('pilot',this)"><i class="ti ti-gauge"></i><span>Pilotage</span></div>
     <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i><span data-i18n="nav.agenda">Agenda</span></div>
     <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i><span data-i18n="nav.risks">Risques</span></div>
     <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i><span data-i18n="nav.rex">Clôture &amp; REX</span></div>
@@ -542,7 +544,7 @@ pmoShowLogin(!pmoIsAuthed());
       <div>
         <div class="home-sec-eyebrow">Priorisation</div>
         <h2 style="font-family:Georgia,serif;font-size:30px;font-weight:800;color:#0F172A;line-height:1.15;margin:2px 0 14px;letter-spacing:-.5px">Décidez vite,<br>priorisez juste.</h2>
-        <p style="font-size:14px;color:#475569;line-height:1.7">Chaque projet est coté sur deux critères simples — sa <strong>valeur</strong> (impact business) et son <strong>effort</strong> (charge et complexité). La matrice Valeur × Effort les répartit en quick wins, projets majeurs, secondaires et projets à éviter, pour arbitrer objectivement votre portefeuille.</p>
+        <p style="font-size:14px;color:#475569;line-height:1.7">Chaque projet est coté sur <strong>cinq critères pondérés</strong> — importance stratégique (40 %), rentabilité attendue (30 %), maîtrise des risques (10 %), effort maîtrisé (10 %, barème de charge) et urgence (10 %) — pour un <strong>score sur 100</strong> aligné sur la stratégie. La matrice Valeur × Effort complète la lecture en répartissant les projets en quick wins, majeurs, secondaires et à éviter.</p>
       </div>
       <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 12px 34px rgba(15,23,42,.10);padding:14px">
         <div style="display:flex;gap:5px;margin-bottom:11px"><span style="width:9px;height:9px;border-radius:50%;background:#F87171"></span><span style="width:9px;height:9px;border-radius:50%;background:#FBBF24"></span><span style="width:9px;height:9px;border-radius:50%;background:#34D399"></span></div>
@@ -729,6 +731,18 @@ pmoShowLogin(!pmoIsAuthed());
 
 
 <!-- PAGE AGENDA -->
+<div id="p-pilot" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Pilotage EVM</div><div class="ab-bc"><div class="ab-dot"></div>SPI · CPI · RAG — avancement et coûts contre la baseline (méthode de la valeur acquise)</div></div>
+    <div class="ab-r" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:11px;color:#64748B">Mois de revue</label>
+      <select id="pilot-month" onchange="renderPilot()" style="font-size:12px;padding:7px 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"></select>
+      <button class="btn btn-acc" onclick="copilReport()"><i class="ti ti-printer"></i>Rapport COPIL</button>
+    </div>
+  </div>
+  <div class="ct"><div id="pilot-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
+</div>
+
 <div id="p-agenda" class="page">
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Agenda — Réunions &amp; Jalons</div><div class="ab-bc"><div class="ab-dot"></div>CODIR · Réunions projet · Points d'équipe</div></div>
@@ -1741,6 +1755,7 @@ function goPage(id,el){
   if(id==='budget')renderBudget();
   if(id==='rex')renderRex();
   if(id==='details')renderDetails();
+  if(id==='pilot')renderPilot();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -1978,6 +1993,7 @@ function renderDetails(name){
     + kv('Valeur',p.valeur+'/5') + kv('Effort',p.effort+'/5') + kv('Quadrant',qLabel[p.q]) + kv('Score',p.sc+'/100')
     + kv('Part licence',(p.pctLic||0)+'%') + kv('Part ESN',(p.pctEsnB||0)+'%') + kv('Sponsor',esc(p.sponsor||'—'))
     +'</div></div>';
+  h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:4px">Profil de priorisation — les 5 critères du score '+p.sc+'/100</div><div style="font-size:10px;color:#94A3B8;margin-bottom:6px">Importance 40 % · Rentabilité 30 % · Maîtrise 10 % · Effort maîtrisé 10 % (auto, charge '+p.c+' j/h) · Urgence 10 %</div><div style="max-width:430px;margin:0 auto"><canvas id="detRadar" height="250"></canvas></div></div>';
   h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Description / Objectifs</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.note)||'<span style="color:#CBD5E1">—</span>')+'</div>';
   h+='<div style="font-size:13px;font-weight:800;color:#0F172A;margin:14px 0 8px">Cahier des charges</div><div style="font-size:12px;color:#475569;line-height:1.6;white-space:pre-wrap">'+(esc(p.cdc)||'<span style="color:#CBD5E1">—</span>')+'</div></div>';
   var rs=(RISKS[p.n]||[]);
@@ -1995,6 +2011,15 @@ function renderDetails(name){
     h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Retour d\'expérience (REX)</div>'+rr('Écarts',rx.ecarts)+rr('Difficultés',rx.diff)+rr('Bonnes pratiques',rx.bonnes)+rr('Leçons apprises',rx.lecons)+'</div>';
   }
   body.innerHTML=h;
+  try{
+    if(window.detRadarChart) window.detRadarChart.destroy();
+    window.detRadarChart=new Chart(document.getElementById('detRadar'),{type:'radar',
+      data:{labels:['Importance','Rentabilité','Maîtrise','Effort maîtrisé','Urgence'],
+        datasets:[{label:p.n,data:[+p.st||3,+p.rent||3,+p.mait||3,effortNote(p.c),+p.urg||URG_SEED[p.n]||3],
+          backgroundColor:'rgba(249,115,22,.16)',borderColor:'#EA580C',pointBackgroundColor:'#EA580C',borderWidth:2}]},
+      options:{responsive:true,plugins:{legend:{display:false}},
+        scales:{r:{min:0,max:5,ticks:{stepSize:1,font:{size:9},color:'#CBD5E1',backdropColor:'transparent'},pointLabels:{font:{size:10.5,weight:'600'},color:'#475569'},grid:{color:'#EEF2F7'}}}}});
+  }catch(e){}
 }
 
 /* ── CLÔTURE & REX ── */
@@ -2955,6 +2980,7 @@ function applyData(d){
   if(d && Array.isArray(d.users)) USERS = d.users;
   if(d && d.risks && typeof d.risks==='object') RISKS = d.risks;
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
+  if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
   P.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
   recalc();
   window.mReady=false; window.rReady=false;
@@ -2968,6 +2994,126 @@ function refreshActiveView(){
   if(r && r.classList.contains('on')){ window.rReady=false; initRes(); }
   if(a && a.classList.contains('on')) renderCalendar();
 }
+
+/* ══ PILOTAGE EVM — SPI/CPI/RAG + courbe en S (miroir de la Partie 2 §4 du dossier) ══ */
+var PILOT={}; /* projet -> {av:% d'avancement (valeur acquise), ac:consommé K€} — onglet « Pilotage » du Sheet */
+var PILOT_SEED={ 'Office 365':{av:100,ac:100}, 'Refonte app web':{av:78,ac:240}, 'Livraison continue':{av:100,ac:98}, 'App mobile clients':{av:48,ac:71} };
+var PILOT_SEL='';
+function cssId(x){ return String(x).replace(/[^a-z0-9]/gi,'_'); }
+function pilotData(p){ var d=PILOT[p.n]||PILOT_SEED[p.n]; return d?{av:+d.av||0,ac:+d.ac||0}:{av:0,ac:0}; }
+function pvPct(p,m){ /* % planifié (valeur planifiée) à fin du mois m — cumul du profil de charge, sinon linéaire */
+  if(m<p.s) return 0;
+  var done=Math.min(m-p.s+1,p.d);
+  var mv=MV[p.n];
+  if(mv&&mv.length===p.d){ var tot=mv.reduce(function(a,b){return a+(+b||0);},0)||1; var cum=0; for(var i=0;i<done;i++)cum+=(+mv[i]||0); return Math.round(cum/tot*100); }
+  return Math.round(done/p.d*100);
+}
+function ragBadge(v){
+  if(v==null) return '<span style="font-size:9px;color:#CBD5E1">—</span>';
+  var c=v<0.9?'#EF4444':(v<1?'#F59E0B':'#10B981'); var t=v<0.9?'Rouge':(v<1?'Ambre':'Vert');
+  return '<span style="font-size:9px;font-weight:700;color:'+c+';background:'+(v<0.9?'#FEF2F2':(v<1?'#FFFBEB':'#ECFDF5'))+';padding:2px 7px;border-radius:5px">'+t+'</span>';
+}
+function renderPilot(){
+  var body=document.getElementById('pilot-body'); if(!body)return;
+  var selEl=document.getElementById('pilot-month');
+  if(selEl&&!selEl.options.length){ var mh=''; for(var i=0;i<10;i++)mh+='<option value="'+i+'"'+(i===4?' selected':'')+'>'+monLabel(i)+' '+yearTag(i)+'</option>'; selEl.innerHTML=mh; }
+  var m=selEl?+selEl.value:4;
+  var started=P.filter(function(p){return p.s<=m;}).sort(function(a,b){return b.sc-a.sc;});
+  var future=P.filter(function(p){return p.s>m;});
+  var rows='',sumSpi=0,sumCpi=0,nS=0,nC=0,red=0,amber=0;
+  started.forEach(function(p){
+    var d=pilotData(p), pv=pvPct(p,m), ev=Math.min(100,d.av), ac=d.ac;
+    var spi=pv>0?ev/pv:null;
+    var cpi=ac>0?((ev/100*(p.b||0))/ac):null;
+    if(spi!=null){sumSpi+=spi;nS++;}
+    if(cpi!=null){sumCpi+=cpi;nC++;}
+    var worst=Math.min(spi==null?9:spi,cpi==null?9:cpi);
+    if(worst<0.9)red++; else if(worst<1)amber++;
+    var sC=spi==null?'#CBD5E1':(spi<0.9?'#EF4444':(spi<1?'#F59E0B':'#10B981'));
+    var cC=cpi==null?'#CBD5E1':(cpi<0.9?'#EF4444':(cpi<1?'#F59E0B':'#10B981'));
+    rows+='<div style="display:grid;grid-template-columns:minmax(150px,1.9fr) repeat(5,minmax(74px,1fr)) minmax(76px,1fr) 108px;gap:8px;align-items:center;background:#fff;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px">'
+      +'<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.n+'</div>'+(p.sel?'<span style="font-size:8px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:3px;font-weight:700">BLUEPRINT</span>':'<span style="font-size:9px;color:#94A3B8">'+p.cat+'</span>')+'</div>'
+      +'<div style="text-align:center"><input type="number" min="0" max="100" value="'+ev+'" id="pl-av-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">avancement %</div></div>'
+      +'<div style="text-align:center"><input type="number" min="0" value="'+ac+'" id="pl-ac-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">consommé K€</div></div>'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+pv+'%<div class="pl-lbl">planifié (courbe S)</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl">SPI · '+(spi==null?'':'')+'</div><div style="margin-top:1px">'+ragBadge(spi)+'</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+cC+'">'+(cpi==null?'—':cpi.toFixed(2))+'<div class="pl-lbl">CPI</div><div style="margin-top:1px">'+ragBadge(cpi)+'</div></div>'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+(p.b?Math.round(ac/p.b*100):0)+'%<div class="pl-lbl">budget consommé</div></div>'
+      +'<button class="btn" style="font-size:10.5px;justify-content:center" onclick="savePilot(\''+p.n.replace(/'/g,"\\'")+'\')"><i class="ti ti-check"></i>Enregistrer</button>'
+      +'</div>';
+  });
+  var head='<div style="display:flex;gap:9px">'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nS&&sumSpi/nS<1?'#F59E0B':'#10B981')+'">'+(nS?(sumSpi/nS).toFixed(2):'—')+'</div><div class="pl-lbl">SPI MOYEN (AVANCEMENT)</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nC&&sumCpi/nC<1?'#F59E0B':'#10B981')+'">'+(nC?(sumCpi/nC).toFixed(2):'—')+'</div><div class="pl-lbl">CPI MOYEN (COÛT)</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#EF4444">'+red+'</div><div class="pl-lbl">PROJETS EN ROUGE (&lt; 0,9)</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#F59E0B">'+amber+'</div><div class="pl-lbl">PROJETS EN AMBRE</div></div>'
+    +'</div>'
+    +'<div style="font-size:10px;color:#94A3B8">SPI = avancement réel / planifié (valeur acquise) · CPI = valeur produite / coût réel · &lt; 1 = alerte, &lt; 0,9 = seuil critique → escalade COPIL. Règles : vert = poursuite · ambre = analyse d\'écart en COPROJ · rouge = arbitrage COPIL.</div>';
+  var scOpts=started.map(function(p){return '<option'+(p.n===PILOT_SEL?' selected':'')+'>'+p.n+'</option>';}).join('');
+  var sc='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px"><div style="font-size:13px;font-weight:800;color:#0F172A">Courbe en S — budget planifié vs consommé</div><select id="pilot-proj" onchange="PILOT_SEL=this.value;renderPilot()" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer">'+scOpts+'</select></div><div style="height:240px"><canvas id="pilotSC"></canvas></div></div>';
+  body.innerHTML=head+rows+(future.length?'<div style="font-size:10.5px;color:#94A3B8">'+future.length+' projet(s) non démarré(s) à cette date : '+future.map(function(p){return p.n;}).join(' · ')+'</div>':'')+sc;
+  drawSCurve(m);
+}
+function drawSCurve(m){
+  var started=P.filter(function(p){return p.s<=m;});
+  if(!PILOT_SEL||!started.some(function(p){return p.n===PILOT_SEL;})) PILOT_SEL=(started.find(function(p){return p.sel;})||started[0]||{}).n||'';
+  var p=P.find(function(x){return x.n===PILOT_SEL;}); if(!p)return;
+  var labels=[],plan=[],cum=0;
+  for(var i=0;i<p.d;i++){ labels.push(monLabel(p.s+i)); cum=pvPct(p,p.s+i); plan.push(Math.round(cum/100*(p.b||0))); }
+  var d=pilotData(p);
+  var act=labels.map(function(_,i){ return (p.s+i)===Math.min(m,p.s+p.d-1)?d.ac:null; });
+  try{
+    if(window.scChart) window.scChart.destroy();
+    window.scChart=new Chart(document.getElementById('pilotSC'),{type:'line',
+      data:{labels:labels,datasets:[
+        {label:'Planifié cumulé (K€)',data:plan,borderColor:'#94A3B8',backgroundColor:'rgba(148,163,184,.12)',fill:true,tension:.35,pointRadius:2},
+        {label:'Consommé réel (K€)',data:act,borderColor:'#EA580C',backgroundColor:'#EA580C',pointRadius:6,pointStyle:'rectRot',showLine:false}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},color:'#64748B'}}},
+        scales:{y:{beginAtZero:true,max:Math.max(p.b||0,d.ac)*1.15,ticks:{font:{size:9},color:'#94A3B8'},grid:{color:'#F1F5F9'}},x:{ticks:{font:{size:9},color:'#94A3B8'},grid:{display:false}}}}});
+  }catch(e){}
+}
+function savePilot(name){
+  var av=+((document.getElementById('pl-av-'+cssId(name))||{}).value||0);
+  var ac=+((document.getElementById('pl-ac-'+cssId(name))||{}).value||0);
+  PILOT[name]={av:Math.min(100,Math.max(0,av)),ac:Math.max(0,ac)};
+  apiPost({action:'savePilotage', row:{project:name, av:PILOT[name].av, ac:PILOT[name].ac}});
+  toast('✓ Pilotage de « '+name+' » enregistré');
+  renderPilot();
+}
+/* ══ RAPPORT COPIL imprimable ══ */
+function copilReport(){
+  var m=+((document.getElementById('pilot-month')||{}).value||4);
+  var esc=function(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  var sorted=P.slice().sort(function(a,b){return b.sc-a.sc;});
+  var totB=P.reduce(function(s,p){return s+(p.b||0);},0), totC=P.reduce(function(s,p){return s+(p.c||0);},0);
+  var rows=sorted.map(function(p,i){
+    var d=pilotData(p), pv=pvPct(p,m);
+    var spi=(p.s<=m&&pv>0)?(Math.min(100,d.av)/pv):null;
+    var cpi=(p.s<=m&&d.ac>0)?((d.av/100*(p.b||0))/d.ac):null;
+    var st=p.s>m?'À venir':p.st2;
+    return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(p.n)+(p.sel?' ★':'')+'</td><td>'+esc(p.cat)+'</td><td>'+p.b+' K€</td><td>'+esc(p.dt)+'</td><td><b>'+p.sc+'</b>/100</td><td>'+(spi==null?'—':spi.toFixed(2))+'</td><td>'+(cpi==null?'—':cpi.toFixed(2))+'</td><td>'+esc(st)+'</td></tr>';
+  }).join('');
+  var riskRows='';
+  P.forEach(function(p){ (RISKS[p.n]||[]).forEach(function(r){ if(r.level==='Critique'||r.level==='Élevé') riskRows+='<tr><td style="text-align:left">'+esc(p.n)+'</td><td style="text-align:left">'+esc(r.risk)+'</td><td>'+esc(r.level)+(r.proba?' (P'+r.proba+'×I'+r.impact+')':'')+'</td><td style="text-align:left">'+esc(r.mitigation)+'</td></tr>'; }); });
+  var alertsHtml=(ALERTS||[]).map(function(a){return '<li>'+a.text+'</li>';}).join('');
+  var w=window.open('','_blank'); if(!w){toast('Autorise les pop-ups pour générer le rapport');return;}
+  w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Rapport COPIL — Time\'Eats</title><style>'
+    +'body{font-family:Arial,sans-serif;color:#1E293B;margin:32px;font-size:12px}h1{font-size:20px;margin:0}h2{font-size:14px;color:#C2410C;border-bottom:2px solid #F97316;padding-bottom:4px;margin-top:22px}'
+    +'table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#F97316;color:#fff;font-size:10px;padding:5px}td{border:1px solid #E2E8F0;padding:5px;text-align:center;font-size:10.5px}'
+    +'.meta{color:#64748B;font-size:11px}.stats{display:flex;gap:12px;margin-top:10px}.st{border:1px solid #E2E8F0;border-radius:8px;padding:9px 14px;text-align:center}.st b{font-size:16px;color:#C2410C}ul{font-size:11px;color:#475569}'
+    +'@media print{button{display:none}}</style></head><body>'
+    +'<h1>Rapport COPIL — Portefeuille DSI Time\'Eats</h1>'
+    +'<div class="meta">Revue de '+monLabel(m)+' '+yearTag(m)+' · édité le '+new Date().toLocaleDateString('fr-FR')+' · Cellule PMO — Arthur Petit</div>'
+    +'<div class="stats"><div class="st"><b>'+P.length+'</b><br>projets</div><div class="st"><b>'+totB+' K€</b><br>budget engagé</div><div class="st"><b>'+totC+' j/h</b><br>charge totale</div><div class="st"><b>'+riskRowsCount(riskRows)+'</b><br>risques majeurs ouverts</div></div>'
+    +'<h2>1. Portefeuille priorisé (score pondéré /100)</h2><table><tr><th>#</th><th>Projet</th><th>Catégorie</th><th>Budget</th><th>Dates</th><th>Score</th><th>SPI</th><th>CPI</th><th>Statut</th></tr>'+rows+'</table>'
+    +'<div class="meta" style="margin-top:4px">★ = projet blueprint · SPI/CPI : méthode de la valeur acquise, &lt; 1 = alerte, &lt; 0,9 = seuil critique.</div>'
+    +'<h2>2. Risques majeurs (criticité ≥ Élevé)</h2><table><tr><th>Projet</th><th>Risque</th><th>Niveau</th><th>Mitigation</th></tr>'+(riskRows||'<tr><td colspan="4">Aucun risque majeur ouvert.</td></tr>')+'</table>'
+    +'<h2>3. Alertes & points d\'attention</h2><ul>'+alertsHtml+'</ul>'
+    +'<button onclick="window.print()" style="margin-top:18px;padding:9px 18px;background:#EA580C;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">Imprimer / PDF</button>'
+    +'</body></html>');
+  w.document.close(); w.focus();
+}
+function riskRowsCount(html){ return (html.match(/<tr>/g)||[]).length; }
 
 function boot(){ buildHome(); renderList(); renderG(); renderRisques(); renderRH(); refreshActiveView(); }
 
