@@ -682,7 +682,7 @@ pmoShowLogin(!pmoIsAuthed());
       <div class="ab-title">Diagramme de ressources</div>
       <div class="ab-bc"><div class="ab-dot"></div>Charge mensuelle réaliste (j/h) · Capacité théorique DSI : 420 j/h/mois · Cliquez sur un projet pour voir l'équipe</div>
     </div>
-    <div class="ab-r" style="display:flex;gap:8px"><button class="btn" onclick="openStaffing()" title="Placer les personnes à la main, projet par projet — l'outil signale les conflits, vous décidez"><i class="ti ti-hand-move"></i>Staffing manuel</button><button class="btn btn-acc" onclick="autoAllocate()" title="Réaffecte tout le personnel automatiquement (max 20 j/h/mois, prestataire en renfort)"><i class="ti ti-wand"></i>Répartir automatiquement</button></div>
+    <div class="ab-r" style="display:flex;gap:8px"><button class="btn" onclick="exportResXlsx()" title="Exporte la charge par projet et par mois, les équipes et la synthèse au format Excel"><i class="ti ti-file-spreadsheet"></i>Exporter Excel</button><button class="btn" onclick="openStaffing()" title="Placer les personnes à la main, projet par projet — l'outil signale les conflits, vous décidez"><i class="ti ti-hand-move"></i>Staffing manuel</button><button class="btn btn-acc" onclick="autoAllocate()" title="Réaffecte tout le personnel automatiquement (max 20 j/h/mois, prestataire en renfort)"><i class="ti ti-wand"></i>Répartir automatiquement</button></div>
   </div>
   <div class="ct">
     <div style="margin-bottom:14px">
@@ -1970,7 +1970,40 @@ function renderBudget(){
     });
   });
   h+='<div style="display:flex;align-items:center;font-size:11.5px;font-weight:800;color:#0F172A;padding:9px 4px;border-top:2px solid #E2E8F0;margin-top:2px"><div style="flex:2">Total général</div><div style="flex:1.2"></div><div style="width:66px;text-align:right">'+totB+' K€</div><div style="width:80px;text-align:right;color:#0EA5E9">'+totLic+' K€</div><div style="width:70px;text-align:right;color:#EC4899">'+totEsn+' K€</div><div style="width:60px;text-align:right">'+totC+' j/h</div></div></div>';
+  /* ── Graphiques de supervision financière ── */
+  h+='<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px" class="home-split">'
+    +'<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:4px"><i class="ti ti-chart-donut" style="color:#F59E0B;margin-right:6px"></i>Répartition du budget par catégorie</div><div style="font-size:10px;color:#94A3B8;margin-bottom:10px">Où va l\'argent du portefeuille — équilibre socle / applicatif / métier.</div><div style="position:relative;height:240px"><canvas id="budCatChart"></canvas></div></div>'
+    +'<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:4px"><i class="ti ti-chart-bar" style="color:#EC4899;margin-right:6px"></i>Structure de coût par projet (K€)</div><div style="font-size:10px;color:#94A3B8;margin-bottom:10px">Interne / licences / sous-traitance ESN — repère les projets dépendants de l\'externe.</div><div style="position:relative;height:240px"><canvas id="budStructChart"></canvas></div></div>'
+    +'</div>'
+    +'<div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04)"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:4px"><i class="ti ti-chart-line" style="color:#2563EB;margin-right:6px"></i>Décaissement prévisionnel cumulé (K€)</div><div style="font-size:10px;color:#94A3B8;margin-bottom:10px">Budget engagé mois par mois (réparti au prorata du plan de charge) — la trajectoire financière que le COPIL doit surveiller.</div><div style="position:relative;height:250px"><canvas id="budCashChart"></canvas></div></div>';
   body.innerHTML=h;
+  /* données des graphiques */
+  if(window.budCharts){window.budCharts.forEach(function(c){try{c.destroy();}catch(e){}});}
+  window.budCharts=[];
+  var catL=cats.slice().sort(function(a,b){return byCat[b]-byCat[a];});
+  window.budCharts.push(new Chart(document.getElementById('budCatChart'),{type:'doughnut',
+    data:{labels:catL,datasets:[{data:catL.map(function(c){return byCat[c];}),backgroundColor:catL.map(function(c){return (CAT[c]&&CAT[c].f)||'#64748B';}),borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12,padding:8}},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+' : '+ctx.parsed+' K€ ('+Math.round(ctx.parsed/totB*100)+'%)';}}}}}}));
+  var sp=P.slice().sort(function(a,b){return (+b.b||0)-(+a.b||0);});
+  window.budCharts.push(new Chart(document.getElementById('budStructChart'),{type:'bar',
+    data:{labels:sp.map(function(p){return p.n.length>18?p.n.slice(0,17)+'…':p.n;}),datasets:[
+      {label:'Interne',data:sp.map(function(p){return Math.max(0,(+p.b||0)-licOf(p)-esnOf(p));}),backgroundColor:'#3B82F6CC',borderRadius:3},
+      {label:'Licences',data:sp.map(function(p){return licOf(p);}),backgroundColor:'#0EA5E9CC',borderRadius:3},
+      {label:'ESN',data:sp.map(function(p){return esnOf(p);}),backgroundColor:'#EC4899CC',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45,minRotation:45}},y:{stacked:true,ticks:{font:{size:9}},title:{display:true,text:'K€',font:{size:9}}}},plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}}}}}));
+  var N=ganttMonths(); var labs=[],cum=[],run=0;
+  for(var m=0;m<N;m++){
+    var mo=P.reduce(function(sm,p){
+      var idx=m-p.s; if(idx<0||idx>=p.d)return sm;
+      var mv=MV[p.n];
+      if(mv&&mv.length===p.d){var tt=mv.reduce(function(a,b){return a+(+b||0);},0)||1;return sm+(+p.b||0)*((+mv[idx]||0)/tt);}
+      return sm+(+p.b||0)/p.d;
+    },0);
+    run+=mo; labs.push(monLabel(m)+' '+yearTag(m)); cum.push(Math.round(run));
+  }
+  window.budCharts.push(new Chart(document.getElementById('budCashChart'),{type:'line',
+    data:{labels:labs,datasets:[{label:'Budget engagé cumulé (K€)',data:cum,borderColor:'#2563EB',backgroundColor:'#2563EB22',fill:true,tension:.3,pointRadius:3,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{font:{size:9}},title:{display:true,text:'K€ cumulés',font:{size:9}}},x:{ticks:{font:{size:9}}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.parsed.y+' K€ cumulés ('+Math.round(ctx.parsed.y/totB*100)+'% du budget)';}}}}}}));
 }
 
 /* ── DÉTAILS PROJET (lecture complète) ── */
@@ -2713,7 +2746,7 @@ function renderList(){
   const order=PORTFOLIOS.map(pf=>pf.name);
   const groups={}; P.forEach(p=>{const k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(groups[k]=groups[k]||[]).push(p);});
   Object.keys(groups).forEach(k=>{if(order.indexOf(k)<0)order.push(k);});
-  const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /100</div><div class="lc lc-s">Statut</div><div class="lc" style="width:50px"></div></div>`;
+  const colHead=`<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Score /100</div><div class="lc lc-s">Statut</div><div class="lc" style="width:72px"></div></div>`;
   let h='';
   order.forEach(name=>{
     const g=groups[name]||[];
@@ -2734,7 +2767,7 @@ function renderList(){
       <div class="lc">${p.b}K€</div>
       <div class="lc" style="font-weight:700;color:#0F172A">${p.sc}/100</div>
       <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
-      <div class="lc" style="width:50px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP(${jsArg(p.n)})"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject(${jsArg(p.n)})" title="Supprimer ce projet"></i></div>
+      <div class="lc" style="width:72px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP(${jsArg(p.n)})"></i><i class="ti ti-archive" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#F59E0B'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();closeProjectAction(${jsArg(p.n)})" title="Clore ce projet (archivage dans l'onglet Clos)"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject(${jsArg(p.n)})" title="Supprimer ce projet"></i></div>
     </div>`).join('');
   });
   document.getElementById('lst').innerHTML=h;
@@ -3324,6 +3357,59 @@ function removeTeamMember(proj,name){
   apiRemoveMember(proj,name);
   showTeamPanel(P.findIndex(p=>p.n===proj));
   toast('🗑 '+name+' retiré de '+proj);
+}
+
+/* ══ EXPORT EXCEL — onglet Ressources (SheetJS chargé à la demande) ══ */
+function loadXLSX(cb){
+  if(window.XLSX){cb();return;}
+  var sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  sc.onload=cb; sc.onerror=function(){toast('Impossible de charger la librairie Excel (connexion ?)');};
+  document.head.appendChild(sc);
+}
+function exportResXlsx(){
+  loadXLSX(function(){
+    var N=ganttMonths();
+    var mois=[]; for(var m=0;m<N;m++) mois.push(monLabel(m)+' '+yearTag(m));
+    /* Feuille 1 — Charge par projet et par mois */
+    var rows=[['Projet','Catégorie','Portefeuille'].concat(mois).concat(['Total (j/h)'])];
+    P.forEach(function(p){
+      var line=[p.n,p.cat,p.pf||''], tot=0;
+      for(var m=0;m<N;m++){var v=getMonthLoad(p,m);tot+=v;line.push(v||0);}
+      line.push(tot); rows.push(line);
+    });
+    var totals=['TOTAL','',''],cap=['Capacité DSI','',''],over=['Dépassement','',''];
+    var gTot=0;
+    for(var m=0;m<N;m++){var t=P.reduce(function(sm,p){return sm+getMonthLoad(p,m);},0);gTot+=t;totals.push(t);cap.push(CAP);over.push(t>CAP?t-CAP:0);}
+    totals.push(gTot);cap.push('');over.push('');
+    rows.push(totals,cap,over);
+    /* Feuille 2 — Équipes */
+    var eq=[['Projet','Intervenant','Rôle','Type','Part (%)']];
+    P.forEach(function(p){
+      var t=TEAMS[p.n]; if(!t||!t.members||!t.members.length){eq.push([p.n,'(aucune équipe affectée)','','','']);return;}
+      t.members.forEach(function(mm){eq.push([p.n,mm.name,mm.role||'',mm.type==='prestataire'?'Prestataire ESN':'Interne',Math.round((mm.share||0)*100)]);});
+    });
+    /* Feuille 3 — Synthèse */
+    var pics=[],overM=[];
+    for(var m=0;m<N;m++){var t2=P.reduce(function(sm,p){return sm+getMonthLoad(p,m);},0);pics.push(t2);if(t2>CAP)overM.push(monLabel(m));}
+    var syn=[['Indicateur','Valeur'],
+      ['Nombre de projets actifs',P.length],
+      ['Charge totale (j/h)',gTot],
+      ['Capacité mensuelle DSI (j/h)',CAP],
+      ['Pic de charge (j/h)',Math.max.apply(null,pics.concat([0]))],
+      ['Mois en sur-charge',overM.length?overM.join(', '):'aucun'],
+      ['Intervenants au vivier',allUserNames().length],
+      ['Export généré le',todayISO()]];
+    var wb=XLSX.utils.book_new();
+    var ws1=XLSX.utils.aoa_to_sheet(rows); ws1['!cols']=[{wch:24},{wch:15},{wch:18}].concat(mois.map(function(){return {wch:9};}),[{wch:11}]);
+    var ws2=XLSX.utils.aoa_to_sheet(eq);   ws2['!cols']=[{wch:24},{wch:18},{wch:16},{wch:16},{wch:9}];
+    var ws3=XLSX.utils.aoa_to_sheet(syn);  ws3['!cols']=[{wch:30},{wch:28}];
+    XLSX.utils.book_append_sheet(wb,ws1,'Charge par mois');
+    XLSX.utils.book_append_sheet(wb,ws2,'Équipes');
+    XLSX.utils.book_append_sheet(wb,ws3,'Synthèse');
+    XLSX.writeFile(wb,'PMO_Ressources_'+todayISO()+'.xlsx');
+    toast('✓ Export Excel généré — 3 feuilles (charge, équipes, synthèse)');
+  });
 }
 
 /* ══ STAFFING MANUEL — placement humain, drag & drop, conflits signalés mais jamais bloquants ══ */
