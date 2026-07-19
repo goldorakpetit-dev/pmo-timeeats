@@ -507,6 +507,7 @@ pmoShowLogin(!pmoIsAuthed());
     <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i><span data-i18n="nav.rex">Clôture &amp; REX</span></div>
     <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.rh">RH</span></div>
     <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i><span data-i18n="nav.list">Liste</span></div>
+    <div class="nt"     onclick="goPage('clos',this)"><i class="ti ti-archive"></i><span>Clos</span></div>
     <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i><span data-i18n="nav.details">Détails</span></div>
   </div>
   <div class="tb-r">
@@ -832,6 +833,14 @@ pmoShowLogin(!pmoIsAuthed());
     </div>
   </div>
   <div class="ct"><div class="lt" id="lst"></div></div>
+</div>
+
+<!-- PAGE PROJETS CLOS -->
+<div id="p-clos" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Projets clos</div><div class="ab-bc"><div class="ab-dot"></div><span id="clos-count">0 projet clos</span></div></div>
+  </div>
+  <div class="ct"><div class="lt" id="clos-body"></div></div>
 </div>
 
 <!-- PAGE DÉTAILS PROJET -->
@@ -1474,7 +1483,7 @@ function saveNewProject(){
   let charges=[...document.querySelectorAll('#np-charges .np-ch')].map(i=>+i.value||0);
   if(!charges.length||charges.every(v=>!v)) charges=Array.from({length:d},()=>Math.round(newP.c/d));
   const risks=npRk;
-  P.push(newP);MV[newP.n]=charges;TEAMS[newP.n]={members:[]};RISKS[newP.n]=risks;
+  PALL.push(newP);refreshP();MV[newP.n]=charges;TEAMS[newP.n]={members:[]};RISKS[newP.n]=risks;
   apiPost({action:'create',project:newP,charges:charges,risks:risks});
   document.getElementById('np-overlay').classList.remove('open');document.body.style.overflow='';
   buildHome();renderList();renderG();renderRisques();window.mReady=false;window.rReady=false;
@@ -1517,6 +1526,12 @@ let P=[
   {n:'Stockage / fichiers',    cat:'Socle IT',      s:6,d:3,b:100,c:80, st:4,dt:'Oct → Déc', note:'Solution centralisée avec droits d\'accès par population',st2:'Planifié',rent:3,mait:3,urg:2,pctLic:25,pctEsnB:0},
   {n:'Sauvegarde Cloud',       cat:'Socle IT',      s:6,d:4,b:100,c:100,st:5,dt:'Oct → Jan', note:'Continuité de service en cas de sinistre — RPO/RTO',st2:'Planifié',rent:3,mait:5,urg:3,pctLic:35,pctEsnB:0},
 ];
+/* Référentiel complet (actifs + clos). P = vue active utilisée par toutes les pages ;
+   les projets « Clos » sortent des vues actives et sont archivés dans l'onglet Clos. */
+let PALL=P;
+function refreshP(){ P=PALL.filter(function(p){ return String(p.st2||'')!=='Clos'; }); }
+function closedProjects(){ return PALL.filter(function(p){ return String(p.st2||'')==='Clos'; }); }
+refreshP();
 /* Objectifs détaillés + cahier des charges des 11 projets du cas (contexte Time'Eats : plateforme
    d'intermédiation traiteurs/chefs ↔ clients). Injectés côté client, comme les dépendances seedées,
    pour alimenter l'onglet Détails et la fiche projet quel que soit l'état du Sheet. */
@@ -1756,6 +1771,7 @@ function goPage(id,el){
   if(id==='rex')renderRex();
   if(id==='details')renderDetails();
   if(id==='pilot')renderPilot();
+  if(id==='clos')renderClos();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -2038,11 +2054,11 @@ function saveRex(){
 }
 function renderRex(){
   var body=document.getElementById('rex-body'); if(!body)return;
-  if(!REX_SEL && P.length) REX_SEL=P[0].n;
+  if(!REX_SEL && PALL.length) REX_SEL=PALL[0].n;
   var cur=REX_DATA[REX_SEL]||{ecarts:'',diff:'',bonnes:'',lecons:'',date:''};
   var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
   var ta=function(id,ph,val){return '<textarea id="'+id+'" placeholder="'+ph+'" style="width:100%;min-height:58px;padding:8px 10px;border:1px solid #E2E8F0;border-radius:8px;font-size:11.5px;font-family:inherit;resize:vertical;line-height:1.5">'+esc(val)+'</textarea>';};
-  var opts=P.map(function(p){return '<option value="'+esc(p.n)+'"'+(p.n===REX_SEL?' selected':'')+'>'+esc(p.n)+'</option>';}).join('');
+  var opts=PALL.map(function(p){return '<option value="'+esc(p.n)+'"'+(p.n===REX_SEL?' selected':'')+'>'+esc(p.n)+'</option>';}).join('');
   // Carte REX
   var h='<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-bulb" style="color:#F59E0B;margin-right:6px"></i>Retour d\'expérience (REX)</div><select id="rex-proj" onchange="rexSelect(this.value)" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;font-family:inherit;cursor:pointer">'+opts+'</select>'+(cur.date?'<span style="font-size:10px;color:#94A3B8">dernière saisie : '+cur.date+'</span>':'')+'</div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
@@ -2740,6 +2756,67 @@ function renderList(){
   });
   document.getElementById('lst').innerHTML=h;
 }
+/* ══ PROJETS CLOS — clôture, archivage par portefeuille, réouverture ══ */
+function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function closeProjectAction(name){
+  var p=PALL.find(function(x){return x.n===name;}); if(!p){toast('Projet introuvable');return;}
+  if(p.st2==='Clos'){toast('Ce projet est déjà clos');return;}
+  if(!confirm('Clore le projet « '+name+' » ?\n\nIl sera archivé dans l\'onglet « Clos » (portefeuille : '+(p.pf||'—')+') et sortira des vues actives (matrice, Gantt, pilotage).\nPensez à saisir son REX (Clôture & REX).')) return;
+  p.st2='Clos'; p.dtClos=todayISO();
+  apiPost({action:'closeProject', name:name, date:p.dtClos});
+  refreshP(); recalc(); window.mReady=false; window.rReady=false;
+  if(typeof closePD==='function') closePD();
+  renderList(); buildHome();
+  toast('✓ Projet « '+name+' » clos — archivé dans l\'onglet Clos');
+  goPageTile('clos');
+}
+function reopenProject(name){
+  var p=PALL.find(function(x){return x.n===name;}); if(!p){toast('Projet introuvable');return;}
+  if(!confirm('Rouvrir le projet « '+name+' » ?\nIl reviendra dans le portefeuille actif avec le statut « En cours ».')) return;
+  p.st2='En cours'; p.dtClos='';
+  apiPost({action:'reopenProject', name:name});
+  refreshP(); recalc(); window.mReady=false; window.rReady=false;
+  renderClos(); renderList(); buildHome();
+  toast('✓ Projet « '+name+' » rouvert');
+}
+function renderClos(){
+  var body=document.getElementById('clos-body'); if(!body)return;
+  var clos=closedProjects();
+  var cnt=document.getElementById('clos-count'); if(cnt)cnt.textContent=clos.length+' projet'+(clos.length>1?'s':'')+' clos';
+  if(!clos.length){
+    body.innerHTML='<div class="card" style="text-align:center;padding:44px 20px"><i class="ti ti-archive" style="font-size:34px;color:#CBD5E1"></i><div style="font-size:13px;font-weight:700;color:#475569;margin-top:10px">Aucun projet clos pour l\'instant</div><div style="font-size:11px;color:#94A3B8;margin-top:6px;line-height:1.7">Pour clore un projet terminé : onglet <strong>Liste</strong> → cliquer sur le projet → bouton <strong>« Clore le projet »</strong>.<br>Le projet est alors archivé ici, dans son portefeuille d\'origine, avec sa date de clôture et l\'état de son REX.</div></div>';
+    return;
+  }
+  var order=PORTFOLIOS.map(function(pf){return pf.name;});
+  var groups={}; clos.forEach(function(p){var k=p.pf||'—';(groups[k]=groups[k]||[]).push(p);});
+  Object.keys(groups).forEach(function(k){if(order.indexOf(k)<0)order.push(k);});
+  var h='';
+  order.forEach(function(name){
+    var g=groups[name]||[]; if(!g.length)return;
+    var pf=pfByName(name); var col=pf?pf.color:'#64748B';
+    var totBg=g.reduce(function(sm,p){return sm+(+p.b||0);},0);
+    h+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 12px;margin:16px 0 6px;background:'+col+'14;border-left:3px solid '+col+';border-radius:0 8px 8px 0">'
+      +'<span style="font-size:12.5px;font-weight:800;color:'+col+';display:flex;align-items:center;gap:6px"><i class="ti ti-folder"></i>'+name+'</span>'
+      +'<span style="font-size:10.5px;color:#64748B">'+g.length+' projet'+(g.length>1?'s':'')+' clos · '+totBg+' K€</span></div>';
+    h+='<div class="lr lh"><div class="lc-n">Projet</div><div class="lc lc-c">Catégorie</div><div class="lc">Budget</div><div class="lc">Période</div><div class="lc">Clos le</div><div class="lc" style="width:130px"></div></div>';
+    g.forEach(function(p){
+      var r=REX_DATA[p.n]; var hasRex=r&&(r.ecarts||r.diff||r.bonnes||r.lecons);
+      h+='<div class="lr" style="cursor:default">'
+        +'<div class="lc-n"><div class="gldot" style="background:'+(CAT[p.cat]?CAT[p.cat].f:'#94A3B8')+';display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>'+p.n
+        +' <span class="pill" style="background:#F1F5F9;color:#64748B;margin-left:6px">Clos</span>'
+        +(hasRex?' <span class="pill" style="background:#DCFCE7;color:#15803D;margin-left:4px" title="REX saisi">REX ✓</span>':' <span class="pill" style="background:#FEF9C3;color:#854D0E;margin-left:4px" title="Capitalisation à faire">REX à faire</span>')+'</div>'
+        +'<div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">'+p.cat+'</div>'
+        +'<div class="lc">'+p.b+'K€</div>'
+        +'<div class="lc" style="font-size:10px;color:#64748B">'+(p.dt||'—')+'</div>'
+        +'<div class="lc" style="font-size:10px;color:#64748B">'+(p.dtClos||'—')+'</div>'
+        +'<div class="lc" style="width:130px;text-align:right;display:flex;gap:6px;align-items:center;justify-content:flex-end">'
+        +'<button class="btn" style="padding:3px 9px;font-size:10px" onclick="REX_SEL='+jsArg(p.n)+';goPageTile(\'rex\')" title="Saisir / voir le REX"><i class="ti ti-bulb"></i>REX</button>'
+        +'<button class="btn" style="padding:3px 9px;font-size:10px" onclick="reopenProject('+jsArg(p.n)+')" title="Rouvrir le projet"><i class="ti ti-rotate"></i>Rouvrir</button></div>'
+      +'</div>';
+    });
+  });
+  body.innerHTML=h;
+}
 function deletePortfolio(name){
   var pf=pfByName(name); if(!pf){ toast('Portefeuille introuvable'); return; }
   if(PORTFOLIOS.length<=1){ toast('Impossible de supprimer le dernier portefeuille.'); return; }
@@ -2862,7 +2939,7 @@ function openProjectDetail(name){
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(ajoute / retire — sauvegardé)</span></div>'+depNote+risksEditorMarkup('pd')+'</div>';
-  h+='<div class="ma2"><button class="btn" onclick="openSP(pdName)"><i class="ti ti-brand-sharepoint"></i>SharePoint</button><button class="btn" onclick="closePD()">Fermer</button><button class="btn btn-acc" onclick="saveProjectDetail()"><i class="ti ti-check"></i>Enregistrer</button></div>';
+  h+='<div class="ma2"><button class="btn" onclick="openSP(pdName)"><i class="ti ti-brand-sharepoint"></i>SharePoint</button><button class="btn" style="color:#B91C1C;border-color:#FECACA" onclick="closeProjectAction(pdName)" title="Archiver le projet terminé dans l\'onglet Clos"><i class="ti ti-archive"></i>Clore le projet</button><button class="btn" onclick="closePD()">Fermer</button><button class="btn btn-acc" onclick="saveProjectDetail()"><i class="ti ti-check"></i>Enregistrer</button></div>';
   document.getElementById('pd-body').innerHTML=h;
   depsEditorOpen('pd', p.deps, name);
   risksEditorOpen('pd', RISKS[name]||[]);
@@ -2926,7 +3003,7 @@ function closeDelModal(e){
 function executeDelete(){
   if(!pendingDeleteName) return;
   const name = pendingDeleteName;
-  P = P.filter(p => p.n !== name);
+  PALL = PALL.filter(p => p.n !== name);refreshP();
   delete MV[name]; delete SP_LINKS[name]; delete TEAMS[name];
   apiDelete(name);
   document.getElementById('del-overlay').classList.remove('open');
@@ -2958,7 +3035,7 @@ function recalc(){
 /* Remplace les données locales par celles du Google Sheet */
 function applyData(d){
   if(d && Array.isArray(d.projects) && d.projects.length){
-    P = d.projects.map(p=>{
+    PALL = d.projects.map(p=>{
       p.s=+p.s; p.d=+p.d; p.b=+p.b; p.c=+p.c;
       p.pctLic=+p.pctLic||0; p.pctEsnB=+p.pctEsnB||0; ensureCat(p.cat);
       // scoreP gère Valeur/Effort et, à défaut, dérive des anciens critères (Importance/Rentabilité/Maîtrise).
@@ -2973,7 +3050,7 @@ function applyData(d){
     PORTFOLIOS = d.portfolios.map(function(pf){ return {name:String(pf.name||'').trim(), deadline:(pf.deadline==null?9:+pf.deadline), color:pf.color||'#2563EB'}; }).filter(function(pf){return pf.name;});
     if(!PORTFOLIOS.length) PORTFOLIOS=[{name:'Portefeuille DSI',deadline:9,color:'#2563EB'}];
   }
-  P.forEach(function(p){ if(!p.pf || !pfByName(p.pf)) p.pf=PORTFOLIOS[0].name; });
+  PALL.forEach(function(p){ if(!p.pf || !pfByName(p.pf)) p.pf=PORTFOLIOS[0].name; });
   if(d && d.charges && Object.keys(d.charges).length) MV    = d.charges;
   if(d && d.teams   && Object.keys(d.teams).length)   TEAMS = d.teams;
   if(d && Array.isArray(d.meetings)) meetings = d.meetings;
@@ -2982,7 +3059,8 @@ function applyData(d){
   if(d && d.risks && typeof d.risks==='object') RISKS = d.risks;
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
-  P.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
+  PALL.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
+  refreshP();
   recalc();
   window.mReady=false; window.rReady=false;
 }
