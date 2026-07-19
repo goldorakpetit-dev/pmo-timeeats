@@ -3021,6 +3021,8 @@ function executeDelete(){
   const name = pendingDeleteName;
   PALL = PALL.filter(p => p.n !== name);refreshP();
   delete MV[name]; delete SP_LINKS[name]; delete TEAMS[name];
+  delete REX_DATA[name]; delete RISKS[name]; if(typeof PILOT!=='undefined')delete PILOT[name];
+  if(REX_SEL===name)REX_SEL='';
   apiDelete(name);
   document.getElementById('del-overlay').classList.remove('open');
   document.body.style.overflow = '';
