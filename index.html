@@ -1762,7 +1762,6 @@ function scrollHome(id){ var e=document.getElementById(id); if(e)e.scrollIntoVie
 /* ── HOME ── */
 function buildHome(){
 recalc();
-if(!document.getElementById('hero-kpis'))return;
 const planifie=P.filter(p=>p.st2==='Planifié').length;
 const nESN=P.filter(p=>TEAMS[p.n]&&TEAMS[p.n].members.some(m=>m.type==='prestataire')).length;
 const totBudgetESN=Math.round(P.filter(p=>TEAMS[p.n]&&TEAMS[p.n].members.some(m=>m.type==='prestataire')).reduce((s,p)=>{
@@ -1779,7 +1778,7 @@ const KPIS=[
   {v:totC,         u:' j/h',id:'charge', k:'Charge totale estimée',   d:'.12s', acc:0, icon:'ti-clock',          sub:'Dont '+totBudgetESN+' K€ externalisés ESN'},
   {v:risqueEleve,  u:'',    id:'risque', k:'Projets à risque élevé',  d:'.18s', acc:risqueEleve>0?2:0, icon:'ti-alert-triangle', sub:'Risque Élevé ou Critique (matrice 5×5)'},
 ];
-document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
+var _hk=document.getElementById('hero-kpis');if(_hk)_hk.innerHTML=KPIS.map(k=>`
   <div class="hkpi" style="animation-delay:${k.d};cursor:pointer" onclick="openKPIModal('${k.id}')">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
       <div class="hkpi-v${k.acc===1?' acc-v':k.acc===2?' warn-v':''}">${k.v}<small>${k.u}</small></div>
@@ -1793,8 +1792,8 @@ document.getElementById('hero-kpis').innerHTML=KPIS.map(k=>`
   </div>`).join('');
 
 const sortedP=[...P].sort((a,b)=>b.sc-a.sc);
-document.getElementById('top5').innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.sc}/100</div></div>`).join('');
-document.getElementById('alerts').innerHTML=ALERTS.map(a=>{const s=alertStyle(a);return `<div class="alert-row"><div class="alert-icon" style="background:${s.bg};color:${s.c}"><i class="ti ${s.ic}" style="font-size:11px"></i></div><div class="alert-txt">${a.text||a.t||''}</div></div>`;}).join('');
+var _t5=document.getElementById('top5');if(_t5)_t5.innerHTML=sortedP.slice(0,5).map(p=>`<div class="prow"><div class="pdot" style="background:${CAT[p.cat].f}"></div><div class="prow-name">${p.n}</div><div class="prow-cat">${p.cat}</div><div class="prow-score">${p.sc}/100</div></div>`).join('');
+var _al=document.getElementById('alerts');if(_al)_al.innerHTML=ALERTS.map(a=>{const s=alertStyle(a);return `<div class="alert-row"><div class="alert-icon" style="background:${s.bg};color:${s.c}"><i class="ti ${s.ic}" style="font-size:11px"></i></div><div class="alert-txt">${a.text||a.t||''}</div></div>`;}).join('');
 }
 
 /* ── DASHBOARD (KPI par portefeuille) ── */
@@ -2658,10 +2657,11 @@ function showTeamPanel(pi){
   html+=`<div style="margin-top:14px;padding:12px 14px;border:1px dashed #CBD5E1;border-radius:10px;background:#F8FAFC">
     <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px">Ajouter un intervenant</div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end">
-      <div class="fld" style="flex:2;min-width:150px"><label>Depuis le vivier</label><select id="tm-user">${availOpts}</select></div>
+      <div class="fld" style="flex:2;min-width:150px"><label>Depuis le vivier</label><select id="tm-user" onchange="tmShowAvail('${p.n}')">${availOpts}</select></div>
       <div class="fld" style="width:80px"><label>Part %</label><input id="tm-share" type="number" min="0" max="100" placeholder="20"></div>
       <button class="btn btn-acc" style="height:33px" onclick="addTeamMember('${p.n}')"><i class="ti ti-plus"></i>Ajouter</button>
     </div>
+    <div id="tm-avail" style="margin-top:9px"></div>
     <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;color:#64748B;margin-top:8px"><input type="checkbox" id="tm-new" style="width:auto;margin:0" onchange="tmToggleNew()">Personne hors vivier (nouvelle ressource)</label>
     <div id="tm-newfields" style="display:none;gap:7px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">
       <div class="fld" style="flex:1;min-width:110px"><label>Nom</label><input id="tm-name" type="text" placeholder="ex. Camille"></div>
@@ -3248,7 +3248,46 @@ function renderRisques(){
 }
 
 /* Saisie d'équipe depuis le web */
-function tmToggleNew(){const on=document.getElementById('tm-new').checked;document.getElementById('tm-newfields').style.display=on?'flex':'none';const s=document.getElementById('tm-user');if(s)s.disabled=on;}
+function tmToggleNew(){const on=document.getElementById('tm-new').checked;document.getElementById('tm-newfields').style.display=on?'flex':'none';const s=document.getElementById('tm-user');if(s)s.disabled=on;const av=document.getElementById('tm-avail');if(av&&on)av.innerHTML='';}
+/* Disponibilité mois par mois de l'intervenant choisi, sur la période du projet */
+function userMonthProjects(name, gm, excludeProj){
+  var out=[];
+  P.forEach(function(p){
+    if(p.n===excludeProj) return;
+    var t=TEAMS[p.n]; if(!t||!t.members) return;
+    var m=t.members.find(function(x){return x.name===name;}); if(!m) return;
+    var idx=gm-p.s;
+    if(idx>=0 && idx<p.d) out.push(p.n);
+  });
+  return out;
+}
+function tmShowAvail(projName){
+  var box=document.getElementById('tm-avail'); if(!box) return;
+  var sel=document.getElementById('tm-user'); var name=sel?sel.value:'';
+  var p=P.find(function(x){return x.n===projName;});
+  if(!name||!p){ box.innerHTML=''; return; }
+  var cells='', busyMonths=[], conflictProjs={};
+  for(var i=0;i<p.d;i++){
+    var gm=p.s+i; var mon=monLabel(gm)+' '+yearTag(gm);
+    var projs=userMonthProjects(name, gm, projName);
+    var info=userMonthInfo(name, gm);
+    var busy=projs.length>0;
+    if(busy){ busyMonths.push(monLabel(gm)); projs.forEach(function(x){conflictProjs[x]=1;}); }
+    cells+='<div style="flex:1;min-width:64px;text-align:center;padding:6px 4px;border-radius:7px;background:'+(busy?'#FFF7ED':'#ECFDF5')+';border:1px solid '+(busy?'#FED7AA':'#BBF7D0')+'" title="'+(busy?projs.join(', '):'Disponible')+'">'
+      +'<div style="font-size:9px;color:#94A3B8;margin-bottom:2px">'+mon+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:'+(busy?'#C2410C':'#15803D')+'">'+(busy?(projs.length+' proj.'):'Libre')+'</div>'
+      +(busy?'<div style="font-size:8.5px;color:#9A3412;line-height:1.3;margin-top:2px">'+projs.map(function(x){return x.length>14?x.slice(0,13)+'…':x;}).join('<br>')+'</div>':'')
+      +(busy&&info.load?'<div style="font-size:9px;color:#64748B;margin-top:2px">'+info.load+' j/h</div>':'')
+      +'</div>';
+  }
+  var head;
+  if(busyMonths.length){
+    head='<div style="display:flex;align-items:flex-start;gap:7px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:7px 10px;font-size:10.5px;color:#9A3412;margin-bottom:7px"><i class="ti ti-alert-triangle" style="margin-top:1px"></i><div><strong>'+name+'</strong> est déjà affecté·e en <strong>'+busyMonths.join(', ')+'</strong> sur : '+Object.keys(conflictProjs).join(', ')+'. Ajustez la part % en conséquence.</div></div>';
+  } else {
+    head='<div style="display:flex;align-items:center;gap:7px;background:#ECFDF5;border:1px solid #BBF7D0;border-radius:8px;padding:7px 10px;font-size:10.5px;color:#15803D;margin-bottom:7px"><i class="ti ti-circle-check"></i><strong>'+name+'</strong> est disponible sur toute la période du projet ('+p.dt+').</div>';
+  }
+  box.innerHTML=head+'<div style="display:flex;gap:5px;flex-wrap:wrap">'+cells+'</div>';
+}
 function addTeamMember(proj){
   const isNew=document.getElementById('tm-new')&&document.getElementById('tm-new').checked;
   const share=Math.max(0,Math.min(100,+document.getElementById('tm-share').value||0))/100;
