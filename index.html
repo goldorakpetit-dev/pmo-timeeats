@@ -497,18 +497,18 @@ pmoShowLogin(!pmoIsAuthed());
   <div class="nav">
     <div class="nt on"  onclick="goPage('home',this)"><i class="ti ti-home"></i><span data-i18n="nav.home">Accueil</span></div>
     <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i><span data-i18n="nav.dash">Dashboard</span></div>
-    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i><span data-i18n="nav.gantt">Gantt</span></div>
+    <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i><span data-i18n="nav.list">Projets</span></div>
+    <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i><span data-i18n="nav.details">Détails</span></div>
     <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i><span data-i18n="nav.matrix">Matrice</span></div>
+    <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i><span data-i18n="nav.gantt">Gantt</span></div>
     <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.res">Ressources</span></div>
     <div class="nt"     onclick="goPage('budget',this)"><i class="ti ti-coin"></i><span data-i18n="nav.budget">Budget</span></div>
     <div class="nt"     onclick="goPage('pilot',this)"><i class="ti ti-gauge"></i><span>Pilotage</span></div>
-    <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i><span data-i18n="nav.agenda">Agenda</span></div>
     <div class="nt"     onclick="goPage('risques',this)"><i class="ti ti-alert-triangle"></i><span data-i18n="nav.risks">Risques</span></div>
-    <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-flag-check"></i><span data-i18n="nav.rex">Clôture &amp; REX</span></div>
+    <div class="nt"     onclick="goPage('agenda',this)"><i class="ti ti-calendar-event"></i><span data-i18n="nav.agenda">Agenda</span></div>
     <div class="nt"     onclick="goPage('rh',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.rh">RH</span></div>
-    <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i><span data-i18n="nav.list">Liste</span></div>
+    <div class="nt"     onclick="goPage('rex',this)"><i class="ti ti-bulb"></i><span data-i18n="nav.rex">REX</span></div>
     <div class="nt"     onclick="goPage('clos',this)"><i class="ti ti-archive"></i><span>Clos</span></div>
-    <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i><span data-i18n="nav.details">Détails</span></div>
   </div>
   <div class="tb-r">
     <button class="ib" onclick="toast('Recherche globale — bientôt disponible')"><i class="ti ti-search"></i></button>
@@ -682,7 +682,7 @@ pmoShowLogin(!pmoIsAuthed());
       <div class="ab-title">Diagramme de ressources</div>
       <div class="ab-bc"><div class="ab-dot"></div>Charge mensuelle réaliste (j/h) · Capacité théorique DSI : 420 j/h/mois · Cliquez sur un projet pour voir l'équipe</div>
     </div>
-    <div class="ab-r"><button class="btn btn-acc" onclick="autoAllocate()" title="Réaffecte tout le personnel automatiquement (max 20 j/h/mois, prestataire en renfort)"><i class="ti ti-wand"></i>Répartir automatiquement</button></div>
+    <div class="ab-r" style="display:flex;gap:8px"><button class="btn" onclick="openStaffing()" title="Placer les personnes à la main, projet par projet — l'outil signale les conflits, vous décidez"><i class="ti ti-hand-move"></i>Staffing manuel</button><button class="btn btn-acc" onclick="autoAllocate()" title="Réaffecte tout le personnel automatiquement (max 20 j/h/mois, prestataire en renfort)"><i class="ti ti-wand"></i>Répartir automatiquement</button></div>
   </div>
   <div class="ct">
     <div style="margin-bottom:14px">
@@ -706,6 +706,11 @@ pmoShowLogin(!pmoIsAuthed());
 <!-- TEAM POPUP MODAL (niveau global : s'affiche depuis n'importe quel onglet) -->
 <div class="team-mo" id="team-mo" onclick="closeTeamModal(event)">
   <div class="team-mc" id="team-mc"></div>
+</div>
+
+<!-- STAFFING MANUEL (drag & drop) -->
+<div class="team-mo" id="staff-mo" onclick="closeStaffing(event)">
+  <div class="team-mc" id="staff-mc" style="width:min(1150px,96vw);max-height:84vh"></div>
 </div>
 
 
@@ -804,7 +809,7 @@ pmoShowLogin(!pmoIsAuthed());
 <!-- PAGE LISTE -->
 <div id="p-lst" class="page">
   <div class="ab">
-    <div class="ab-l"><div class="ab-title">Liste des projets</div><div class="ab-bc"><div class="ab-dot"></div>11 projets</div></div>
+    <div class="ab-l"><div class="ab-title">Projets du portefeuille</div><div class="ab-bc"><div class="ab-dot"></div>11 projets</div></div>
     <div class="ab-r">
       <button class="btn btn-acc" onclick="openNewProject()"><i class="ti ti-plus"></i>Nouveau projet</button>
     </div>
@@ -3321,6 +3326,99 @@ function removeTeamMember(proj,name){
   toast('🗑 '+name+' retiré de '+proj);
 }
 
+/* ══ STAFFING MANUEL — placement humain, drag & drop, conflits signalés mais jamais bloquants ══ */
+var STAFF_SEL=''; /* personne sélectionnée (fallback clic-clic, tablette) */
+function openStaffing(){ STAFF_SEL=''; staffRender(); document.getElementById('staff-mo').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeStaffing(e){ if(e&&e.target!==document.getElementById('staff-mo'))return; document.getElementById('staff-mo').classList.remove('open'); document.body.style.overflow=''; window.rReady=false; }
+function staffBusyMonths(name, p){ /* mois du projet où la personne est déjà prise ailleurs */
+  var out=[];
+  for(var i=0;i<p.d;i++){ var gm=p.s+i; if(userMonthProjects(name, gm, p.n).length) out.push(monLabel(gm)); }
+  return out;
+}
+function staffRender(){
+  var mc=document.getElementById('staff-mc'); if(!mc)return;
+  var esc=function(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  /* Vivier : tout le monde, avec charge cumulée */
+  var people=allUserNames().map(function(n){ var u=userInfo(n); var a=userAllocation(n); return {name:n,role:u.role||'',type:u.type||'interne',alloc:a}; });
+  people.sort(function(a,b){ return a.alloc.share-b.alloc.share || a.name.localeCompare(b.name); });
+  var vivier=people.map(function(u){
+    var pct=Math.round(u.alloc.share*100);
+    var col=pct>100?'#EF4444':(pct>80?'#F59E0B':'#10B981');
+    var selected=(STAFF_SEL===u.name);
+    return '<div class="hkpi" draggable="true" ondragstart="staffDragStart(event,'+jsArg(u.name)+')" onclick="staffSelect('+jsArg(u.name)+')" '
+      +'style="padding:10px 12px;margin-bottom:7px;cursor:grab;'+(selected?'border-color:#4F46E5;box-shadow:0 0 0 2px #C7D2FE;':'')+'" title="Glissez cette personne sur un projet (ou cliquez pour la sélectionner puis « Placer ici »)">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="width:26px;height:26px;border-radius:50%;background:'+(u.type==='prestataire'?'#2563EB':'#3B82F6')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">'+esc(u.name).slice(0,2).toUpperCase()+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:11.5px;font-weight:700;color:#0F172A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(u.name)+(u.type==='prestataire'?' <span style="font-size:8px;background:#EFF6FF;color:#2563EB;border-radius:8px;padding:1px 5px;font-weight:700">ESN</span>':'')+'</div>'
+      +'<div style="font-size:9px;color:#94A3B8">'+esc(u.role||'Intervenant')+' · '+u.alloc.count+' projet'+(u.alloc.count>1?'s':'')+'</div></div>'
+      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-weight:800;color:'+col+'">'+pct+'%</div><div style="font-size:8px;color:#94A3B8">affecté</div></div>'
+      +'</div></div>';
+  }).join('');
+  /* Projets : zones de dépôt */
+  var zones=P.map(function(p){
+    var team=(TEAMS[p.n]&&TEAMS[p.n].members)||[];
+    var chips=team.map(function(m){
+      return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:10px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:12px;padding:3px 8px;color:#334155;margin:2px">'
+        +esc(m.name)+(m.type==='prestataire'?' · ESN':'')+' <strong>'+Math.round((m.share||0)*100)+'%</strong>'
+        +'<i class="ti ti-x" style="cursor:pointer;color:#94A3B8;font-size:10px" onclick="event.stopPropagation();staffRemove('+jsArg(p.n)+','+jsArg(m.name)+')" title="Retirer"></i></span>';
+    }).join('')||'<span style="font-size:10px;color:#CBD5E1;font-style:italic">Personne pour l\'instant — déposez ici</span>';
+    var warn='';
+    if(STAFF_SEL){
+      var onIt=team.some(function(m){return m.name===STAFF_SEL;});
+      if(!onIt){ var bm=staffBusyMonths(STAFF_SEL,p);
+        warn=bm.length?'<div style="font-size:9.5px;color:#C2410C;margin-top:4px"><i class="ti ti-alert-triangle" style="font-size:9px"></i> '+esc(STAFF_SEL)+' déjà pris·e en '+bm.join(', ')+'</div>'
+                      :'<div style="font-size:9.5px;color:#15803D;margin-top:4px"><i class="ti ti-circle-check" style="font-size:9px"></i> '+esc(STAFF_SEL)+' disponible sur '+p.dt+'</div>'; }
+    }
+    return '<div id="sz-'+cssId(p.n)+'" ondragover="staffAllowDrop(event,'+jsArg(p.n)+')" ondragleave="staffDragLeave(event,'+jsArg(p.n)+')" ondrop="staffDrop(event,'+jsArg(p.n)+')" '
+      +'style="border:1.5px dashed #E2E8F0;border-radius:12px;padding:11px 13px;margin-bottom:9px;background:#fff;transition:all .15s">'
+      +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +'<div class="gldot" style="background:'+(CAT[p.cat]?CAT[p.cat].f:'#94A3B8')+'"></div>'
+      +'<div style="font-size:12px;font-weight:800;color:#0F172A">'+esc(p.n)+'</div>'
+      +'<div style="font-size:9.5px;color:#94A3B8">'+esc(p.dt||'')+' · '+team.length+' pers.</div>'
+      +(STAFF_SEL?'<button class="btn btn-acc" style="margin-left:auto;padding:3px 10px;font-size:10px" onclick="staffPlace('+jsArg(p.n)+')"><i class="ti ti-plus"></i>Placer ici</button>':'')
+      +'</div><div style="margin-top:7px">'+chips+'</div>'+warn+'</div>';
+  }).join('');
+  mc.innerHTML='<div class="tmo-header"><div style="width:34px;height:34px;border-radius:10px;background:#EEF2FF;color:#4F46E5;display:flex;align-items:center;justify-content:center"><i class="ti ti-hand-move" style="font-size:16px"></i></div>'
+    +'<div style="flex:1"><div style="font-size:14px;font-weight:800;color:#0F172A">Staffing manuel</div><div style="font-size:10px;color:#94A3B8">Glissez une personne du vivier vers un projet — ou cliquez sur la personne puis « Placer ici ». Les conflits sont signalés mais ne bloquent jamais : c\'est vous qui décidez (cohésion, binômes, montée en compétence…).</div></div>'
+    +'<button class="btn" onclick="closeStaffing()" style="flex-shrink:0">Fermer</button></div>'
+    +'<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;padding:16px 20px 20px;align-items:start">'
+    +'<div><div style="font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Vivier · '+people.length+' personnes</div><div style="max-height:58vh;overflow-y:auto;padding-right:4px">'+vivier+'</div></div>'
+    +'<div><div style="font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Projets actifs · déposez pour affecter</div><div style="max-height:58vh;overflow-y:auto;padding-right:4px">'+zones+'</div></div>'
+    +'</div>';
+}
+function staffSelect(name){ STAFF_SEL=(STAFF_SEL===name)?'':name; staffRender(); }
+function staffDragStart(ev,name){ STAFF_SEL=name; try{ev.dataTransfer.setData('text/plain',name);}catch(e){} staffRender(); }
+function staffAllowDrop(ev,proj){ ev.preventDefault(); var z=document.getElementById('sz-'+cssId(proj)); if(!z)return;
+  var bm=STAFF_SEL?staffBusyMonths(STAFF_SEL,P.find(function(x){return x.n===proj;})||{s:0,d:0,n:proj}):[];
+  z.style.borderColor=bm.length?'#F59E0B':'#10B981'; z.style.background=bm.length?'#FFFBEB':'#F0FDF4';
+}
+function staffDragLeave(ev,proj){ var z=document.getElementById('sz-'+cssId(proj)); if(z){z.style.borderColor='#E2E8F0';z.style.background='#fff';} }
+function staffDrop(ev,proj){ ev.preventDefault(); staffDragLeave(ev,proj); var name=''; try{name=ev.dataTransfer.getData('text/plain');}catch(e){} staffAssign(name||STAFF_SEL,proj); }
+function staffPlace(proj){ staffAssign(STAFF_SEL,proj); }
+function staffAssign(name,proj){
+  if(!name){toast('Choisissez d\'abord une personne');return;}
+  var p=P.find(function(x){return x.n===proj;}); if(!p){toast('Projet introuvable');return;}
+  if(!TEAMS[proj])TEAMS[proj]={members:[]};
+  if(TEAMS[proj].members.some(function(m){return m.name===name;})){toast(name+' est déjà sur '+proj);return;}
+  var bm=staffBusyMonths(name,p);
+  var msg='Part d\'affectation de '+name+' sur « '+proj+' » (%)'+(bm.length?'\n⚠ Déjà pris·e en : '+bm.join(', ')+' — à vous d\'arbitrer.':'');
+  var v=prompt(msg,'20'); if(v===null)return;
+  var share=Math.max(0,Math.min(100,+v||0))/100;
+  var u=userInfo(name);
+  var member={name:name,role:u.role||'Intervenant',type:u.type||'interne',color:u.color||'#3B82F6',share:share};
+  TEAMS[proj].members.push(member);
+  apiAddMember(proj,member);
+  STAFF_SEL=''; staffRender(); window.rReady=false;
+  toast('✓ '+name+' → '+proj+' ('+Math.round(share*100)+'%)'+(bm.length?' · ⚠ conflit '+bm.join(', '):''));
+}
+function staffRemove(proj,name){
+  if(!TEAMS[proj])return;
+  TEAMS[proj].members=TEAMS[proj].members.filter(function(m){return m.name!==name;});
+  apiRemoveMember(proj,name);
+  staffRender(); window.rReady=false;
+  toast('🗑 '+name+' retiré de '+proj);
+}
+
 /* ─── Ressources humaines : allocation & alertes ─── */
 function userAllocation(name, excludeProj){
   let count=0, share=0; const projs=[];
@@ -3632,10 +3730,10 @@ body.compact .tb{padding-top:6px;padding-bottom:6px}
 <script>
 /* ═══════════ PRÉFÉRENCES : thème, langue, densité, profil (persistées dans le navigateur) ═══════════ */
 var I18N={
-  fr:{'nav.home':'Accueil','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrice','nav.res':'Ressources','nav.budget':'Budget','nav.agenda':'Agenda','nav.risks':'Risques','nav.rex':'Clôture & REX','nav.rh':'RH','nav.list':'Liste','nav.details':'Détails','logo.tag':'Gestion de portefeuille projets',
+  fr:{'nav.home':'Accueil','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrice','nav.res':'Ressources','nav.budget':'Budget','nav.agenda':'Agenda','nav.risks':'Risques','nav.rex':'REX','nav.rh':'RH','nav.list':'Projets','nav.details':'Détails','logo.tag':'Gestion de portefeuille projets',
     'set.title':'Paramètres','set.sub':'Personnalisez votre espace','set.dark':'Mode sombre','set.darkD':'Thème foncé, plus reposant le soir','set.density':"Densité d'affichage",'set.densityD':"Compact = plus d'infos à l'écran",'set.comfort':'Confortable','set.compact':'Compact','set.lang':'Langue','set.langD':'Interface en français ou anglais','set.name':'Nom affiché','set.nameD':'Affiché sur votre avatar','set.reset':'Réinitialiser','set.done':'Terminé',
     'login.title':'Connexion','login.sub':'Accédez à votre espace de gestion de portefeuille','login.user':'Identifiant','login.pass':'Mot de passe','login.btn':'Se connecter'},
-  en:{'nav.home':'Home','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrix','nav.res':'Resources','nav.budget':'Budget','nav.agenda':'Calendar','nav.risks':'Risks','nav.rex':'Closure & Lessons','nav.rh':'HR','nav.list':'List','nav.details':'Details','logo.tag':'Project portfolio management',
+  en:{'nav.home':'Home','nav.dash':'Dashboard','nav.gantt':'Gantt','nav.matrix':'Matrix','nav.res':'Resources','nav.budget':'Budget','nav.agenda':'Calendar','nav.risks':'Risks','nav.rex':'Lessons (REX)','nav.rh':'HR','nav.list':'Projects','nav.details':'Details','logo.tag':'Project portfolio management',
     'set.title':'Settings','set.sub':'Personalize your workspace','set.dark':'Dark mode','set.darkD':'Darker theme, easier on the eyes','set.density':'Display density','set.densityD':'Compact = more on screen','set.comfort':'Comfortable','set.compact':'Compact','set.lang':'Language','set.langD':'Interface in French or English','set.name':'Display name','set.nameD':'Shown on your avatar','set.reset':'Reset','set.done':'Done',
     'login.title':'Sign in','login.sub':'Access your portfolio management workspace','login.user':'Username','login.pass':'Password','login.btn':'Sign in'}
 };
