@@ -3125,7 +3125,17 @@ var BACKLOG_SEED={'App mobile clients':[
   {id:'US-05',t:'Réservation de chefs',w:25,st:'À faire'},
   {id:'US-06',t:'Suivi temps réel & notifications push',w:25,st:'À faire'},
   {id:'US-07',t:'Interfaçage CRM',w:25,st:'À faire'},
-  {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire'}]};
+  {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire'}],
+'CRM':[
+  {id:'US-01',t:'Cadrage & spécifications (ateliers métier, règles de gestion)',w:30,st:'Terminé'},
+  {id:'US-02',t:'Paramétrage du référentiel clients & fournisseurs',w:45,st:'Terminé'},
+  {id:'US-03',t:'Reprise & nettoyage des données (dédoublonnage)',w:50,st:'Terminé'},
+  {id:'US-04',t:'Gestion commerciale : opportunités, devis, commandes',w:40,st:'En cours'},
+  {id:'US-05',t:'API d\'interfaçage web & mobile',w:40,st:'En cours'},
+  {id:'US-06',t:'Droits & rôles par population (RGPD)',w:25,st:'À faire'},
+  {id:'US-07',t:'Tableaux de bord & reporting commercial',w:20,st:'À faire'},
+  {id:'US-08',t:'Formation & conduite du changement',w:25,st:'À faire'},
+  {id:'US-09',t:'Recette (VABF / VABE) & bascule',w:25,st:'À faire'}]};
 function blList(name){ return (BACKLOG[name]&&BACKLOG[name].length)?BACKLOG[name]:(BACKLOG_SEED[name]||[]); }
 function backlogPct(name){
   var l=blList(name); if(!l.length)return null;
