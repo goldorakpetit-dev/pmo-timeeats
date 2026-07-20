@@ -3110,6 +3110,20 @@ function ragBadge(v){
   var c=v<0.9?'#EF4444':(v<1?'#F59E0B':'#10B981'); var t=v<0.9?'Rouge':(v<1?'Ambre':'Vert');
   return '<span style="font-size:9px;font-weight:700;color:'+c+';background:'+(v<0.9?'#FEF2F2':(v<1?'#FFFBEB':'#ECFDF5'))+';padding:2px 7px;border-radius:5px">'+t+'</span>';
 }
+/* Diagnostic du projet en langage clair (aucun jargon requis) */
+function pilotPhrase(noData,spi,cpi){
+  var box=function(col,bg,icon,txt){return '<div style="display:flex;align-items:flex-start;gap:7px;margin-top:8px;padding:7px 10px;border-radius:7px;background:'+bg+';font-size:11px;color:'+col+';line-height:1.5"><i class="ti '+icon+'" style="margin-top:1px;flex-shrink:0"></i><div>'+txt+'</div></div>';};
+  if(noData) return box('#64748B','#F8FAFC','ti-pencil','Saisissez l\'<strong>avancement réel (%)</strong> et le <strong>montant déjà dépensé (K€)</strong> puis Enregistrer — le diagnostic s\'affichera ici en langage clair.');
+  var dDelai=spi==null?null:(spi<0.9?'<strong>nettement en retard</strong> sur son planning':(spi<1?'<strong>légèrement en retard</strong> sur son planning':(spi<1.05?'<strong>dans les temps</strong>':'<strong>en avance</strong> sur son planning')));
+  var dCout=cpi==null?null:(cpi<0.9?'les dépenses <strong>dérivent</strong> par rapport au travail produit':(cpi<1?'les dépenses sont <strong>un peu au-dessus</strong> de la valeur produite':'les dépenses sont <strong>conformes au budget</strong>'));
+  var parts=[]; if(dDelai)parts.push('le projet est '+dDelai); if(dCout)parts.push(dCout);
+  var worst=Math.min(spi==null?9:spi,cpi==null?9:cpi);
+  var action=worst<0.9?' → <strong>à faire remonter au COPIL</strong> pour décision (replanifier, renforcer ou réduire le périmètre).':(worst<1?' → <strong>à analyser en comité projet</strong> : comprendre l\'écart avant qu\'il ne grossisse.':' → rien à signaler, on poursuit.');
+  var col=worst<0.9?'#B91C1C':(worst<1?'#B45309':'#15803D');
+  var bg=worst<0.9?'#FEF2F2':(worst<1?'#FFFBEB':'#F0FDF4');
+  var icon=worst<0.9?'ti-alert-triangle':(worst<1?'ti-eye':'ti-circle-check');
+  return box(col,bg,icon,'Lecture : '+parts.join(' et ')+'.'+action);
+}
 function renderPilot(){
   var body=document.getElementById('pilot-body'); if(!body)return;
   var selEl=document.getElementById('pilot-month');
@@ -3129,24 +3143,37 @@ function renderPilot(){
     if(worst<0.9)red++; else if(worst<1)amber++;
     var sC=spi==null?'#CBD5E1':(spi<0.9?'#EF4444':(spi<1?'#F59E0B':'#10B981'));
     var cC=cpi==null?'#CBD5E1':(cpi<0.9?'#EF4444':(cpi<1?'#F59E0B':'#10B981'));
-    rows+='<div style="display:grid;grid-template-columns:minmax(150px,1.9fr) repeat(5,minmax(74px,1fr)) minmax(76px,1fr) 108px;gap:8px;align-items:center;background:#fff;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px">'
+    rows+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px">'
+      +'<div style="display:grid;grid-template-columns:minmax(150px,1.9fr) repeat(5,minmax(74px,1fr)) minmax(76px,1fr) 108px;gap:8px;align-items:center">'
       +'<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.n+'</div>'+(p.sel?'<span style="font-size:8px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:3px;font-weight:700">BLUEPRINT</span>':'<span style="font-size:9px;color:#94A3B8">'+p.cat+'</span>')+'</div>'
       +'<div style="text-align:center"><input type="number" min="0" max="100" value="'+ev+'" id="pl-av-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">avancement %</div></div>'
       +'<div style="text-align:center"><input type="number" min="0" value="'+ac+'" id="pl-ac-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">consommé K€</div></div>'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+pv+'%<div class="pl-lbl">planifié (courbe S)</div></div>'
-      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl">SPI</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(spi))+'</div></div>'
-      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+cC+'">'+(cpi==null?'—':cpi.toFixed(2))+'<div class="pl-lbl">CPI</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(cpi))+'</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl" title="Indice de délai : fait ÷ prévu. 1,00 = à l’heure, en dessous = retard">SPI · délai</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(spi))+'</div></div>'
+      +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+cC+'">'+(cpi==null?'—':cpi.toFixed(2))+'<div class="pl-lbl" title="Indice de coût : valeur produite ÷ argent dépensé. 1,00 = au budget, en dessous = surcoût">CPI · coût</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(cpi))+'</div></div>'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+(p.b?Math.round(ac/p.b*100):0)+'%<div class="pl-lbl">budget consommé</div></div>'
       +'<button class="btn" style="font-size:10.5px;justify-content:center" onclick="savePilot(\''+p.n.replace(/'/g,"\\'")+'\')"><i class="ti ti-check"></i>Enregistrer</button>'
-      +'</div>';
+      +'</div>'+pilotPhrase(noData,spi,cpi)+'</div>';
   });
   var head='<div style="display:flex;gap:9px">'
-    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nS&&sumSpi/nS<1?'#F59E0B':'#10B981')+'">'+(nS?(sumSpi/nS).toFixed(2):'—')+'</div><div class="pl-lbl">SPI MOYEN (AVANCEMENT)</div></div>'
-    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nC&&sumCpi/nC<1?'#F59E0B':'#10B981')+'">'+(nC?(sumCpi/nC).toFixed(2):'—')+'</div><div class="pl-lbl">CPI MOYEN (COÛT)</div></div>'
-    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#EF4444">'+red+'</div><div class="pl-lbl">PROJETS EN ROUGE (&lt; 0,9)</div></div>'
-    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#F59E0B">'+amber+'</div><div class="pl-lbl">PROJETS EN AMBRE</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nS&&sumSpi/nS<1?'#F59E0B':'#10B981')+'">'+(nS?(sumSpi/nS).toFixed(2):'—')+'</div><div class="pl-lbl">SPI MOYEN — TENUE DES DÉLAIS</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:'+(nC&&sumCpi/nC<1?'#F59E0B':'#10B981')+'">'+(nC?(sumCpi/nC).toFixed(2):'—')+'</div><div class="pl-lbl">CPI MOYEN — TENUE DU BUDGET</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#EF4444">'+red+'</div><div class="pl-lbl">PROJETS EN ROUGE — À ARBITRER</div></div>'
+    +'<div style="flex:1;background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center"><div style="font-size:21px;font-weight:800;color:#F59E0B">'+amber+'</div><div class="pl-lbl">PROJETS EN AMBRE — À SURVEILLER</div></div>'
     +'</div>'
-    +'<div style="font-size:10px;color:#94A3B8">SPI = avancement réel / planifié (valeur acquise) · CPI = valeur produite / coût réel · &lt; 1 = alerte, &lt; 0,9 = seuil critique → escalade COPIL. Règles : vert = poursuite · ambre = analyse d\'écart en COPROJ · rouge = arbitrage COPIL.</div>';
+    +'<div class="card" style="padding:13px 16px">'
+      +'<div style="font-size:12px;font-weight:800;color:#0F172A;margin-bottom:8px"><i class="ti ti-help-circle" style="color:#2563EB;margin-right:5px"></i>Comment lire cette page ? <span style="font-weight:400;color:#94A3B8;font-size:10.5px">— chaque mois, on compare ce qui est fait à ce qui était prévu, et ce que ça a coûté.</span></div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:11px;color:#475569;line-height:1.55">'
+      +'<div><strong style="color:#0F172A">Avancement %</strong> : la part du travail réellement terminée (mesurée sur les livrables / le backlog).</div>'
+      +'<div><strong style="color:#0F172A">Planifié %</strong> : là où le projet devrait en être à cette date, selon le plan de charge initial.</div>'
+      +'<div><strong style="color:#0F172A">SPI · délai</strong> = fait ÷ prévu. <strong>1,00</strong> = pile à l\'heure · <strong>0,80</strong> = il ne s\'est fait que 80 % de ce qui était prévu → retard.</div>'
+      +'<div><strong style="color:#0F172A">CPI · coût</strong> = valeur du travail fait ÷ argent dépensé. <strong>1,00</strong> = au budget · <strong>0,80</strong> = chaque euro ne produit que 80 centimes de travail → surcoût.</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:10.5px">'
+      +'<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#10B981;margin-right:5px"></span><strong style="color:#15803D">Vert (≥ 1)</strong> : tout va bien, on poursuit</span>'
+      +'<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#F59E0B;margin-right:5px"></span><strong style="color:#B45309">Ambre (0,9 – 1)</strong> : petit écart, on l\'analyse en comité projet</span>'
+      +'<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#EF4444;margin-right:5px"></span><strong style="color:#B91C1C">Rouge (&lt; 0,9)</strong> : écart sérieux, on décide en COPIL</span>'
+      +'</div></div>';
   var scOpts=started.map(function(p){return '<option'+(p.n===PILOT_SEL?' selected':'')+'>'+p.n+'</option>';}).join('');
   var sc='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px"><div style="font-size:13px;font-weight:800;color:#0F172A">Courbe en S — budget planifié vs consommé</div><select id="pilot-proj" onchange="PILOT_SEL=this.value;renderPilot()" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer">'+scOpts+'</select></div><div style="height:240px"><canvas id="pilotSC"></canvas></div></div>';
   body.innerHTML=head+rows+(future.length?'<div style="font-size:10.5px;color:#94A3B8">'+future.length+' projet(s) non démarré(s) à cette date : '+future.map(function(p){return p.n;}).join(' · ')+'</div>':'')+sc;
