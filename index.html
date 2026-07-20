@@ -2954,11 +2954,13 @@ function openProjectDetail(name){
   h+='</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-link" style="font-size:12px;color:#F59E0B"></i>Dépendances <span style="font-size:9px;color:#94A3B8;font-weight:400">(type + décalage par dépendance)</span></div>'+depsEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-users" style="font-size:12px;color:#3B82F6"></i>Équipe affectée <span style="font-size:9px;color:#94A3B8;font-weight:400">(lecture)</span></div><div style="display:flex;flex-wrap:wrap;gap:5px">'+team+'</div></div>';
+  h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-list-check" style="font-size:12px;color:#2563EB"></i>Backlog — user stories pondérées <span style="font-size:9px;color:#94A3B8;font-weight:400">(mesure l\'avancement du Pilotage)</span></div>'+backlogEditorMarkup('pd')+'</div>';
   h+='<div class="form-section"><div class="form-section-title"><i class="ti ti-alert-triangle" style="font-size:12px;color:#EF4444"></i>Risques <span style="font-size:9px;color:#94A3B8;font-weight:400">(ajoute / retire — sauvegardé)</span></div>'+depNote+risksEditorMarkup('pd')+'</div>';
   h+='<div class="ma2"><button class="btn" onclick="openSP(pdName)"><i class="ti ti-brand-sharepoint"></i>SharePoint</button><button class="btn" style="color:#B91C1C;border-color:#FECACA" onclick="closeProjectAction(pdName)" title="Archiver le projet terminé dans l\'onglet Clos"><i class="ti ti-archive"></i>Clore le projet</button><button class="btn" onclick="closePD()">Fermer</button><button class="btn btn-acc" onclick="saveProjectDetail()"><i class="ti ti-check"></i>Enregistrer</button></div>';
   document.getElementById('pd-body').innerHTML=h;
   depsEditorOpen('pd', p.deps, name);
   risksEditorOpen('pd', RISKS[name]||[]);
+  backlogEditorOpen('pd', blList(name));
   document.getElementById('pd-overlay').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closePD(e){ if(e&&e.target!==document.getElementById('pd-overlay'))return; document.getElementById('pd-overlay').classList.remove('open'); document.body.style.overflow=''; }
@@ -2983,6 +2985,8 @@ function saveProjectDetail(){
   var manualRisks=(RISKS_STORE['pd']||[]).slice(); RISKS[p.n]=manualRisks;
   p.q=p.val>=10&&p.fais>=10?'stars':p.val<10&&p.fais>=10?'quickwins':p.val>=10&&p.fais<10?'majeurs':'reconsider';
   apiPost({action:'update', project:p, charges:MV[p.n]||[], risks:manualRisks});
+  var bl=(BL_STORE['pd']||[]).slice(); BACKLOG[p.n]=bl;
+  apiPost({action:'saveBacklog', project:p.n, rows:bl});
   closePD();
   recalc(); buildHome(); renderList(); renderG(); renderRisques(); renderDetails(); window.mReady=false; window.rReady=false;
   toast('✓ Projet "'+p.n+'" mis à jour');
@@ -3077,6 +3081,7 @@ function applyData(d){
   if(d && d.risks && typeof d.risks==='object') RISKS = d.risks;
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
+  if(d && d.backlog && typeof d.backlog==='object' && Object.keys(d.backlog).length) BACKLOG = d.backlog;
   PALL.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
   refreshP();
   recalc();
@@ -3110,6 +3115,64 @@ function ragBadge(v){
   var c=v<0.9?'#EF4444':(v<1?'#F59E0B':'#10B981'); var t=v<0.9?'Rouge':(v<1?'Ambre':'Vert');
   return '<span style="font-size:9px;font-weight:700;color:'+c+';background:'+(v<0.9?'#FEF2F2':(v<1?'#FFFBEB':'#ECFDF5'))+';padding:2px 7px;border-radius:5px">'+t+'</span>';
 }
+/* ══ BACKLOG LÉGER — user stories pondérées : « le WBS pondère, le backlog mesure » ══ */
+var BACKLOG={}; /* projet -> [{id,t,w,st}] — onglet « Backlog » du Sheet */
+var BACKLOG_SEED={'App mobile clients':[
+  {id:'US-01',t:'Compte client & authentification',w:20,st:'Terminé'},
+  {id:'US-02',t:'Catalogue des prestations traiteurs / chefs',w:25,st:'Terminé'},
+  {id:'US-03',t:'Commande de prestations',w:35,st:'Terminé'},
+  {id:'US-04',t:'Paiement en ligne sécurisé',w:30,st:'En cours'},
+  {id:'US-05',t:'Réservation de chefs',w:25,st:'À faire'},
+  {id:'US-06',t:'Suivi temps réel & notifications push',w:25,st:'À faire'},
+  {id:'US-07',t:'Interfaçage CRM',w:25,st:'À faire'},
+  {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire'}]};
+function blList(name){ return (BACKLOG[name]&&BACKLOG[name].length)?BACKLOG[name]:(BACKLOG_SEED[name]||[]); }
+function backlogPct(name){
+  var l=blList(name); if(!l.length)return null;
+  var tot=0,acq=0;
+  l.forEach(function(u){var w=+u.w||0;tot+=w;if(u.st==='Terminé')acq+=w;else if(u.st==='En cours')acq+=w*0.5;});
+  return tot?Math.round(acq/tot*100):null;
+}
+var BL_STORE={};
+function backlogEditorMarkup(prefix){
+  return '<div id="'+prefix+'-bl-head" style="font-size:10px;color:#64748B;margin-bottom:6px"></div><div id="'+prefix+'-bl-rows"></div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:8px">'
+    +'<div class="fld" style="flex:2;min-width:150px"><label>Nouvelle user story</label><input type="text" id="'+prefix+'-bl-t" placeholder="ex. Paiement en ligne sécurisé"></div>'
+    +'<div class="fld" style="width:90px"><label>Poids (j/h)</label><input type="number" id="'+prefix+'-bl-w" min="1" placeholder="20"></div>'
+    +'<button class="btn" onclick="blAdd(\''+prefix+'\')"><i class="ti ti-plus"></i>Ajouter</button></div>';
+}
+function backlogEditorOpen(prefix,cur){ BL_STORE[prefix]=(cur||[]).map(function(u){return {id:u.id||'',t:u.t||'',w:+u.w||0,st:u.st||'À faire'};}); blRender(prefix); }
+function blRender(prefix){
+  var box=document.getElementById(prefix+'-bl-rows'); if(!box)return;
+  var l=BL_STORE[prefix]||[];
+  var tot=l.reduce(function(a,u){return a+(+u.w||0);},0);
+  var acq=l.reduce(function(a,u){return a+(u.st==='Terminé'?(+u.w||0):(u.st==='En cours'?(+u.w||0)*0.5:0));},0);
+  var head=document.getElementById(prefix+'-bl-head');
+  if(head) head.innerHTML=l.length?('<strong>'+l.length+' US · '+tot+' j/h</strong> — avancement mesuré : <strong style="color:#2563EB">'+(tot?Math.round(acq/tot*100):0)+' %</strong> <span style="color:#94A3B8">(terminé + 50 % des US en cours — c\'est cette valeur que l\'onglet Pilotage suggère)</span>'):'Aucune user story — ajoutez-en pour mesurer l\'avancement objectivement.';
+  var stCol={'Terminé':'#15803D;background:#DCFCE7','En cours':'#B45309;background:#FEF9C3','À faire':'#64748B;background:#F1F5F9'};
+  box.innerHTML=l.map(function(u,i){
+    return '<div style="display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid #F1F5F9;border-radius:7px;margin-bottom:4px;background:#FBFCFE">'
+      +'<span style="font-size:9px;font-weight:800;color:#94A3B8;width:42px;flex-shrink:0">'+(u.id||('US-'+('0'+(i+1)).slice(-2)))+'</span>'
+      +'<span style="flex:1;font-size:11px;color:#334155;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+String(u.t).replace(/</g,'&lt;')+'</span>'
+      +'<span style="font-size:10px;color:#64748B;flex-shrink:0">'+(+u.w||0)+' j/h</span>'
+      +'<select onchange="blSt(\''+prefix+'\','+i+',this.value)" style="width:auto;font-size:10px;padding:3px 6px;border-radius:6px;border:1px solid #E2E8F0;color:'+stCol[u.st||'À faire']+';font-weight:700">'
+      +['À faire','En cours','Terminé'].map(function(o){return '<option'+(o===u.st?' selected':'')+'>'+o+'</option>';}).join('')+'</select>'
+      +'<i class="ti ti-x" style="cursor:pointer;color:#CBD5E1;font-size:12px" onclick="blDel(\''+prefix+'\','+i+')" title="Retirer"></i></div>';
+  }).join('');
+}
+function blAdd(prefix){
+  var t=(document.getElementById(prefix+'-bl-t')||{}).value||''; t=t.trim();
+  var w=+((document.getElementById(prefix+'-bl-w')||{}).value||0);
+  if(!t){toast('Titre de la user story requis');return;}
+  if(!(w>0)){toast('Poids en j/h requis (ex. 20)');return;}
+  BL_STORE[prefix]=BL_STORE[prefix]||[];
+  BL_STORE[prefix].push({id:'US-'+('0'+(BL_STORE[prefix].length+1)).slice(-2),t:t,w:w,st:'À faire'});
+  document.getElementById(prefix+'-bl-t').value='';document.getElementById(prefix+'-bl-w').value='';
+  blRender(prefix);
+}
+function blDel(prefix,i){ (BL_STORE[prefix]||[]).splice(i,1); blRender(prefix); }
+function blSt(prefix,i,v){ if(BL_STORE[prefix]&&BL_STORE[prefix][i])BL_STORE[prefix][i].st=v; blRender(prefix); }
+
 /* Diagnostic du projet en langage clair (aucun jargon requis) */
 function pilotPhrase(noData,spi,cpi){
   var box=function(col,bg,icon,txt){return '<div style="display:flex;align-items:flex-start;gap:7px;margin-top:8px;padding:7px 10px;border-radius:7px;background:'+bg+';font-size:11px;color:'+col+';line-height:1.5"><i class="ti '+icon+'" style="margin-top:1px;flex-shrink:0"></i><div>'+txt+'</div></div>';};
@@ -3134,6 +3197,7 @@ function renderPilot(){
   var rows='',sumSpi=0,sumCpi=0,nS=0,nC=0,red=0,amber=0;
   started.forEach(function(p){
     var d=pilotData(p), pv=pvPct(p,m), ev=Math.min(100,d.av), ac=d.ac;
+    var bp=backlogPct(p.n);
     var noData=(ev===0&&ac===0);   /* pas encore renseigné : neutre, pas rouge */
     var spi=(!noData&&pv>0)?ev/pv:null;
     var cpi=(!noData&&ac>0)?((ev/100*(p.b||0))/ac):null;
@@ -3146,7 +3210,7 @@ function renderPilot(){
     rows+='<div style="background:#fff;border:1px solid #E2E8F0;border-radius:9px;padding:9px 12px">'
       +'<div style="display:grid;grid-template-columns:minmax(150px,1.9fr) repeat(5,minmax(74px,1fr)) minmax(76px,1fr) 108px;gap:8px;align-items:center">'
       +'<div style="min-width:0"><div style="font-size:12px;font-weight:700;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.n+'</div>'+(p.sel?'<span style="font-size:8px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:3px;font-weight:700">BLUEPRINT</span>':'<span style="font-size:9px;color:#94A3B8">'+p.cat+'</span>')+'</div>'
-      +'<div style="text-align:center"><input type="number" min="0" max="100" value="'+ev+'" id="pl-av-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">avancement %</div></div>'
+      +'<div style="text-align:center"><input type="number" min="0" max="100" value="'+ev+'" id="pl-av-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">avancement %</div>'+(bp!=null?'<div style="font-size:9px;color:#2563EB;margin-top:2px;cursor:pointer;font-weight:700" title="Mesuré sur le backlog : US terminées + 50 % des US en cours. Cliquez pour reporter cette valeur." onclick="var i=document.getElementById(\'pl-av-'+cssId(p.n)+'\');if(i)i.value='+bp+';">backlog : '+bp+' % — utiliser</div>':'')+'</div>'
       +'<div style="text-align:center"><input type="number" min="0" value="'+ac+'" id="pl-ac-'+cssId(p.n)+'" style="width:60px;padding:5px;border:1px solid #E2E8F0;border-radius:6px;text-align:center;font-size:12px;font-family:inherit"><div class="pl-lbl">consommé K€</div></div>'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:#475569">'+pv+'%<div class="pl-lbl">planifié (courbe S)</div></div>'
       +'<div style="text-align:center;font-size:15px;font-weight:800;color:'+sC+'">'+(spi==null?'—':spi.toFixed(2))+'<div class="pl-lbl" title="Indice de délai : fait ÷ prévu. 1,00 = à l’heure, en dessous = retard">SPI · délai</div><div style="margin-top:1px">'+(noData?'<span style="font-size:9px;color:#94A3B8;background:#F1F5F9;padding:2px 7px;border-radius:5px">à renseigner</span>':ragBadge(spi))+'</div></div>'
