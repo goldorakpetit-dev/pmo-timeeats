@@ -3195,7 +3195,20 @@ function applyData(d){
   if(d && d.risks && typeof d.risks==='object') RISKS = d.risks;
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
-  if(d && d.backlog && typeof d.backlog==='object' && Object.keys(d.backlog).length) BACKLOG = d.backlog;
+  if(d && d.backlog && typeof d.backlog==='object' && Object.keys(d.backlog).length){
+    BACKLOG = d.backlog;
+    /* le Sheet peut dater (5 colonnes) : on complète mos/récit/critères depuis le seed embarqué */
+    Object.keys(BACKLOG).forEach(function(pn){
+      var seed=BACKLOG_SEED[pn]; if(!seed)return;
+      BACKLOG[pn].forEach(function(u){
+        var ref=seed.find(function(x){return x.id===u.id;})||seed.find(function(x){return x.t===u.t;});
+        if(!ref)return;
+        if(!u.mos)u.mos=ref.mos||'';
+        if(!u.desc)u.desc=ref.desc||'';
+        if(!u.crit)u.crit=ref.crit||'';
+      });
+    });
+  }
   if(d && d.docs && typeof d.docs==='object'){ Object.keys(d.docs).forEach(function(pn){ DOCS[pn]=DOCS[pn]||{}; Object.keys(d.docs[pn]).forEach(function(md){ DOCS[pn][md]=Object.assign({},DOCS[pn][md]||{},d.docs[pn][md]); }); }); }
   Object.keys(REX_SEED_DOC).forEach(function(k){ if(!REX_DATA[k]||!(REX_DATA[k].ecarts||REX_DATA[k].lecons||REX_DATA[k].diff||REX_DATA[k].bonnes)) REX_DATA[k]=REX_SEED_DOC[k]; });
   PALL.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
@@ -3243,15 +3256,15 @@ var BACKLOG_SEED={'App mobile clients':[
   {id:'US-07',t:'Interfaçage CRM',w:25,st:'À faire',mos:'Must',desc:"En tant que DSI, je veux que l'application synchronise comptes et commandes avec le CRM afin de garantir un référentiel client unique.",crit:"Contrat d'interface API figé au cadrage • Synchronisation < 5 min • Mise en service conditionnée à la bascule CRM (dépendance fin-fin)"},
   {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire',mos:'Must',desc:"En tant que PMO, je veux une recette complète en conditions réelles afin de prononcer la VABF/VABE et d'autoriser la mise en service.",crit:"Commande complète réalisée en conditions réelles • Cas de test tracés aux exigences Must • PV de recette contradictoire signé"}],
 'CRM':[
-  {id:'US-01',t:'Cadrage & spécifications (ateliers métier, règles de gestion)',w:30,st:'Terminé'},
-  {id:'US-02',t:'Paramétrage du référentiel clients & fournisseurs',w:45,st:'Terminé'},
-  {id:'US-03',t:'Reprise & nettoyage des données (dédoublonnage)',w:50,st:'Terminé'},
-  {id:'US-04',t:'Gestion commerciale : opportunités, devis, commandes',w:40,st:'En cours'},
-  {id:'US-05',t:'API d\'interfaçage web & mobile',w:40,st:'En cours'},
-  {id:'US-06',t:'Droits & rôles par population (RGPD)',w:25,st:'À faire'},
-  {id:'US-07',t:'Tableaux de bord & reporting commercial',w:20,st:'À faire'},
-  {id:'US-08',t:'Formation & conduite du changement',w:25,st:'À faire'},
-  {id:'US-09',t:'Recette (VABF / VABE) & bascule',w:25,st:'À faire'}]};
+  {id:'US-01',t:'Cadrage & spécifications (ateliers métier, règles de gestion)',w:30,st:'Terminé',mos:'Must',desc:"En tant que PMO, je veux cadrer les processus et règles de gestion avec les métiers afin de paramétrer le progiciel sans le dénaturer.",crit:"Ateliers menés avec commerce, support et finance • Règles de gestion documentées et validées • Périmètre MoSCoW signé par le sponsor"},
+  {id:'US-02',t:'Paramétrage du référentiel clients & fournisseurs',w:45,st:'Terminé',mos:'Must',desc:"En tant qu'utilisateur métier, je veux un référentiel unique des clients et fournisseurs afin de disposer d'une vision à 360° de chaque compte.",crit:"Fiche compte unique (client, fournisseur, contacts) • Champs obligatoires et formats contrôlés • Aucun doublon possible à la création"},
+  {id:'US-03',t:'Reprise & nettoyage des données (dédoublonnage)',w:50,st:'Terminé',mos:'Must',desc:"En tant que DSI, je veux reprendre les données existantes nettoyées et dédoublonnées afin de démarrer sur un référentiel fiable.",crit:"Audit qualité avant migration • Taux de doublons < 1 % après reprise • Double run de migration validé sur environnement de recette"},
+  {id:'US-04',t:'Gestion commerciale : opportunités, devis, commandes',w:40,st:'En cours',mos:'Must',desc:"En tant que commercial, je veux suivre mes opportunités, devis et commandes afin de convertir plus vite et de tracer mon activité.",crit:"Pipeline par étapes avec probabilités • Devis généré depuis l'opportunité • Historique complet par compte"},
+  {id:'US-05',t:'API d\'interfaçage web & mobile',w:40,st:'En cours',mos:'Must',desc:"En tant que DSI, je veux exposer une API aux applications web et mobiles afin que comptes et commandes restent synchronisés en permanence.",crit:"Contrat d'interface figé au cadrage • Synchronisation < 5 min • Recette d'API dédiée (jeux d'essai contractuels)"},
+  {id:'US-06',t:'Droits & rôles par population (RGPD)',w:25,st:'À faire',mos:'Must',desc:"En tant que RSSI, je veux des droits d'accès par rôle et population afin de garantir la conformité RGPD du référentiel client.",crit:"Matrice des droits validée par le RSSI • Traçabilité des accès aux données personnelles • Procédure d'exercice des droits (accès, effacement)"},
+  {id:'US-07',t:'Tableaux de bord & reporting commercial',w:20,st:'À faire',mos:'Should',desc:"En tant que direction commerciale, je veux des tableaux de bord d'activité afin de piloter le développement sans consolidation manuelle.",crit:"CA et pipeline par période et par segment • Export Excel • Rafraîchissement quotidien automatique"},
+  {id:'US-08',t:'Formation & conduite du changement',w:25,st:'À faire',mos:'Should',desc:"En tant qu'utilisateur, je veux être formé et accompagné afin d'adopter le CRM dès la bascule.",crit:"100 % des utilisateurs formés avant bascule • Ambassadeurs métier identifiés par service • Indicateur d'usage suivi en COPIL après bascule"},
+  {id:'US-09',t:'Recette (VABF / VABE) & bascule',w:25,st:'À faire',mos:'Must',desc:"En tant que PMO, je veux une recette contradictoire complète afin de prononcer la VABF/VABE et d'autoriser la bascule en production.",crit:"Cas de test tracés aux exigences Must • Reprise de données validée en VABE • PV de recette contradictoire signé avec l'intégrateur"}]};
 function blList(name){ return (BACKLOG[name]&&BACKLOG[name].length)?BACKLOG[name]:(BACKLOG_SEED[name]||[]); }
 function backlogPct(name){
   var l=blList(name); if(!l.length)return null;
