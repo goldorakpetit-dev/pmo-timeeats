@@ -842,7 +842,11 @@ pmoShowLogin(!pmoIsAuthed());
 <div id="p-lst" class="page">
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Projets du portefeuille</div><div class="ab-bc"><div class="ab-dot"></div>11 projets</div></div>
-    <div class="ab-r">
+    <div class="ab-r" style="display:flex;gap:8px;align-items:center">
+      <div style="display:flex;border:1px solid #E2E8F0;border-radius:9px;overflow:hidden">
+        <button id="lst-v-list"  class="ib" style="border:none;border-radius:0;padding:7px 11px" onclick="setLstView('list')"  title="Vue liste"><i class="ti ti-list"></i></button>
+        <button id="lst-v-cards" class="ib" style="border:none;border-radius:0;padding:7px 11px;border-left:1px solid #E2E8F0" onclick="setLstView('cards')" title="Vue cartes — plus d'informations par projet"><i class="ti ti-layout-grid"></i></button>
+      </div>
       <button class="btn btn-acc" onclick="openNewProject()"><i class="ti ti-plus"></i>Nouveau projet</button>
     </div>
   </div>
@@ -2856,7 +2860,47 @@ const SP_LINKS={
   'Stockage / fichiers':'#sharepoint-stockage',
   'Sauvegarde Cloud':'#sharepoint-sauvegarde',
 };
+var LST_VIEW=(function(){try{return localStorage.getItem('pmo_lst_view')||'list';}catch(e){return 'list';}})();
+function setLstView(v){ LST_VIEW=v; try{localStorage.setItem('pmo_lst_view',v);}catch(e){} renderList(); }
+function lstViewBtns(){
+  var bl=document.getElementById('lst-v-list'), bc=document.getElementById('lst-v-cards');
+  if(bl)bl.style.background=LST_VIEW==='list'?'#EEF2FF':'#fff';
+  if(bl)bl.style.color=LST_VIEW==='list'?'#4F46E5':'#64748B';
+  if(bc)bc.style.background=LST_VIEW==='cards'?'#EEF2FF':'#fff';
+  if(bc)bc.style.color=LST_VIEW==='cards'?'#4F46E5':'#64748B';
+}
+function projCard(p){
+  var col=(CAT[p.cat]&&CAT[p.cat].f)||'#94A3B8';
+  var team=(TEAMS[p.n]&&TEAMS[p.n].members)?TEAMS[p.n].members.length:0;
+  var nRisk=(RISKS[p.n]||[]).length;
+  var bp=backlogPct(p.n);
+  var full=(typeof REF_MODELES!=='undefined')?REF_MODELES.filter(function(m){var c=docCompleteness(p,m.id);return c&&c.n===c.tot;}).length:0;
+  var d=(typeof pilotData==='function')?pilotData(p):{av:0,ac:0};
+  var mini=function(v,l){return '<div style="text-align:center"><div style="font-size:13px;font-weight:800;color:#0F172A">'+v+'</div><div style="font-size:8.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:.3px;font-weight:700">'+l+'</div></div>';};
+  return '<div class="hkpi" onclick="openProjectDetail('+jsArg(p.n)+')" style="padding:14px 16px;display:flex;flex-direction:column;gap:9px;cursor:pointer">'
+    +'<div style="display:flex;align-items:center;gap:8px"><div class="gldot" style="background:'+col+';flex-shrink:0"></div>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.n+(p.sel?' <span style="font-size:8px;background:#EFF6FF;color:#2563EB;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle">BLUEPRINT</span>':'')+'</div>'
+    +'<div style="font-size:9.5px;color:#94A3B8">'+p.cat+' · '+(p.dt||'—')+'</div></div>'
+    +'<span class="pill" style="background:'+(sbc[p.st2]||'#F1F5F9')+';color:'+(stc[p.st2]||'#64748B')+';flex-shrink:0">'+p.st2+'</span></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:#F8FAFC;border-radius:9px;padding:8px 6px">'
+    +mini('<span style="color:#EA580C">'+p.sc+'</span>','score /100')+mini(p.b+' K€','budget')+mini(p.c,'j/h')+mini((p.d||0)+' m','durée')+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap;font-size:9.5px;color:#64748B">'
+    +'<span title="Intervenants affectés"><i class="ti ti-users" style="color:#3B82F6"></i> '+team+' pers.</span>'
+    +'<span title="Risques au registre"><i class="ti ti-alert-triangle" style="color:#EF4444"></i> '+nRisk+' risque'+(nRisk>1?'s':'')+'</span>'
+    +(bp!=null?'<span title="Avancement mesuré sur le backlog"><i class="ti ti-list-check" style="color:#2563EB"></i> '+bp+' %</span>':'')
+    +'<span title="Modèles du référentiel entièrement complétés"><i class="ti ti-books" style="color:#EA580C"></i> '+full+'/8 docs</span>'
+    +(d.ac?'<span title="Budget consommé"><i class="ti ti-coin" style="color:#F59E0B"></i> '+d.ac+' K€</span>':'')
+    +'</div>'
+    +'<div style="display:flex;gap:7px;align-items:center;border-top:1px solid #F1F5F9;padding-top:8px;margin-top:auto">'
+    +'<span style="font-size:9px;color:#CBD5E1">'+(p.methodo||'')+'</span>'
+    +'<span style="margin-left:auto;display:flex;gap:8px">'
+    +'<i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="SharePoint" onclick="event.stopPropagation();openSP('+jsArg(p.n)+')"></i>'
+    +'<i class="ti ti-archive" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color=\'#F59E0B\'" onmouseleave="this.style.color=\'#CBD5E1\'" title="Clore ce projet" onclick="event.stopPropagation();closeProjectAction('+jsArg(p.n)+')"></i>'
+    +'<i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color=\'#EF4444\'" onmouseleave="this.style.color=\'#CBD5E1\'" title="Supprimer" onclick="event.stopPropagation();confirmDeleteProject('+jsArg(p.n)+')"></i>'
+    +'</span></div></div>';
+}
 function renderList(){
+  lstViewBtns();
   const order=PORTFOLIOS.map(pf=>pf.name);
   const groups={}; P.forEach(p=>{const k=p.pf||(PORTFOLIOS[0]?PORTFOLIOS[0].name:'—');(groups[k]=groups[k]||[]).push(p);});
   Object.keys(groups).forEach(k=>{if(order.indexOf(k)<0)order.push(k);});
@@ -2874,7 +2918,9 @@ function renderList(){
       <span style="font-size:10.5px;color:#64748B">échéance ${dlLabel} · ${g.length} projet${g.length>1?'s':''}</span>
       ${pf?`<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="openPortfolioEdit(${jsArg(name)})" title="Renommer / changer l'échéance"><i class="ti ti-pencil"></i>Modifier</button>`:''}
       ${canDel?`<button class="btn" style="${pf?'':'margin-left:auto;'}padding:4px 10px;font-size:10px;color:#EF4444;border-color:#FECACA" onclick="deletePortfolio(${jsArg(name)})" title="Supprimer ce portefeuille — ses projets repassent au portefeuille par défaut"><i class="ti ti-trash"></i>Supprimer</button>`:''}
-    </div>`+(g.length?colHead:`<div style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic">Aucun projet dans ce portefeuille pour l'instant.</div>`)+
+    </div>`+(LST_VIEW==='cards'
+      ?(g.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:6px">${g.map(p=>projCard(p)).join('')}</div>`:`<div style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic">Aucun projet dans ce portefeuille pour l'instant.</div>`)
+      :(g.length?colHead:`<div style="padding:9px 12px;font-size:11px;color:#94A3B8;font-style:italic">Aucun projet dans ce portefeuille pour l'instant.</div>`)+
     g.map(p=>`<div class="lr" onclick="openProjectDetail(${jsArg(p.n)})" title="Voir / modifier le projet">
       <div class="lc-n"><div class="gldot" style="background:${CAT[p.cat].f};display:inline-block;margin-right:7px;vertical-align:middle;margin-top:-1px"></div>${p.n}</div>
       <div class="lc lc-c" style="font-size:10px;color:#64748B;text-align:left">${p.cat}</div>
@@ -2882,7 +2928,7 @@ function renderList(){
       <div class="lc" style="font-weight:700;color:#0F172A">${p.sc}/100</div>
       <div class="lc lc-s"><span class="pill" style="background:${sbc[p.st2]};color:${stc[p.st2]}">${p.st2}</span></div>
       <div class="lc" style="width:72px;text-align:right;display:flex;gap:7px;align-items:center;justify-content:flex-end"><i class="ti ti-brand-sharepoint" style="font-size:14px;color:#0078D4;opacity:.7;cursor:pointer" title="Ouvrir le SharePoint" onclick="event.stopPropagation();openSP(${jsArg(p.n)})"></i><i class="ti ti-archive" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#F59E0B'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();closeProjectAction(${jsArg(p.n)})" title="Clore ce projet (archivage dans l'onglet Clos)"></i><i class="ti ti-trash" style="font-size:13px;color:#CBD5E1;cursor:pointer" onmouseenter="this.style.color='#EF4444'" onmouseleave="this.style.color='#CBD5E1'" onclick="event.stopPropagation();confirmDeleteProject(${jsArg(p.n)})" title="Supprimer ce projet"></i></div>
-    </div>`).join('');
+    </div>`).join(''));
   });
   document.getElementById('lst').innerHTML=h;
 }
