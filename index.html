@@ -2069,9 +2069,24 @@ function renderBudget(){
 
 /* ── DÉTAILS PROJET (lecture complète) ── */
 var DET_SEL='';
+var DET_BL_OPEN=-1;
+function detBlToggle(i){ DET_BL_OPEN=(DET_BL_OPEN===i)?-1:i; renderDetails(); }
+function detBlSave(i){
+  if(juryGuard())return;
+  var p=P.find(function(x){return x.n===DET_SEL;}); if(!p)return;
+  var l=blList(p.n).map(function(u){return {id:u.id,t:u.t,w:+u.w||0,st:u.st||'À faire',mos:u.mos||'',desc:u.desc||'',crit:u.crit||''};});
+  var u=l[i]; if(!u)return;
+  var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
+  u.mos=g('dbl-mos'); u.st=g('dbl-st')||u.st; u.w=Math.max(1,+g('dbl-w')||u.w);
+  u.desc=g('dbl-desc'); u.crit=g('dbl-crit');
+  BACKLOG[p.n]=l;
+  apiPost({action:'saveBacklog', project:p.n, rows:l});
+  renderDetails();
+  toast('✓ '+u.id+' mise à jour — avancement mesuré : '+(backlogPct(p.n)==null?'—':backlogPct(p.n)+' %'));
+}
 function renderDetails(name){
   var body=document.getElementById('details-body'); if(!body)return;
-  if(name) DET_SEL=name;
+  if(name){ if(name!==DET_SEL) DET_BL_OPEN=-1; DET_SEL=name; }
   if(!DET_SEL && P.length) DET_SEL=P[0].n;
   var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');};
   var sel=document.getElementById('det-proj'); if(sel) sel.innerHTML=P.map(function(p){return '<option'+(p.n===DET_SEL?' selected':'')+'>'+esc(p.n)+'</option>';}).join('');
@@ -2108,13 +2123,28 @@ function renderDetails(name){
       +'<span style="font-size:10.5px;color:#64748B">avancement mesuré : <strong style="color:#2563EB">'+(blPct==null?'—':blPct+' %')+'</strong> (terminé + 50 % des US en cours — repris par l\'onglet Pilotage)</span>'
       +'<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="openProjectDetail('+jsArg(p.n)+')" title="Ajouter / modifier les user stories"><i class="ti ti-pencil"></i>Gérer</button></div>';
     h+='<div style="display:flex;font-size:9.5px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:0 4px 5px;border-bottom:1px solid #F1F5F9"><div style="width:52px">ID</div><div style="flex:1">User story</div><div style="width:64px;text-align:right">Poids</div><div style="width:88px;text-align:right">Statut</div></div>';
-    bl.forEach(function(u){
+    var mosCol={'Must':['#FEE2E2','#B91C1C'],'Should':['#FEF9C3','#B45309'],'Could':['#E0F2FE','#0369A1'],"Won't":['#F1F5F9','#64748B']};
+    bl.forEach(function(u,ui){
       var c2=stCol[u.st||'À faire']||stCol['À faire'];
-      h+='<div style="display:flex;align-items:center;font-size:11.5px;color:#334155;padding:6px 4px;border-bottom:1px solid #F8FAFC">'
+      var open=(DET_BL_OPEN===ui);
+      var m2=mosCol[u.mos]||null;
+      h+='<div style="display:flex;align-items:center;font-size:11.5px;color:#334155;padding:7px 4px;border-bottom:1px solid #F8FAFC;cursor:pointer;'+(open?'background:#F8FAFC;':'')+'" onclick="detBlToggle('+ui+')" title="Cliquez pour le détail de la user story">'
+        +'<i class="ti ti-chevron-'+(open?'down':'right')+'" style="font-size:11px;color:#94A3B8;width:18px"></i>'
         +'<div style="width:52px;font-size:9.5px;font-weight:800;color:#94A3B8">'+esc(u.id||'')+'</div>'
-        +'<div style="flex:1">'+esc(u.t)+'</div>'
+        +'<div style="flex:1">'+esc(u.t)+(m2?' <span style="font-size:8.5px;font-weight:800;background:'+m2[0]+';color:'+m2[1]+';padding:1px 6px;border-radius:8px;margin-left:5px">'+esc(u.mos)+'</span>':'')+'</div>'
         +'<div style="width:64px;text-align:right;color:#64748B">'+(+u.w||0)+' j/h</div>'
         +'<div style="width:88px;text-align:right"><span style="font-size:9.5px;font-weight:700;background:'+c2[0]+';color:'+c2[1]+';padding:2px 8px;border-radius:10px">'+esc(u.st||'À faire')+'</span></div></div>';
+      if(open){
+        h+='<div style="background:#F8FAFC;border-bottom:1px solid #F1F5F9;padding:12px 14px 14px 22px" onclick="event.stopPropagation()">'
+          +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:9px">'
+          +'<div class="fld" style="width:130px"><label>MoSCoW</label><select id="dbl-mos">'+['','Must','Should','Could',"Won't"].map(function(o){return '<option'+(o===(u.mos||'')?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>'
+          +'<div class="fld" style="width:130px"><label>Statut</label><select id="dbl-st">'+['À faire','En cours','Terminé'].map(function(o){return '<option'+(o===(u.st||'À faire')?' selected':'')+'>'+o+'</option>';}).join('')+'</select></div>'
+          +'<div class="fld" style="width:110px"><label>Poids (j/h)</label><input type="number" id="dbl-w" min="1" value="'+(+u.w||0)+'"></div></div>'
+          +'<div class="fld" style="margin-bottom:8px"><label>Récit — en tant que… je veux… afin de…</label><textarea id="dbl-desc" style="min-height:56px">'+esc(u.desc||'')+'</textarea></div>'
+          +'<div class="fld" style="margin-bottom:10px"><label>Critères d\'acceptation (séparés par •)</label><textarea id="dbl-crit" style="min-height:56px">'+esc(u.crit||'')+'</textarea></div>'
+          +'<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" onclick="DET_BL_OPEN=-1;renderDetails()">Fermer</button><button class="btn btn-acc" onclick="detBlSave('+ui+')"><i class="ti ti-check"></i>Enregistrer</button></div>'
+          +'</div>';
+      }
     });
     h+='</div>';
   }
@@ -3204,14 +3234,14 @@ function ragBadge(v){
 /* ══ BACKLOG LÉGER — user stories pondérées : « le WBS pondère, le backlog mesure » ══ */
 var BACKLOG={}; /* projet -> [{id,t,w,st}] — onglet « Backlog » du Sheet */
 var BACKLOG_SEED={'App mobile clients':[
-  {id:'US-01',t:'Compte client & authentification',w:20,st:'Terminé'},
-  {id:'US-02',t:'Catalogue des prestations traiteurs / chefs',w:25,st:'Terminé'},
-  {id:'US-03',t:'Commande de prestations',w:35,st:'Terminé'},
-  {id:'US-04',t:'Paiement en ligne sécurisé',w:30,st:'En cours'},
-  {id:'US-05',t:'Réservation de chefs',w:25,st:'À faire'},
-  {id:'US-06',t:'Suivi temps réel & notifications push',w:25,st:'À faire'},
-  {id:'US-07',t:'Interfaçage CRM',w:25,st:'À faire'},
-  {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire'}],
+  {id:'US-01',t:'Compte client & authentification',w:20,st:'Terminé',mos:'Must',desc:"En tant que client (établissement ou entreprise), je veux créer mon compte et m'authentifier de façon sécurisée afin d'accéder à mes commandes et à mes informations.",crit:"Création de compte avec vérification e-mail • Connexion sécurisée adossée à l'annuaire (O365) • Récupération de mot de passe autonome"},
+  {id:'US-02',t:'Catalogue des prestations traiteurs / chefs',w:25,st:'Terminé',mos:'Must',desc:"En tant que client, je veux parcourir le catalogue des prestations des traiteurs et chefs afin de choisir l'offre adaptée à mon besoin.",crit:"Recherche et filtres (type, prix, zone, date) • Fiches prestataires avec menus et avis • Temps d'affichage < 2 s"},
+  {id:'US-03',t:'Commande de prestations',w:35,st:'Terminé',mos:'Must',desc:"En tant que client, je veux commander une prestation en quelques étapes afin de gagner du temps.",crit:"Tunnel de commande en 5 étapes maximum • Récapitulatif et confirmation notifiée • Commande transmise au fournisseur en temps réel"},
+  {id:'US-04',t:'Paiement en ligne sécurisé',w:30,st:'En cours',mos:'Must',desc:"En tant que client, je veux payer en ligne de manière sécurisée afin de finaliser ma commande en confiance.",crit:"Paiement CB via prestataire certifié PCI-DSS • 3-D Secure obligatoire • Aucune donnée bancaire stockée par Time'Eats (exigence RSSI)"},
+  {id:'US-05',t:'Réservation de chefs',w:25,st:'À faire',mos:'Should',desc:"En tant que client, je veux réserver un chef à domicile sur un créneau afin d'organiser un événement.",crit:"Calendrier de disponibilité en temps réel • Confirmation sous 24 h • Annulation selon conditions affichées"},
+  {id:'US-06',t:'Suivi temps réel & notifications push',w:25,st:'À faire',mos:'Should',desc:"En tant que client, je veux suivre l'état de ma commande et recevoir des notifications afin d'être informé sans effort.",crit:"Statuts en temps réel (confirmée, préparée, livrée) • Push < 30 s après changement de statut • Historique consultable"},
+  {id:'US-07',t:'Interfaçage CRM',w:25,st:'À faire',mos:'Must',desc:"En tant que DSI, je veux que l'application synchronise comptes et commandes avec le CRM afin de garantir un référentiel client unique.",crit:"Contrat d'interface API figé au cadrage • Synchronisation < 5 min • Mise en service conditionnée à la bascule CRM (dépendance fin-fin)"},
+  {id:'US-08',t:'Recette bout-en-bout & mise en service',w:15,st:'À faire',mos:'Must',desc:"En tant que PMO, je veux une recette complète en conditions réelles afin de prononcer la VABF/VABE et d'autoriser la mise en service.",crit:"Commande complète réalisée en conditions réelles • Cas de test tracés aux exigences Must • PV de recette contradictoire signé"}],
 'CRM':[
   {id:'US-01',t:'Cadrage & spécifications (ateliers métier, règles de gestion)',w:30,st:'Terminé'},
   {id:'US-02',t:'Paramétrage du référentiel clients & fournisseurs',w:45,st:'Terminé'},
@@ -3237,7 +3267,7 @@ function backlogEditorMarkup(prefix){
     +'<div class="fld" style="width:90px"><label>Poids (j/h)</label><input type="number" id="'+prefix+'-bl-w" min="1" placeholder="20"></div>'
     +'<button class="btn" onclick="blAdd(\''+prefix+'\')"><i class="ti ti-plus"></i>Ajouter</button></div>';
 }
-function backlogEditorOpen(prefix,cur){ BL_STORE[prefix]=(cur||[]).map(function(u){return {id:u.id||'',t:u.t||'',w:+u.w||0,st:u.st||'À faire'};}); blRender(prefix); }
+function backlogEditorOpen(prefix,cur){ BL_STORE[prefix]=(cur||[]).map(function(u){return {id:u.id||'',t:u.t||'',w:+u.w||0,st:u.st||'À faire',mos:u.mos||'',desc:u.desc||'',crit:u.crit||''};}); blRender(prefix); }
 function blRender(prefix){
   var box=document.getElementById(prefix+'-bl-rows'); if(!box)return;
   var l=BL_STORE[prefix]||[];
@@ -3542,7 +3572,7 @@ function refDocHtml(id,p){
     b='<h1>Cahier des charges</h1>'+idcard
     +'<h2>1. Contexte et objectifs</h2><p>'+(e(p.note)||W)+'</p>'
     +'<h2>2. Exigences (priorisation MoSCoW)</h2>'+(p.cdc?'<p>'+e(p.cdc)+'</p>':'<p>'+W+'</p>')
-    +(bl.length?'<h2>3. Backlog associé ('+bl.length+' user stories · '+bl.reduce(function(a,u){return a+(+u.w||0);},0)+' j/h)</h2><table><tr><th>ID</th><th>User story</th><th>Poids</th><th>Statut</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+'</td><td>'+(u.w||0)+' j/h</td><td>'+e(u.st)+'</td></tr>';}).join('')+'</table>':'')
+    +(bl.length?'<h2>3. Backlog associé ('+bl.length+' user stories · '+bl.reduce(function(a,u){return a+(+u.w||0);},0)+' j/h)</h2><table><tr><th>ID</th><th>User story</th><th>MoSCoW</th><th>Poids</th><th>Statut</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+(u.desc?'<br><span style="color:#64748B;font-size:9pt">'+e(u.desc)+'</span>':'')+'</td><td>'+e(u.mos||'—')+'</td><td>'+(u.w||0)+' j/h</td><td>'+e(u.st)+'</td></tr>';}).join('')+'</table>':'')
     +(D('cdc','contraintes')?'<h2>'+(bl.length?'4':'3')+'. Contraintes & interfaces</h2><p>'+D('cdc','contraintes')+'</p>':'')
     +'<h2>'+(bl.length?(D('cdc','contraintes')?'5':'4'):(D('cdc','contraintes')?'4':'3'))+'. Critères de recette</h2><p>Chaque exigence « Must » est tracée à au moins un cas de test — la recette (VABF/VABE) se prononce contre ce document.</p>';
   } else if(id==='pmp'){
