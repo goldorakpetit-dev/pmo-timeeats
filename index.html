@@ -709,6 +709,11 @@ pmoShowLogin(!pmoIsAuthed());
   <div class="team-mc" id="team-mc"></div>
 </div>
 
+<!-- ÉDITION D'UN MODÈLE DU RÉFÉRENTIEL -->
+<div class="team-mo" id="doc-mo" onclick="closeDocEdit(event)">
+  <div class="team-mc" id="doc-mc" style="width:min(680px,94vw)"></div>
+</div>
+
 <!-- STAFFING MANUEL (drag & drop) -->
 <div class="team-mo" id="staff-mo" onclick="closeStaffing(event)">
   <div class="team-mc" id="staff-mc" style="width:min(1150px,96vw);max-height:84vh"></div>
@@ -3093,6 +3098,7 @@ function applyData(d){
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
   if(d && d.backlog && typeof d.backlog==='object' && Object.keys(d.backlog).length) BACKLOG = d.backlog;
+  if(d && d.docs && typeof d.docs==='object') DOCS = d.docs;
   PALL.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
   refreshP();
   recalc();
@@ -3301,6 +3307,95 @@ var REF_MODELES=[
  {id:'pv', ph:'Clôture', t:'PV de recette (VABF / VABE)', i:"L'acte contradictoire qui prouve la conformité au CDC et déclenche le paiement du solde prestataire.", r:['Synthèse des tests vs CDC','Réserves & échéances','Décision à 3 issues','Signatures MOA / MOE / presta']},
  {id:'rex', ph:'Clôture', t:'Fiche REX', i:"La capitalisation : écarts, difficultés, bonnes pratiques, leçons — réinjectée au référentiel chaque trimestre.", r:['Écarts coût/délai/qualité','Difficultés rencontrées','Bonnes pratiques','Leçons apprises']},
 ];
+var DOCS={}; /* projet -> modèle -> {champ: valeur} — onglet « Referentiel » du Sheet */
+function dv(p,mid,k){ return (DOCS[p.n]&&DOCS[p.n][mid]&&DOCS[p.n][mid][k])||''; }
+/* Champs de chaque modèle. src:'doc' = propre au document (Sheet Referentiel) ; sinon champ partagé du site. */
+var DOC_FIELDS={
+ besoin:[
+  {k:'demandeur',l:'Demandeur',t:'text',src:'doc',ph:'ex. Direction commerciale'},
+  {k:'besoin',l:'Besoin exprimé & objectifs',t:'ta',src:'note'},
+  {k:'decision',l:"Décision du comité d'entrée",t:'sel',src:'doc',opts:['','GO','NO-GO','Différé']},
+  {k:'datedec',l:'Date de la décision',t:'text',src:'doc',ph:'ex. 2026-04-15'}],
+ charte:[
+  {k:'objectifs',l:'Objectifs & périmètre',t:'ta',src:'note'},
+  {k:'sponsor',l:'Sponsor',t:'text',src:'sponsor'},
+  {k:'cp',l:'Chef de projet',t:'text',src:'cp'},
+  {k:'succes',l:'Critères de succès',t:'ta',src:'doc',ph:'ex. commande complète réalisée en conditions réelles ; crash-free ≥ 99 %'},
+  {k:'jalons',l:'Jalons clés',t:'ta',src:'doc',ph:'ex. Cadrage validé fin mai · Recette fin novembre · Bascule décembre'}],
+ cdc:[
+  {k:'exigences',l:'Exigences (MoSCoW)',t:'ta',src:'cdc'},
+  {k:'contraintes',l:'Contraintes & interfaces',t:'ta',src:'doc',ph:'ex. interfaçage CRM obligatoire ; RGPD ; budget plafonné'}],
+ pmp:[
+  {k:'reserve',l:'Réserve pour aléas',t:'text',src:'doc',ph:'ex. 10 % du budget'},
+  {k:'commutil',l:'Communication vers les utilisateurs',t:'ta',src:'doc',ph:'ex. newsletter mensuelle, démos, formation à J-30'}],
+ copil:[
+  {k:'attention',l:"Points d'attention du mois",t:'ta',src:'doc',ph:'ex. reprise de données : +1 semaine de nettoyage'},
+  {k:'decisions',l:'Décisions demandées au comité',t:'ta',src:'doc',ph:'ex. valider le décalage du jalon de recette au 15/12'}],
+ risques:[
+  {k:'analyse',l:'Analyse du registre (synthèse pour le comité)',t:'ta',src:'doc',ph:'ex. 2 risques ≥ 12 sous surveillance, mitigations engagées'}],
+ pv:[
+  {k:'reserves',l:'Réserves (anomalie · sévérité · responsable · échéance)',t:'ta',src:'doc',ph:'ex. CT-05 notification retardée · mineure · TechMob · 15/01'},
+  {k:'decision',l:'Décision de recette',t:'sel',src:'doc',opts:['','Acceptation ferme','Acceptation avec réserves','Refus motivé']},
+  {k:'datepv',l:'Date du PV',t:'text',src:'doc',ph:'ex. 2026-12-18'}],
+ rex:[
+  {k:'ecarts',l:'Écarts (coût / délai / qualité)',t:'ta',src:'rex'},
+  {k:'diff',l:'Difficultés rencontrées',t:'ta',src:'rex'},
+  {k:'bonnes',l:'Bonnes pratiques',t:'ta',src:'rex'},
+  {k:'lecons',l:'Leçons apprises',t:'ta',src:'rex'}],
+};
+function docFieldVal(p,mid,fld){
+  if(fld.src==='doc') return dv(p,mid,fld.k);
+  if(fld.src==='rex') return (REX_DATA[p.n]||{})[fld.k]||'';
+  return p[fld.src]||'';
+}
+function docCompleteness(p,mid){
+  var fs=DOC_FIELDS[mid]||[]; if(!fs.length)return null;
+  var n=fs.filter(function(fd){return String(docFieldVal(p,mid,fd)).trim()!=='';}).length;
+  return {n:n,tot:fs.length};
+}
+var DOC_EDIT='';
+function openDocEdit(mid){
+  var p=refP(); if(!p){toast('Choisissez un projet');return;}
+  DOC_EDIT=mid;
+  var m=REF_MODELES.find(function(x){return x.id===mid;})||{t:mid};
+  var esc=function(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+  var h='<div class="tmo-header"><div style="width:34px;height:34px;border-radius:10px;background:#FFF7ED;color:#EA580C;display:flex;align-items:center;justify-content:center"><i class="ti ti-file-pencil" style="font-size:16px"></i></div>'
+    +'<div style="flex:1"><div style="font-size:14px;font-weight:800;color:#0F172A">'+m.t+'</div><div style="font-size:10px;color:#94A3B8">Projet : '+esc(p.n)+' — les champs marqués <span style="color:#2563EB;font-weight:700">↔ partagé</span> mettent aussi à jour la fiche du projet.</div></div>'
+    +'<button class="btn" onclick="closeDocEdit()">Fermer</button></div>';
+  h+='<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:10px">';
+  (DOC_FIELDS[mid]||[]).forEach(function(fd){
+    var v=docFieldVal(p,mid,fd);
+    var shared=fd.src!=='doc'?' <span style="font-size:8.5px;color:#2563EB;font-weight:700">↔ partagé</span>':'';
+    h+='<div class="fld"><label>'+fd.l+shared+'</label>';
+    if(fd.t==='ta') h+='<textarea id="doc-f-'+fd.k+'" style="min-height:64px" placeholder="'+esc(fd.ph||'')+'">'+esc(v)+'</textarea>';
+    else if(fd.t==='sel') h+='<select id="doc-f-'+fd.k+'">'+fd.opts.map(function(o){return '<option'+(o===v?' selected':'')+'>'+o+'</option>';}).join('')+'</select>';
+    else h+='<input type="text" id="doc-f-'+fd.k+'" value="'+esc(v)+'" placeholder="'+esc(fd.ph||'')+'">';
+    h+='</div>';
+  });
+  if(mid==='risques') h+='<div style="font-size:10.5px;color:#94A3B8">Les risques eux-mêmes (cotation P×I, mitigations) se gèrent dans la <strong>fiche projet</strong> (onglet Projets) — ils sont repris automatiquement dans le document.</div>';
+  if(mid==='cdc') h+='<div style="font-size:10.5px;color:#94A3B8">Le backlog (user stories pondérées) se gère dans la <strong>fiche projet</strong> — il est repris automatiquement dans le document.</div>';
+  h+='<div class="ma2" style="margin-top:4px"><button class="btn" onclick="refDoc(\''+mid+'\',\'view\')"><i class="ti ti-eye"></i>Aperçu</button><button class="btn btn-acc" onclick="saveDocEdit()"><i class="ti ti-check"></i>Enregistrer</button></div></div>';
+  document.getElementById('doc-mc').innerHTML=h;
+  document.getElementById('doc-mo').classList.add('open'); document.body.style.overflow='hidden';
+}
+function closeDocEdit(e){ if(e&&e.target!==document.getElementById('doc-mo'))return; document.getElementById('doc-mo').classList.remove('open'); document.body.style.overflow=''; }
+function saveDocEdit(){
+  var p=refP(), mid=DOC_EDIT; if(!p||!mid)return;
+  var fs=DOC_FIELDS[mid]||[], docFields={}, touchedProj=false, touchedRex=false;
+  fs.forEach(function(fd){
+    var el=document.getElementById('doc-f-'+fd.k); if(!el)return;
+    var v=el.value;
+    if(fd.src==='doc'){ docFields[fd.k]=v; }
+    else if(fd.src==='rex'){ REX_DATA[p.n]=REX_DATA[p.n]||{}; REX_DATA[p.n][fd.k]=v; touchedRex=true; }
+    else { p[fd.src]=v; touchedProj=true; }
+  });
+  DOCS[p.n]=DOCS[p.n]||{}; DOCS[p.n][mid]=docFields;
+  apiPost({action:'saveDoc', project:p.n, model:mid, fields:docFields});
+  if(touchedProj) apiPost({action:'update', project:p, charges:MV[p.n]||[]});
+  if(touchedRex){ var r=REX_DATA[p.n]; r.date=todayISO(); apiPost({action:'saveRex', rex:{project:p.n, ecarts:r.ecarts||'', diff:r.diff||'', bonnes:r.bonnes||'', lecons:r.lecons||'', date:r.date}}); }
+  closeDocEdit(); renderRef();
+  toast('✓ « '+(REF_MODELES.find(function(x){return x.id===mid;})||{t:mid}).t+' » enregistré pour « '+p.n+' »'+(touchedProj?' — fiche projet mise à jour':''));
+}
 function refEsc(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');}
 function refP(){ var sel=document.getElementById('ref-proj'); var n=sel?sel.value:''; return PALL.find(function(x){return x.n===n;})||P[0]; }
 function renderRef(){
@@ -3319,8 +3414,10 @@ function renderRef(){
         +'<div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:8px;background:'+phCol[ph]+'1A;color:'+phCol[ph]+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-text" style="font-size:14px"></i></div><div style="font-size:12.5px;font-weight:800;color:#0F172A">'+m.t+'</div></div>'
         +'<div style="font-size:10.5px;color:#64748B;line-height:1.55">'+m.i+'</div>'
         +'<div style="font-size:9.5px;color:#94A3B8">'+m.r.map(function(x){return '• '+x;}).join('&nbsp;&nbsp;')+'</div>'
-        +'<div style="display:flex;gap:7px;margin-top:auto"><button class="btn" style="flex:1;justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'view\')"><i class="ti ti-eye"></i>Aperçu</button>'
-        +'<button class="btn btn-acc" style="flex:1;justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'dl\')"><i class="ti ti-download"></i>Word</button></div>'
+        +(function(){var c=docCompleteness(p,m.id);if(!c)return '';var pc=Math.round(c.n/c.tot*100);var col=pc===100?'#10B981':(pc>0?'#F59E0B':'#CBD5E1');return '<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:5px;border-radius:3px;background:#F1F5F9;overflow:hidden"><div style="width:'+pc+'%;height:100%;background:'+col+'"></div></div><span style="font-size:9px;font-weight:700;color:'+col+'">'+c.n+'/'+c.tot+' champs</span></div>';})()
+        +'<div style="display:flex;gap:7px;margin-top:auto"><button class="btn btn-acc" style="flex:1;justify-content:center;font-size:10.5px" onclick="openDocEdit(\''+m.id+'\')"><i class="ti ti-pencil"></i>Compléter</button>'
+        +'<button class="btn" style="justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'view\')" title="Aperçu imprimable"><i class="ti ti-eye"></i></button>'
+        +'<button class="btn" style="justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'dl\')" title="Télécharger en Word, pré-rempli"><i class="ti ti-download"></i></button></div>'
       +'</div>';
     });
     h+='</div>';
@@ -3331,57 +3428,61 @@ function refDocHtml(id,p){
   var e=refEsc, today=todayISO();
   var team=(TEAMS[p.n]&&TEAMS[p.n].members)||[], risks=RISKS[p.n]||[], bl=blList(p.n), rx=REX_DATA[p.n]||{};
   var W='<span style="background:#FEF9C3">À compléter</span>';
+  var D=function(mid,k){var v=dv(p,mid,k);return v?e(v):'';};
   var css='body{font-family:Arial,sans-serif;font-size:11pt;color:#1E293B;margin:2cm}h1{font-size:17pt;color:#1E293B;border-bottom:3px solid #EA580C;padding-bottom:6px}h2{font-size:12.5pt;color:#EA580C;margin-top:22px}table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #CBD5E1;padding:6px 9px;font-size:10pt;text-align:left;vertical-align:top}th{background:#F1F5F9}p,li{line-height:1.55;font-size:10.5pt}.meta{color:#64748B;font-size:9.5pt}';
   var head='<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>MODELE</title><style>'+css+'</style></head><body>';
   var idcard='<table><tr><th style="width:30%">Projet</th><td>'+e(p.n)+'</td></tr><tr><th>Portefeuille / Catégorie</th><td>'+e(p.pf||'—')+' · '+e(p.cat)+'</td></tr><tr><th>Période</th><td>'+e(p.dt||'—')+'</td></tr><tr><th>Budget / Charge</th><td>'+(p.b||0)+' K€ · '+(p.c||0)+' j/h</td></tr><tr><th>Sponsor / Chef de projet</th><td>'+(e(p.sponsor)||W)+' / '+(e(p.cp)||W)+'</td></tr><tr><th>Méthodologie</th><td>'+(e(p.methodo)||W)+'</td></tr></table>';
   var foot='<p class="meta">Référentiel documentaire PMO Time\'Eats — modèle généré par PMO Suite le '+today+'. Document de travail à compléter et à valider en comité.</p></body></html>';
   var b='';
   if(id==='besoin'){
-    b='<h1>Fiche d\'expression de besoin</h1>'+idcard
+    b='<h1>Fiche d\'expression de besoin</h1>'+idcard.replace('</table>','<tr><th>Demandeur</th><td>'+(D('besoin','demandeur')||W)+'</td></tr></table>')
     +'<h2>1. Besoin exprimé et objectifs</h2><p>'+(e(p.note)||W)+'</p>'
     +'<h2>2. Cotation — 5 critères du portefeuille</h2><table><tr><th>Critère</th><th>Poids</th><th>Note /5</th></tr>'
     +'<tr><td>Importance stratégique</td><td>40 %</td><td>'+(p.st||W)+'</td></tr><tr><td>Rentabilité attendue</td><td>30 %</td><td>'+(p.rent||W)+'</td></tr><tr><td>Maîtrise des risques</td><td>10 %</td><td>'+(p.mait||W)+'</td></tr><tr><td>Effort maîtrisé (barème charge)</td><td>10 %</td><td>'+effortNote(p.c)+'</td></tr><tr><td>Urgence</td><td>10 %</td><td>'+(p.urg||W)+'</td></tr>'
     +'<tr><th colspan="2">Score pondéré</th><th>'+(p.sc||'—')+' / 100</th></tr></table>'
-    +'<h2>3. Décision du comité d\'entrée</h2><table><tr><th>Décision</th><td>☐ GO &nbsp;&nbsp; ☐ NO-GO &nbsp;&nbsp; ☐ Différé</td></tr><tr><th>Date / signatures</th><td>'+W+'</td></tr></table>';
+    +'<h2>3. Décision du comité d\'entrée</h2><table><tr><th>Décision</th><td>'+(D('besoin','decision')?'<strong>'+D('besoin','decision')+'</strong>':'☐ GO &nbsp;&nbsp; ☐ NO-GO &nbsp;&nbsp; ☐ Différé')+'</td></tr><tr><th>Date / signatures</th><td>'+(D('besoin','datedec')||W)+'</td></tr></table>';
   } else if(id==='charte'){
     b='<h1>Charte projet</h1>'+idcard
     +'<h2>1. Objectifs et périmètre</h2><p>'+(e(p.note)||W)+'</p>'
     +'<h2>2. Parties prenantes</h2><table><tr><th>Rôle</th><th>Nom</th></tr><tr><td>Sponsor</td><td>'+(e(p.sponsor)||W)+'</td></tr><tr><td>Chef de projet</td><td>'+(e(p.cp)||W)+'</td></tr>'+ (team.length?team.map(function(m){return '<tr><td>'+e(m.role||'Équipe')+(m.type==='prestataire'?' (ESN)':'')+'</td><td>'+e(m.name)+' — '+Math.round((m.share||0)*100)+' %</td></tr>';}).join(''):'<tr><td>Équipe</td><td>'+W+'</td></tr>')+'</table>'
     +'<h2>3. Macro-budget et jalons</h2><p>Budget : <strong>'+(p.b||0)+' K€</strong> (licences '+(p.pctLic||0)+' %, ESN '+(p.pctEsnB||0)+' %) · Charge : <strong>'+(p.c||0)+' j/h</strong> · Période : '+e(p.dt||'—')+'</p>'
-    +'<h2>4. Critères de succès</h2><p>'+W+'</p><h2>5. Signatures</h2><p>Sponsor : ______________ &nbsp;&nbsp; Chef de projet : ______________ &nbsp;&nbsp; Date : '+today+'</p>';
+    +'<h2>4. Critères de succès</h2><p>'+(D('charte','succes')||W)+'</p>'
+    +(D('charte','jalons')?'<h2>5. Jalons clés</h2><p>'+D('charte','jalons')+'</p><h2>6. Signatures</h2>':'<h2>5. Signatures</h2>')+'<p>Sponsor : ______________ &nbsp;&nbsp; Chef de projet : ______________ &nbsp;&nbsp; Date : '+today+'</p>';
   } else if(id==='cdc'){
     b='<h1>Cahier des charges</h1>'+idcard
     +'<h2>1. Contexte et objectifs</h2><p>'+(e(p.note)||W)+'</p>'
     +'<h2>2. Exigences (priorisation MoSCoW)</h2>'+(p.cdc?'<p>'+e(p.cdc)+'</p>':'<p>'+W+'</p>')
     +(bl.length?'<h2>3. Backlog associé ('+bl.length+' user stories · '+bl.reduce(function(a,u){return a+(+u.w||0);},0)+' j/h)</h2><table><tr><th>ID</th><th>User story</th><th>Poids</th><th>Statut</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+'</td><td>'+(u.w||0)+' j/h</td><td>'+e(u.st)+'</td></tr>';}).join('')+'</table>':'')
-    +'<h2>'+(bl.length?'4':'3')+'. Critères de recette</h2><p>Chaque exigence « Must » est tracée à au moins un cas de test — la recette (VABF/VABE) se prononce contre ce document.</p>';
+    +(D('cdc','contraintes')?'<h2>'+(bl.length?'4':'3')+'. Contraintes & interfaces</h2><p>'+D('cdc','contraintes')+'</p>':'')
+    +'<h2>'+(bl.length?(D('cdc','contraintes')?'5':'4'):(D('cdc','contraintes')?'4':'3'))+'. Critères de recette</h2><p>Chaque exigence « Must » est tracée à au moins un cas de test — la recette (VABF/VABE) se prononce contre ce document.</p>';
   } else if(id==='pmp'){
     b='<h1>Plan de management du projet</h1>'+idcard
     +'<h2>1. Organisation</h2><p>'+(team.length?team.map(function(m){return e(m.name)+' ('+e(m.role||'équipe')+(m.type==='prestataire'?' — ESN':'')+', '+Math.round((m.share||0)*100)+' %)';}).join(' · '):W)+'</p>'
     +'<h2>2. Planification</h2><p>Période : '+e(p.dt||'—')+' · '+(p.d||'—')+' mois · Dépendances : '+((p.deps&&p.deps.length)?p.deps.map(function(d){return e(typeof d==='string'?d:d.dep);}).join(', '):'aucune')+'</p>'
-    +'<h2>3. Budget</h2><p>'+(p.b||0)+' K€ — licences '+(p.pctLic||0)+' %, sous-traitance ESN '+(p.pctEsnB||0)+' %, interne '+(100-(p.pctLic||0)-(p.pctEsnB||0))+' % · réserve pour aléas : '+W+'</p>'
+    +'<h2>3. Budget</h2><p>'+(p.b||0)+' K€ — licences '+(p.pctLic||0)+' %, sous-traitance ESN '+(p.pctEsnB||0)+' %, interne '+(100-(p.pctLic||0)-(p.pctEsnB||0))+' % · réserve pour aléas : '+(D('pmp','reserve')||W)+'</p>'
     +'<h2>4. Gestion des risques</h2><p>'+(risks.length?risks.length+' risques au registre (voir modèle « Registre des risques »)':W)+'</p>'
-    +'<h2>5. Plan de communication</h2><table><tr><th>Cible</th><th>Canal / fréquence</th></tr><tr><td>Direction (COPIL)</td><td>Comité mensuel + flash report à jalon</td></tr><tr><td>Équipe projet</td><td>Point hebdomadaire</td></tr><tr><td>Utilisateurs</td><td>'+W+'</td></tr></table>';
+    +'<h2>5. Plan de communication</h2><table><tr><th>Cible</th><th>Canal / fréquence</th></tr><tr><td>Direction (COPIL)</td><td>Comité mensuel + flash report à jalon</td></tr><tr><td>Équipe projet</td><td>Point hebdomadaire</td></tr><tr><td>Utilisateurs</td><td>'+(D('pmp','commutil')||W)+'</td></tr></table>';
   } else if(id==='copil'){
     var d=pilotData(p), bp=backlogPct(p.n);
     b='<h1>Rapport de comité — COPIL</h1>'+idcard
     +'<h2>1. Avancement</h2><p>Avancement déclaré : <strong>'+(d.av||0)+' %</strong>'+(bp!=null?' · mesuré sur backlog : <strong>'+bp+' %</strong>':'')+' · Consommé : <strong>'+(d.ac||0)+' K€</strong> / '+(p.b||0)+' K€</p>'
-    +'<h2>2. Points d\'attention et risques</h2><p>'+(risks.length?risks.slice(0,3).map(function(r){return e(r.risk)+' ('+e(r.level||'')+')';}).join(' · '):W)+'</p>'
-    +'<h2>3. Décisions demandées au comité</h2><p>'+W+'</p>'
+    +'<h2>2. Points d\'attention et risques</h2><p>'+(D('copil','attention')||(risks.length?risks.slice(0,3).map(function(r){return e(r.risk)+' ('+e(r.level||'')+')';}).join(' · '):W))+'</p>'
+    +'<h2>3. Décisions demandées au comité</h2><p>'+(D('copil','decisions')||W)+'</p>'
     +'<p class="meta">Astuce : l\'onglet Pilotage génère automatiquement le rapport COPIL consolidé de tout le portefeuille.</p>';
   } else if(id==='risques'){
     b='<h1>Registre des risques</h1>'+idcard
     +'<h2>Risques identifiés'+(risks.length?' ('+risks.length+')':'')+'</h2>'
     +(risks.length?'<table><tr><th>Risque</th><th>P</th><th>I</th><th>Criticité</th><th>Niveau</th><th>Mitigation</th></tr>'+risks.map(function(r){var pi=(typeof riskPI==='function')?riskPI(r):{p:r.proba||0,i:r.impact||0};return '<tr><td>'+e(r.risk)+'</td><td>'+pi.p+'</td><td>'+pi.i+'</td><td>'+(pi.p*pi.i)+'</td><td>'+e(r.level||'')+'</td><td>'+(e(r.mitigation)||W)+'</td></tr>';}).join('')+'</table>':'<p>'+W+'</p>')
+    +(D('risques','analyse')?'<h2>Analyse pour le comité</h2><p>'+D('risques','analyse')+'</p>':'')
     +'<p class="meta">Cotation Probabilité × Impact sur matrice 5×5 — seuil d\'escalade COPIL : criticité ≥ 12. Registre revu à chaque comité projet.</p>';
   } else if(id==='pv'){
     var must=bl.filter(function(u){return true;});
     b='<h1>Procès-verbal de recette</h1>'+idcard
     +'<h2>1. Périmètre recetté</h2><p>Recette prononcée contre le cahier des charges du projet (exigences MoSCoW).</p>'
     +(bl.length?'<h2>2. Synthèse des tests par user story</h2><table><tr><th>ID</th><th>User story</th><th>Résultat</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+'</td><td>☐ Conforme ☐ Non conforme ☐ Réserve</td></tr>';}).join('')+'</table>':'<h2>2. Synthèse des tests</h2><p>'+W+'</p>')
-    +'<h2>3. Réserves</h2><table><tr><th>Anomalie</th><th>Sévérité</th><th>Responsable</th><th>Échéance de levée</th></tr><tr><td>'+W+'</td><td></td><td></td><td></td></tr></table>'
-    +'<h2>4. Décision</h2><p>☐ Acceptation ferme &nbsp; ☐ Acceptation avec réserves &nbsp; ☐ Refus motivé</p>'
-    +'<h2>5. Signatures (contradictoire)</h2><p>MOA : ______________ &nbsp; MOE / DSI : ______________ &nbsp; Prestataire : ______________ &nbsp; Date : '+today+'</p>';
+    +'<h2>3. Réserves</h2>'+(D('pv','reserves')?'<p>'+D('pv','reserves')+'</p>':'<table><tr><th>Anomalie</th><th>Sévérité</th><th>Responsable</th><th>Échéance de levée</th></tr><tr><td>'+W+'</td><td></td><td></td><td></td></tr></table>')
+    +'<h2>4. Décision</h2><p>'+(D('pv','decision')?'<strong>'+D('pv','decision')+'</strong>':'☐ Acceptation ferme &nbsp; ☐ Acceptation avec réserves &nbsp; ☐ Refus motivé')+'</p>'
+    +'<h2>5. Signatures (contradictoire)</h2><p>MOA : ______________ &nbsp; MOE / DSI : ______________ &nbsp; Prestataire : ______________ &nbsp; Date : '+(D('pv','datepv')||today)+'</p>';
   } else if(id==='rex'){
     b='<h1>Fiche de retour d\'expérience (REX)</h1>'+idcard
     +'<h2>1. Écarts (coût / délai / qualité)</h2><p>'+(e(rx.ecarts)||W)+'</p>'
