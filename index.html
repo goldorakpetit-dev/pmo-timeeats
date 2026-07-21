@@ -442,6 +442,7 @@ var AUTH_USERS=[
   {user:'arthur', pass:'cesi2026'}
 ];
 var JURY=/[?&]jury=1/.test(location.search);
+function juryGuard(){ if(typeof JURY!=='undefined'&&JURY){ toast('🔒 Mode jury — lecture seule : cette action est désactivée'); return true; } return false; }
 function enterJury(){
   JURY=true;
   var ov=document.getElementById('login-overlay'); if(ov)ov.style.display='none';
@@ -1214,7 +1215,7 @@ function renderCalendar(){
 }
 function prevMonth(){if(calMonth===0){calMonth=11;calYear--;}else calMonth--;renderCalendar();}
 function nextMonth(){if(calMonth===11){calMonth=0;calYear++;}else calMonth++;renderCalendar();}
-function delMeeting(id){meetings=meetings.filter(m=>m.id!==id);apiDeleteMeeting(id);renderCalendar();toast('Réunion supprimée');}
+function delMeeting(id){if(juryGuard())return;meetings=meetings.filter(m=>m.id!==id);apiDeleteMeeting(id);renderCalendar();toast('Réunion supprimée');}
 
 function openMeetingModal(){
   ['m-title','m-participants','m-location','m-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1224,7 +1225,7 @@ function openMeetingModal(){
   document.getElementById('meeting-overlay').classList.add('open');document.body.style.overflow='hidden';
 }
 function closeMeetingModal(e){if(e&&e.target!==document.getElementById('meeting-overlay'))return;document.getElementById('meeting-overlay').classList.remove('open');document.body.style.overflow='';}
-function saveMeeting(){
+function saveMeeting(){if(juryGuard())return;
   const title=document.getElementById('m-title').value.trim(),type=document.getElementById('m-type').value,date=document.getElementById('m-date').value,time=document.getElementById('m-time').value;
   const errs=[];if(!title)errs.push('Titre');if(!type)errs.push('Type');if(!date)errs.push('Date');if(!time)errs.push('Heure');
   if(errs.length){const el=document.getElementById('m-errors');el.style.display='block';document.getElementById('m-errors-list').innerHTML=errs.map(e=>`<li>${e}</li>`).join('');return;}
@@ -1346,7 +1347,7 @@ function npPctSum(){
   var el=document.getElementById('np-pct-sum'); if(el){el.textContent='Total : '+s+'%'+(s===100?' ✓':' (idéalement 100%)');el.style.color=s===100?'#10B981':'#F59E0B';}
 }
 function npUsers(){ return (typeof USERS!=='undefined'&&USERS.length)?USERS:Object.values(TEAMS).flatMap(t=>t.members).reduce((a,m)=>{if(!a.some(x=>x.name===m.name))a.push(m);return a;},[]); }
-function openNewProject(){
+function openNewProject(){if(juryGuard())return;
   resetNPForm();
   npFillCat();
   const pfSel=document.getElementById('np-pf'); if(pfSel) pfSel.innerHTML=pfOptions(PORTFOLIOS[0]?PORTFOLIOS[0].name:'');
@@ -1449,7 +1450,7 @@ function npToggleNewUser(){
     box.innerHTML=`<div class="fld" style="flex:1;min-width:110px"><label>Nom</label><input type="text" id="np-newuser-name" placeholder="ex. Camille"></div><div class="fld" style="flex:1;min-width:110px"><label>Poste</label><input type="text" id="np-newuser-role" placeholder="ex. Développeur"></div><div class="fld" style="width:120px"><label>Type</label><select id="np-newuser-type"><option value="interne">Interne</option><option value="prestataire">Prestataire ESN</option></select></div>`;
   }
 }
-function npAddTeam(){
+function npAddTeam(){if(juryGuard())return;
   const isNew=document.getElementById('np-team-new').checked;
   const share=Math.max(0,Math.min(100,+document.getElementById('np-team-share').value||0))/100;
   let name,role,type,color;
@@ -1479,7 +1480,7 @@ function npRenderTeam(){
   if(!npTeam.length){el.innerHTML='<div style="font-size:10px;color:#CBD5E1">Aucun intervenant ajouté.</div>';return;}
   el.innerHTML=npTeam.map(m=>`<span style="display:inline-flex;align-items:center;gap:6px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:20px;padding:3px 10px;font-size:10.5px;color:#334155"><span style="width:8px;height:8px;border-radius:50%;background:${m.color}"></span>${m.name}${m.share?' · '+Math.round(m.share*100)+'%':''}${m.type==='prestataire'?' <span style="font-size:8px;color:#2563EB;font-weight:700">ESN</span>':''} <i class="ti ti-x" style="cursor:pointer;color:#94A3B8" onclick="npRemoveTeam('${m.name}')"></i></span>`).join('');
 }
-function saveNewProject(){
+function saveNewProject(){if(juryGuard())return;
   const errs=[];NP_REQ.forEach(id=>{const el=document.getElementById(id);if(el&&!el.value.trim()){el.classList.add('err');errs.push(NP_LABELS[id]);}else if(el)el.classList.remove('err');});
   if(errs.length){const el=document.getElementById('np-errors');el.style.display='block';document.getElementById('np-errors-list').innerHTML=errs.map(e=>`<li>${e}</li>`).join('');return;}
   var catSel=document.getElementById('np-cat').value;
@@ -1654,7 +1655,7 @@ var PF_EDIT=null; /* nom du portefeuille en cours d'édition, ou null en créati
 function openPortfolioModal(){ PF_EDIT=null; document.getElementById('pf-modal-title').textContent='Nouveau portefeuille'; document.getElementById('pf-save-btn').innerHTML='<i class="ti ti-check"></i>Créer'; document.getElementById('pf-name').value=''; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(9); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
 function openPortfolioEdit(name){ var pf=pfByName(name); if(!pf){toast('Portefeuille introuvable');return;} PF_EDIT=name; document.getElementById('pf-modal-title').textContent='Modifier le portefeuille'; document.getElementById('pf-save-btn').innerHTML='<i class="ti ti-check"></i>Enregistrer'; document.getElementById('pf-name').value=pf.name; document.getElementById('pf-deadline').innerHTML=pfMonthOptions(+pf.deadline); document.getElementById('pf-err').style.display='none'; document.getElementById('pf-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
 function closePortfolioModal(e){ if(e&&e.target!==document.getElementById('pf-overlay'))return; document.getElementById('pf-overlay').classList.remove('open'); document.body.style.overflow=''; }
-function savePortfolio(){
+function savePortfolio(){if(juryGuard())return;
   var name=document.getElementById('pf-name').value.trim();
   var dl=+document.getElementById('pf-deadline').value;
   var err=document.getElementById('pf-err');
@@ -2113,7 +2114,7 @@ function renderDetails(name){
 var REX_DATA={};        /* projet -> {ecarts,diff,bonnes,lecons,date} */
 var REX_SEL='';
 function rexSelect(v){ REX_SEL=v; renderRex(); }
-function saveRex(){
+function saveRex(){if(juryGuard())return;
   var proj=document.getElementById('rex-proj')?document.getElementById('rex-proj').value:REX_SEL;
   if(!proj){ toast('Choisis un projet'); return; }
   var g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
@@ -2391,7 +2392,7 @@ function showSimBanner(n,tension,scopeLabel){
   b.style.display='flex';
 }
 function hideSimBanner(){ var b=document.getElementById('sim-banner'); if(b) b.style.display='none'; }
-function applySimulation(){
+function applySimulation(){if(juryGuard())return;
   if(!SIM.active) return;
   var n=SIM.changed.length;
   SIM.changed.forEach(function(nm){ var p=P.find(function(x){return x.n===nm;}); if(p) apiPost({action:'update', project:p, charges:MV[p.n]||[]}); });
@@ -2832,7 +2833,7 @@ function renderList(){
 }
 /* ══ PROJETS CLOS — clôture, archivage par portefeuille, réouverture ══ */
 function todayISO(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-function closeProjectAction(name){
+function closeProjectAction(name){if(juryGuard())return;
   var p=PALL.find(function(x){return x.n===name;}); if(!p){toast('Projet introuvable');return;}
   if(p.st2==='Clos'){toast('Ce projet est déjà clos');return;}
   if(!confirm('Clore le projet « '+name+' » ?\n\nIl sera archivé dans l\'onglet « Clos » (portefeuille : '+(p.pf||'—')+') et sortira des vues actives (matrice, Gantt, pilotage).\nPensez à saisir son REX (Clôture & REX).')) return;
@@ -2844,7 +2845,7 @@ function closeProjectAction(name){
   toast('✓ Projet « '+name+' » clos — archivé dans l\'onglet Clos');
   goPageTile('clos');
 }
-function reopenProject(name){
+function reopenProject(name){if(juryGuard())return;
   var p=PALL.find(function(x){return x.n===name;}); if(!p){toast('Projet introuvable');return;}
   if(!confirm('Rouvrir le projet « '+name+' » ?\nIl reviendra dans le portefeuille actif avec le statut « En cours ».')) return;
   p.st2='En cours'; p.dtClos='';
@@ -2891,7 +2892,7 @@ function renderClos(){
   });
   body.innerHTML=h;
 }
-function deletePortfolio(name){
+function deletePortfolio(name){if(juryGuard())return;
   var pf=pfByName(name); if(!pf){ toast('Portefeuille introuvable'); return; }
   if(PORTFOLIOS.length<=1){ toast('Impossible de supprimer le dernier portefeuille.'); return; }
   var other=PORTFOLIOS.filter(function(x){return x.name!==name;})[0]; var def=other.name;
@@ -3022,7 +3023,7 @@ function openProjectDetail(name){
   document.getElementById('pd-overlay').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closePD(e){ if(e&&e.target!==document.getElementById('pd-overlay'))return; document.getElementById('pd-overlay').classList.remove('open'); document.body.style.overflow=''; }
-function saveProjectDetail(){
+function saveProjectDetail(){if(juryGuard())return;
   var p=P.find(function(x){return x.n===pdName;}); if(!p)return;
   var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
   var newPf=g('pd-pf')||p.pf; var ndl=pfDeadline(newPf);
@@ -3065,7 +3066,7 @@ document.querySelectorAll('.nt').forEach(n=>n.addEventListener('click',function(
 
 /* ── DELETE PROJECT ── */
 let pendingDeleteName = null;
-function confirmDeleteProject(name){
+function confirmDeleteProject(name){if(juryGuard())return;
   pendingDeleteName = name;
   document.getElementById('del-sub').textContent = 'Cette action est irréversible';
   document.getElementById('del-proj-name').textContent = name;
@@ -3078,7 +3079,7 @@ function closeDelModal(e){
   document.body.style.overflow = '';
   pendingDeleteName = null;
 }
-function executeDelete(){
+function executeDelete(){if(juryGuard())return;
   if(!pendingDeleteName) return;
   const name = pendingDeleteName;
   PALL = PALL.filter(p => p.n !== name);refreshP();
@@ -3331,7 +3332,7 @@ function drawSCurve(m){
         scales:{y:{beginAtZero:true,max:Math.max(p.b||0,d.ac)*1.15,ticks:{font:{size:9},color:'#94A3B8'},grid:{color:'#F1F5F9'}},x:{ticks:{font:{size:9},color:'#94A3B8'},grid:{display:false}}}}});
   }catch(e){}
 }
-function savePilot(name){
+function savePilot(name){if(juryGuard())return;
   var av=+((document.getElementById('pl-av-'+cssId(name))||{}).value||0);
   var ac=+((document.getElementById('pl-ac-'+cssId(name))||{}).value||0);
   PILOT[name]={av:Math.min(100,Math.max(0,av)),ac:Math.max(0,ac)};
@@ -3442,7 +3443,7 @@ function openDocEdit(mid){
   document.getElementById('doc-mo').classList.add('open'); document.body.style.overflow='hidden';
 }
 function closeDocEdit(e){ if(e&&e.target!==document.getElementById('doc-mo'))return; document.getElementById('doc-mo').classList.remove('open'); document.body.style.overflow=''; }
-function saveDocEdit(){
+function saveDocEdit(){if(juryGuard())return;
   var p=refP(), mid=DOC_EDIT; if(!p||!mid)return;
   var fs=DOC_FIELDS[mid]||[], docFields={}, touchedProj=false, touchedRex=false;
   fs.forEach(function(fd){
@@ -3740,7 +3741,7 @@ function tmShowAvail(projName){
   }
   box.innerHTML=head+'<div style="display:flex;gap:5px;flex-wrap:wrap">'+cells+'</div>';
 }
-function addTeamMember(proj){
+function addTeamMember(proj){if(juryGuard())return;
   const isNew=document.getElementById('tm-new')&&document.getElementById('tm-new').checked;
   const share=Math.max(0,Math.min(100,+document.getElementById('tm-share').value||0))/100;
   let member;
@@ -3765,7 +3766,7 @@ function addTeamMember(proj){
   showTeamPanel(P.findIndex(p=>p.n===proj));
   toast('✓ '+member.name+' ajouté'+(al.count>1?' — ⚠ aussi sur '+(al.count-1)+' autre'+(al.count-1>1?'s':''):''));
 }
-function removeTeamMember(proj,name){
+function removeTeamMember(proj,name){if(juryGuard())return;
   if(!TEAMS[proj])return;
   TEAMS[proj].members=TEAMS[proj].members.filter(m=>m.name!==name);
   apiRemoveMember(proj,name);
@@ -3828,7 +3829,7 @@ function exportResXlsx(){
 
 /* ══ STAFFING MANUEL — placement humain, drag & drop, conflits signalés mais jamais bloquants ══ */
 var STAFF_SEL=''; /* personne sélectionnée (fallback clic-clic, tablette) */
-function openStaffing(){ STAFF_SEL=''; staffRender(); document.getElementById('staff-mo').classList.add('open'); document.body.style.overflow='hidden'; }
+function openStaffing(){if(juryGuard())return; STAFF_SEL=''; staffRender(); document.getElementById('staff-mo').classList.add('open'); document.body.style.overflow='hidden'; }
 function closeStaffing(e){ if(e&&e.target!==document.getElementById('staff-mo'))return; document.getElementById('staff-mo').classList.remove('open'); document.body.style.overflow=''; window.rReady=false; }
 function staffBusyMonths(name, p){ /* mois du projet où la personne est déjà prise ailleurs */
   var out=[];
@@ -3895,7 +3896,7 @@ function staffAllowDrop(ev,proj){ ev.preventDefault(); var z=document.getElement
 function staffDragLeave(ev,proj){ var z=document.getElementById('sz-'+cssId(proj)); if(z){z.style.borderColor='#E2E8F0';z.style.background='#fff';} }
 function staffDrop(ev,proj){ ev.preventDefault(); staffDragLeave(ev,proj); var name=''; try{name=ev.dataTransfer.getData('text/plain');}catch(e){} staffAssign(name||STAFF_SEL,proj); }
 function staffPlace(proj){ staffAssign(STAFF_SEL,proj); }
-function staffAssign(name,proj){
+function staffAssign(name,proj){if(juryGuard())return;
   if(!name){toast('Choisissez d\'abord une personne');return;}
   var p=P.find(function(x){return x.n===proj;}); if(!p){toast('Projet introuvable');return;}
   if(!TEAMS[proj])TEAMS[proj]={members:[]};
@@ -3911,7 +3912,7 @@ function staffAssign(name,proj){
   STAFF_SEL=''; staffRender(); window.rReady=false;
   toast('✓ '+name+' → '+proj+' ('+Math.round(share*100)+'%)'+(bm.length?' · ⚠ conflit '+bm.join(', '):''));
 }
-function staffRemove(proj,name){
+function staffRemove(proj,name){if(juryGuard())return;
   if(!TEAMS[proj])return;
   TEAMS[proj].members=TEAMS[proj].members.filter(function(m){return m.name!==name;});
   apiRemoveMember(proj,name);
@@ -4055,7 +4056,7 @@ const ROLE_PREF={
 };
 function isCP(u){ return /chef de projet/i.test(u.role||'') || /^cp\b/i.test(u.role||''); }
 function roleFamily(role){ role=(role||'').toLowerCase(); if(/chef de projet|^cp\b/.test(role)) return 'CP'; if(/d[ée]velopp|lead developer/.test(role)) return 'Dev'; if(/admin/.test(role)) return 'Admin'; if(/technicien/.test(role)) return 'Tech'; return 'Autre'; }
-function autoAllocate(){
+function autoAllocate(){if(juryGuard())return;
   if(!confirm('Recomposer TOUTES les équipes automatiquement ?\nLes affectations actuelles seront remplacées (et écrites dans le Sheet).')) return;
   var internes=npUsers().filter(function(u){return u.type!=='prestataire';});
   var NM=ganttMonths();
