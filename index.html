@@ -499,6 +499,7 @@ pmoShowLogin(!pmoIsAuthed());
     <div class="nt"     onclick="goPage('dash',this)"><i class="ti ti-chart-pie"></i><span data-i18n="nav.dash">Dashboard</span></div>
     <div class="nt"     onclick="goPage('lst',this)"><i class="ti ti-list-details"></i><span data-i18n="nav.list">Projets</span></div>
     <div class="nt"     onclick="goPage('details',this)"><i class="ti ti-file-search"></i><span data-i18n="nav.details">Détails</span></div>
+    <div class="nt"     onclick="goPage('ref',this)"><i class="ti ti-books"></i><span>Référentiel</span></div>
     <div class="nt"     onclick="goPage('matrix',this)"><i class="ti ti-chart-bubble"></i><span data-i18n="nav.matrix">Matrice</span></div>
     <div class="nt"     onclick="goPage('gantt',this)"><i class="ti ti-timeline"></i><span data-i18n="nav.gantt">Gantt</span></div>
     <div class="nt"     onclick="goPage('res',this)"><i class="ti ti-users-group"></i><span data-i18n="nav.res">Ressources</span></div>
@@ -815,6 +816,15 @@ pmoShowLogin(!pmoIsAuthed());
     </div>
   </div>
   <div class="ct"><div class="lt" id="lst"></div></div>
+</div>
+
+<!-- PAGE RÉFÉRENTIEL DOCUMENTAIRE -->
+<div id="p-ref" class="page">
+  <div class="ab">
+    <div class="ab-l"><div class="ab-title">Référentiel documentaire</div><div class="ab-bc"><div class="ab-dot"></div>Les 8 modèles communs à tous les projets — pré-remplis avec les données du projet choisi</div></div>
+    <div class="ab-r" style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:#64748B">Projet</label><select id="ref-proj" onchange="renderRef()" style="font-size:12px;padding:7px 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"></select></div>
+  </div>
+  <div class="ct"><div id="ref-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
 </div>
 
 <!-- PAGE PROJETS CLOS -->
@@ -1754,6 +1764,7 @@ function goPage(id,el){
   if(id==='details')renderDetails();
   if(id==='pilot')renderPilot();
   if(id==='clos')renderClos();
+  if(id==='ref')renderRef();
 }
 function goPageTile(id){const el=document.querySelector(`.nt[onclick*="'${id}'"]`);if(el)goPage(id,el);}
 function toggleAcc(id){
@@ -3279,6 +3290,124 @@ function savePilot(name){
   toast('✓ Pilotage de « '+name+' » enregistré');
   renderPilot();
 }
+/* ══ RÉFÉRENTIEL DOCUMENTAIRE — 8 modèles pré-remplis avec les données du projet ══ */
+var REF_MODELES=[
+ {id:'besoin', ph:'Cadrage', t:"Fiche d'expression de besoin", i:"Le comité d'entrée cote chaque demande sur les 5 critères — c'est la porte du portefeuille.", r:['Demandeur & sponsor','Besoin et objectifs','Cotation des 5 critères /100','Décision GO / NO-GO']},
+ {id:'charte', ph:'Cadrage', t:'Charte projet', i:"Le mandat officiel : elle donne au chef de projet son autorité, son budget et ses critères de succès.", r:['Objectifs & périmètre','Sponsor, CdP, parties prenantes','Macro-budget & jalons','Critères de succès']},
+ {id:'cdc', ph:'Cadrage', t:'Cahier des charges (CDC)', i:"Les exigences priorisées MoSCoW — la base contractuelle de la recette.", r:['Contexte & objectifs','Exigences Must / Should / Could','Contraintes & interfaces','Critères de recette']},
+ {id:'pmp', ph:'Cadrage', t:'Plan de management (PMP)', i:"Comment le projet sera conduit : organisation, planning, budget, risques, communication.", r:['Organisation & rôles','Planification & jalons','Budget ventilé','Risques & communication']},
+ {id:'copil', ph:'Pilotage', t:'Rapport de comité (COPIL)', i:"L'état des lieux mensuel sur lequel le comité décide — généré aussi depuis l'onglet Pilotage.", r:['Avancement & SPI/CPI','Budget consommé','Risques & alertes','Décisions demandées']},
+ {id:'risques', ph:'Pilotage', t:'Registre des risques', i:"Chaque risque coté Probabilité × Impact avec son plan de mitigation — revu à chaque comité.", r:['Description du risque','Cotation P × I','Plan de mitigation','Porteur & échéance']},
+ {id:'pv', ph:'Clôture', t:'PV de recette (VABF / VABE)', i:"L'acte contradictoire qui prouve la conformité au CDC et déclenche le paiement du solde prestataire.", r:['Synthèse des tests vs CDC','Réserves & échéances','Décision à 3 issues','Signatures MOA / MOE / presta']},
+ {id:'rex', ph:'Clôture', t:'Fiche REX', i:"La capitalisation : écarts, difficultés, bonnes pratiques, leçons — réinjectée au référentiel chaque trimestre.", r:['Écarts coût/délai/qualité','Difficultés rencontrées','Bonnes pratiques','Leçons apprises']},
+];
+function refEsc(x){return String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');}
+function refP(){ var sel=document.getElementById('ref-proj'); var n=sel?sel.value:''; return PALL.find(function(x){return x.n===n;})||P[0]; }
+function renderRef(){
+  var body=document.getElementById('ref-body'); if(!body)return;
+  var sel=document.getElementById('ref-proj');
+  if(sel&&!sel.options.length){ sel.innerHTML=PALL.map(function(p){return '<option'+(p.sel?' selected':'')+'>'+p.n+'</option>';}).join(''); }
+  var p=refP(); if(!p){body.innerHTML='';return;}
+  var phases=['Cadrage','Pilotage','Clôture'], phCol={'Cadrage':'#EA580C','Pilotage':'#2563EB','Clôture':'#10B981'};
+  var h='<div class="card" style="padding:12px 16px;font-size:11.5px;color:#475569;line-height:1.6"><i class="ti ti-info-circle" style="color:#2563EB;margin-right:5px"></i><strong>Le principe :</strong> chaque projet du portefeuille utilise les <strong>mêmes 8 modèles</strong>, du cadrage à la clôture. Choisissez un projet en haut à droite : les modèles se pré-remplissent avec ses données réelles (équipe, risques, backlog, REX…) — <strong>Aperçu</strong> pour consulter, <strong>Word</strong> pour télécharger et compléter.</div>';
+  phases.forEach(function(ph){
+    var mods=REF_MODELES.filter(function(m){return m.ph===ph;});
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><div style="width:4px;height:16px;border-radius:2px;background:'+phCol[ph]+'"></div><div style="font-size:12.5px;font-weight:800;color:#0F172A">'+ph+'</div><div style="font-size:10px;color:#94A3B8">'+mods.length+' modèles</div></div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px">';
+    mods.forEach(function(m){
+      h+='<div class="card" style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">'
+        +'<div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:8px;background:'+phCol[ph]+'1A;color:'+phCol[ph]+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-text" style="font-size:14px"></i></div><div style="font-size:12.5px;font-weight:800;color:#0F172A">'+m.t+'</div></div>'
+        +'<div style="font-size:10.5px;color:#64748B;line-height:1.55">'+m.i+'</div>'
+        +'<div style="font-size:9.5px;color:#94A3B8">'+m.r.map(function(x){return '• '+x;}).join('&nbsp;&nbsp;')+'</div>'
+        +'<div style="display:flex;gap:7px;margin-top:auto"><button class="btn" style="flex:1;justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'view\')"><i class="ti ti-eye"></i>Aperçu</button>'
+        +'<button class="btn btn-acc" style="flex:1;justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'dl\')"><i class="ti ti-download"></i>Word</button></div>'
+      +'</div>';
+    });
+    h+='</div>';
+  });
+  body.innerHTML=h;
+}
+function refDocHtml(id,p){
+  var e=refEsc, today=todayISO();
+  var team=(TEAMS[p.n]&&TEAMS[p.n].members)||[], risks=RISKS[p.n]||[], bl=blList(p.n), rx=REX_DATA[p.n]||{};
+  var W='<span style="background:#FEF9C3">À compléter</span>';
+  var css='body{font-family:Arial,sans-serif;font-size:11pt;color:#1E293B;margin:2cm}h1{font-size:17pt;color:#1E293B;border-bottom:3px solid #EA580C;padding-bottom:6px}h2{font-size:12.5pt;color:#EA580C;margin-top:22px}table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #CBD5E1;padding:6px 9px;font-size:10pt;text-align:left;vertical-align:top}th{background:#F1F5F9}p,li{line-height:1.55;font-size:10.5pt}.meta{color:#64748B;font-size:9.5pt}';
+  var head='<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>MODELE</title><style>'+css+'</style></head><body>';
+  var idcard='<table><tr><th style="width:30%">Projet</th><td>'+e(p.n)+'</td></tr><tr><th>Portefeuille / Catégorie</th><td>'+e(p.pf||'—')+' · '+e(p.cat)+'</td></tr><tr><th>Période</th><td>'+e(p.dt||'—')+'</td></tr><tr><th>Budget / Charge</th><td>'+(p.b||0)+' K€ · '+(p.c||0)+' j/h</td></tr><tr><th>Sponsor / Chef de projet</th><td>'+(e(p.sponsor)||W)+' / '+(e(p.cp)||W)+'</td></tr><tr><th>Méthodologie</th><td>'+(e(p.methodo)||W)+'</td></tr></table>';
+  var foot='<p class="meta">Référentiel documentaire PMO Time\'Eats — modèle généré par PMO Suite le '+today+'. Document de travail à compléter et à valider en comité.</p></body></html>';
+  var b='';
+  if(id==='besoin'){
+    b='<h1>Fiche d\'expression de besoin</h1>'+idcard
+    +'<h2>1. Besoin exprimé et objectifs</h2><p>'+(e(p.note)||W)+'</p>'
+    +'<h2>2. Cotation — 5 critères du portefeuille</h2><table><tr><th>Critère</th><th>Poids</th><th>Note /5</th></tr>'
+    +'<tr><td>Importance stratégique</td><td>40 %</td><td>'+(p.st||W)+'</td></tr><tr><td>Rentabilité attendue</td><td>30 %</td><td>'+(p.rent||W)+'</td></tr><tr><td>Maîtrise des risques</td><td>10 %</td><td>'+(p.mait||W)+'</td></tr><tr><td>Effort maîtrisé (barème charge)</td><td>10 %</td><td>'+effortNote(p.c)+'</td></tr><tr><td>Urgence</td><td>10 %</td><td>'+(p.urg||W)+'</td></tr>'
+    +'<tr><th colspan="2">Score pondéré</th><th>'+(p.sc||'—')+' / 100</th></tr></table>'
+    +'<h2>3. Décision du comité d\'entrée</h2><table><tr><th>Décision</th><td>☐ GO &nbsp;&nbsp; ☐ NO-GO &nbsp;&nbsp; ☐ Différé</td></tr><tr><th>Date / signatures</th><td>'+W+'</td></tr></table>';
+  } else if(id==='charte'){
+    b='<h1>Charte projet</h1>'+idcard
+    +'<h2>1. Objectifs et périmètre</h2><p>'+(e(p.note)||W)+'</p>'
+    +'<h2>2. Parties prenantes</h2><table><tr><th>Rôle</th><th>Nom</th></tr><tr><td>Sponsor</td><td>'+(e(p.sponsor)||W)+'</td></tr><tr><td>Chef de projet</td><td>'+(e(p.cp)||W)+'</td></tr>'+ (team.length?team.map(function(m){return '<tr><td>'+e(m.role||'Équipe')+(m.type==='prestataire'?' (ESN)':'')+'</td><td>'+e(m.name)+' — '+Math.round((m.share||0)*100)+' %</td></tr>';}).join(''):'<tr><td>Équipe</td><td>'+W+'</td></tr>')+'</table>'
+    +'<h2>3. Macro-budget et jalons</h2><p>Budget : <strong>'+(p.b||0)+' K€</strong> (licences '+(p.pctLic||0)+' %, ESN '+(p.pctEsnB||0)+' %) · Charge : <strong>'+(p.c||0)+' j/h</strong> · Période : '+e(p.dt||'—')+'</p>'
+    +'<h2>4. Critères de succès</h2><p>'+W+'</p><h2>5. Signatures</h2><p>Sponsor : ______________ &nbsp;&nbsp; Chef de projet : ______________ &nbsp;&nbsp; Date : '+today+'</p>';
+  } else if(id==='cdc'){
+    b='<h1>Cahier des charges</h1>'+idcard
+    +'<h2>1. Contexte et objectifs</h2><p>'+(e(p.note)||W)+'</p>'
+    +'<h2>2. Exigences (priorisation MoSCoW)</h2>'+(p.cdc?'<p>'+e(p.cdc)+'</p>':'<p>'+W+'</p>')
+    +(bl.length?'<h2>3. Backlog associé ('+bl.length+' user stories · '+bl.reduce(function(a,u){return a+(+u.w||0);},0)+' j/h)</h2><table><tr><th>ID</th><th>User story</th><th>Poids</th><th>Statut</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+'</td><td>'+(u.w||0)+' j/h</td><td>'+e(u.st)+'</td></tr>';}).join('')+'</table>':'')
+    +'<h2>'+(bl.length?'4':'3')+'. Critères de recette</h2><p>Chaque exigence « Must » est tracée à au moins un cas de test — la recette (VABF/VABE) se prononce contre ce document.</p>';
+  } else if(id==='pmp'){
+    b='<h1>Plan de management du projet</h1>'+idcard
+    +'<h2>1. Organisation</h2><p>'+(team.length?team.map(function(m){return e(m.name)+' ('+e(m.role||'équipe')+(m.type==='prestataire'?' — ESN':'')+', '+Math.round((m.share||0)*100)+' %)';}).join(' · '):W)+'</p>'
+    +'<h2>2. Planification</h2><p>Période : '+e(p.dt||'—')+' · '+(p.d||'—')+' mois · Dépendances : '+((p.deps&&p.deps.length)?p.deps.map(function(d){return e(typeof d==='string'?d:d.dep);}).join(', '):'aucune')+'</p>'
+    +'<h2>3. Budget</h2><p>'+(p.b||0)+' K€ — licences '+(p.pctLic||0)+' %, sous-traitance ESN '+(p.pctEsnB||0)+' %, interne '+(100-(p.pctLic||0)-(p.pctEsnB||0))+' % · réserve pour aléas : '+W+'</p>'
+    +'<h2>4. Gestion des risques</h2><p>'+(risks.length?risks.length+' risques au registre (voir modèle « Registre des risques »)':W)+'</p>'
+    +'<h2>5. Plan de communication</h2><table><tr><th>Cible</th><th>Canal / fréquence</th></tr><tr><td>Direction (COPIL)</td><td>Comité mensuel + flash report à jalon</td></tr><tr><td>Équipe projet</td><td>Point hebdomadaire</td></tr><tr><td>Utilisateurs</td><td>'+W+'</td></tr></table>';
+  } else if(id==='copil'){
+    var d=pilotData(p), bp=backlogPct(p.n);
+    b='<h1>Rapport de comité — COPIL</h1>'+idcard
+    +'<h2>1. Avancement</h2><p>Avancement déclaré : <strong>'+(d.av||0)+' %</strong>'+(bp!=null?' · mesuré sur backlog : <strong>'+bp+' %</strong>':'')+' · Consommé : <strong>'+(d.ac||0)+' K€</strong> / '+(p.b||0)+' K€</p>'
+    +'<h2>2. Points d\'attention et risques</h2><p>'+(risks.length?risks.slice(0,3).map(function(r){return e(r.risk)+' ('+e(r.level||'')+')';}).join(' · '):W)+'</p>'
+    +'<h2>3. Décisions demandées au comité</h2><p>'+W+'</p>'
+    +'<p class="meta">Astuce : l\'onglet Pilotage génère automatiquement le rapport COPIL consolidé de tout le portefeuille.</p>';
+  } else if(id==='risques'){
+    b='<h1>Registre des risques</h1>'+idcard
+    +'<h2>Risques identifiés'+(risks.length?' ('+risks.length+')':'')+'</h2>'
+    +(risks.length?'<table><tr><th>Risque</th><th>P</th><th>I</th><th>Criticité</th><th>Niveau</th><th>Mitigation</th></tr>'+risks.map(function(r){var pi=(typeof riskPI==='function')?riskPI(r):{p:r.proba||0,i:r.impact||0};return '<tr><td>'+e(r.risk)+'</td><td>'+pi.p+'</td><td>'+pi.i+'</td><td>'+(pi.p*pi.i)+'</td><td>'+e(r.level||'')+'</td><td>'+(e(r.mitigation)||W)+'</td></tr>';}).join('')+'</table>':'<p>'+W+'</p>')
+    +'<p class="meta">Cotation Probabilité × Impact sur matrice 5×5 — seuil d\'escalade COPIL : criticité ≥ 12. Registre revu à chaque comité projet.</p>';
+  } else if(id==='pv'){
+    var must=bl.filter(function(u){return true;});
+    b='<h1>Procès-verbal de recette</h1>'+idcard
+    +'<h2>1. Périmètre recetté</h2><p>Recette prononcée contre le cahier des charges du projet (exigences MoSCoW).</p>'
+    +(bl.length?'<h2>2. Synthèse des tests par user story</h2><table><tr><th>ID</th><th>User story</th><th>Résultat</th></tr>'+bl.map(function(u){return '<tr><td>'+e(u.id)+'</td><td>'+e(u.t)+'</td><td>☐ Conforme ☐ Non conforme ☐ Réserve</td></tr>';}).join('')+'</table>':'<h2>2. Synthèse des tests</h2><p>'+W+'</p>')
+    +'<h2>3. Réserves</h2><table><tr><th>Anomalie</th><th>Sévérité</th><th>Responsable</th><th>Échéance de levée</th></tr><tr><td>'+W+'</td><td></td><td></td><td></td></tr></table>'
+    +'<h2>4. Décision</h2><p>☐ Acceptation ferme &nbsp; ☐ Acceptation avec réserves &nbsp; ☐ Refus motivé</p>'
+    +'<h2>5. Signatures (contradictoire)</h2><p>MOA : ______________ &nbsp; MOE / DSI : ______________ &nbsp; Prestataire : ______________ &nbsp; Date : '+today+'</p>';
+  } else if(id==='rex'){
+    b='<h1>Fiche de retour d\'expérience (REX)</h1>'+idcard
+    +'<h2>1. Écarts (coût / délai / qualité)</h2><p>'+(e(rx.ecarts)||W)+'</p>'
+    +'<h2>2. Difficultés rencontrées</h2><p>'+(e(rx.diff)||W)+'</p>'
+    +'<h2>3. Bonnes pratiques</h2><p>'+(e(rx.bonnes)||W)+'</p>'
+    +'<h2>4. Leçons apprises (réutilisables)</h2><p>'+(e(rx.lecons)||W)+'</p>'
+    +'<p class="meta">Saisie possible directement dans l\'onglet REX de PMO Suite — consolidée par la PMO et réinjectée au référentiel lors de la revue trimestrielle.</p>';
+  }
+  return head.replace('MODELE',(REF_MODELES.find(function(m){return m.id===id;})||{}).t+' — '+p.n)+b+foot;
+}
+function refDoc(id,mode){
+  var p=refP(); if(!p){toast('Choisissez un projet');return;}
+  var html=refDocHtml(id,p);
+  if(mode==='view'){
+    var w=window.open('','_blank'); if(!w){toast('Autorise les pop-ups pour l\'aperçu');return;}
+    w.document.write(html); w.document.close();
+  } else {
+    var m=REF_MODELES.find(function(x){return x.id===id;})||{t:'Modele'};
+    var blob=new Blob(['﻿',html],{type:'application/msword'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download=(m.t+' — '+p.n).replace(/[^\wÀ-ÿ ()\/-]/g,'').replace(/[\/ ]+/g,'_')+'.doc';
+    document.body.appendChild(a); a.click(); setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},400);
+    toast('✓ Modèle « '+m.t+' » téléchargé, pré-rempli pour « '+p.n+' »');
+  }
+}
+
 /* ══ RAPPORT COPIL imprimable ══ */
 function copilReport(){
   var m=+((document.getElementById('pilot-month')||{}).value||4);
