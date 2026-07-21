@@ -439,7 +439,15 @@ var AUTH_USERS=[
   {user:'admin',  pass:'pmo2026'},
   {user:'arthur', pass:'cesi2026'}
 ];
-function pmoIsAuthed(){ try{ return sessionStorage.getItem('pmo_auth')==='1'; }catch(e){ return false; } }
+var JURY=/[?&]jury=1/.test(location.search);
+function pmoIsAuthed(){ if(JURY)return true; try{ return sessionStorage.getItem('pmo_auth')==='1'; }catch(e){ return false; } }
+document.addEventListener('DOMContentLoaded',function(){
+  if(!JURY)return;
+  var tb=document.querySelector('.tb-r');
+  if(tb){ var b=document.createElement('span'); b.innerHTML='<i class="ti ti-lock"></i> Mode jury · lecture seule';
+    b.style.cssText='font-size:10px;font-weight:800;color:#B45309;background:#FEF9C3;border:1px solid #FDE68A;border-radius:14px;padding:4px 11px;display:inline-flex;align-items:center;gap:5px;margin-right:6px';
+    tb.prepend(b); }
+});
 function pmoShowLogin(show){
   var ov=document.getElementById('login-overlay'); if(!ov) return;
   ov.style.display=show?'flex':'none';
@@ -827,7 +835,7 @@ pmoShowLogin(!pmoIsAuthed());
 <div id="p-ref" class="page">
   <div class="ab">
     <div class="ab-l"><div class="ab-title">Référentiel documentaire</div><div class="ab-bc"><div class="ab-dot"></div>Les 8 modèles communs à tous les projets — pré-remplis avec les données du projet choisi</div></div>
-    <div class="ab-r" style="display:flex;gap:8px;align-items:center"><label style="font-size:11px;color:#64748B">Projet</label><select id="ref-proj" onchange="renderRef()" style="font-size:12px;padding:7px 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"></select></div>
+    <div class="ab-r" style="display:flex;gap:8px;align-items:center"><button class="btn btn-acc" onclick="refFullDossier()" title="Les 8 documents du projet en un seul fichier imprimable"><i class="ti ti-book"></i>Dossier complet</button><label style="font-size:11px;color:#64748B">Projet</label><select id="ref-proj" onchange="renderRef()" style="font-size:12px;padding:7px 11px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer"></select></div>
   </div>
   <div class="ct"><div id="ref-body" style="display:flex;flex-direction:column;gap:14px"></div></div>
 </div>
@@ -926,6 +934,7 @@ pmoShowLogin(!pmoIsAuthed());
         <div style="font-size:9.5px;color:#94A3B8;margin-top:6px">Position dans la matrice dérivée automatiquement des critères : Valeur = (Importance + Rentabilité) ÷ 2 · Effort = 6 − Maîtrise. Une seule saisie, zéro incohérence.</div>
         <div class="frow c2" style="margin-top:10px"><div class="fld"><label>Importance stratégique (/5) · 40 %</label><select id="np-imp"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Rentabilité attendue (/5) · 30 %</label><select id="np-rent"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
         <div class="frow c2" style="margin-top:8px"><div class="fld"><label>Maîtrise des risques (/5) · 10 %</label><select id="np-mait"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div><div class="fld"><label>Urgence / dépendance (/5) · 10 %</label><select id="np-urg"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div></div>
+        <div class="frow" style="margin-top:8px"><div class="fld"><label>Effort maîtrisé (/5) · 10 % — 5ᵉ critère, calculé automatiquement</label><div id="np-effort-view" style="padding:8px 11px;border:1px dashed #CBD5E1;border-radius:8px;background:#F8FAFC;font-size:11px;color:#475569">Saisissez la charge (j/h) ci-dessus — barème : ≤ 80 j/h = 5 · 81-150 = 4 · 151-250 = 3 · 251-320 = 2 · &gt; 320 = 1</div></div></div>
         <div style="font-size:9.5px;color:#94A3B8;margin-top:4px">Score pondéré /100 (dossier) = Σ(note × poids) × 20 — l'effort maîtrisé (10 %) est calculé automatiquement d'après la charge (≤ 80 j/h = 5 · 81-150 = 4 · 151-250 = 3 · 251-320 = 2 · &gt; 320 = 1).</div>
       </div>
       <div class="form-section">
@@ -1362,6 +1371,9 @@ function updNP(){
   bar.style.background=pct<40?'#EF4444':pct<80?'#F59E0B':'#10B981';
   npRenderCharges();
   npShowAvail();
+  var _ch=+((document.getElementById('np-charge')||{}).value||0);
+  var _ev=document.getElementById('np-effort-view');
+  if(_ev&&_ch>0)_ev.innerHTML='<strong style="color:#EA580C;font-size:13px">'+effortNote(_ch)+'/5</strong> — dérivé de la charge de '+_ch+' j/h (barème : ≤ 80 = 5 · 81-150 = 4 · 151-250 = 3 · 251-320 = 2 · > 320 = 1)';
 }
 var npChargesTouched=false; /* true dès que l'utilisateur modifie une case de charge mensuelle à la main */
 function npRenderCharges(){
@@ -1514,7 +1526,7 @@ let P=[
   {n:'Office 365',             cat:'Socle IT',      s:0,d:3,b:100,c:220,st:4,dt:'Avr → Juin',note:'Prérequis bloquant — doit terminer avant apps mobiles et CRM',st2:'En cours', rent:2,mait:3,urg:5,pctLic:60,pctEsnB:0},
   {n:'Refonte app web',        cat:'Dev applicatif',s:0,d:6,b:300,c:400,st:5,dt:'Avr → Sep', note:'Interfaçage CRM · compte client & fournisseur · responsive design',st2:'En cours', rent:5,mait:2,urg:4,pctLic:10,pctEsnB:45},
   {n:'Livraison continue',     cat:'DevOps',        s:0,d:3,b:100,c:300,st:3,dt:'Avr → Juin',note:'Modernisation du pipeline de développement — CI/CD',st2:'En cours', rent:3,mait:3,urg:2,pctLic:25,pctEsnB:45},
-  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3,urg:4,sel:1,pctLic:5,pctEsnB:40,methodo:'Hybride — Cycle en V + Scrum',sponsor:'Direction Générale / DSI'},
+  {n:'App mobile clients',     cat:'Dev applicatif',s:1,d:8,b:150,c:200,st:5,dt:'Mai → Déc', note:'Pilier croissance — commandes & réservations traiteurs/chefs',st2:'Planifié',rent:5,mait:3,urg:4,sel:1,pctLic:5,pctEsnB:40,methodo:'Hybride — Cycle en V + Scrum',sponsor:'Direction Générale / DSI',cp:'Sarah — cheffe de projet DSI'},
   {n:'App mobile fournisseurs',cat:'Dev applicatif',s:1,d:8,b:200,c:250,st:5,dt:'Mai → Déc', note:'Intermédiation traiteurs/chefs & établissement de commandes',st2:'Planifié',rent:5,mait:2,urg:4,pctLic:5,pctEsnB:40},
   {n:'CRM',                    cat:'CRM / Métier',  s:2,d:6,b:250,c:300,st:5,dt:'Juin → Nov',note:'Progiciel — doit être opérationnel avant la mise en service des apps',st2:'Planifié',rent:3,mait:4,urg:4,pctLic:45,pctEsnB:45},
   {n:'Auth forte (MFA)',       cat:'Socle IT',      s:3,d:4,b:150,c:120,st:5,dt:'Juil → Oct',note:'Authentification multi-facteurs pour l\'ensemble des employés',st2:'Planifié',rent:3,mait:4,urg:3,pctLic:40,pctEsnB:0},
@@ -1868,6 +1880,21 @@ function renderDash(){
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div style="display:flex;gap:12px;flex-wrap:wrap">'+leg+'</div><span style="font-size:10.5px;color:#2563EB;font-weight:700">Voir tous les KPI <i class="ti ti-arrow-right"></i></span></div>'
     +'</div>';
   });
+  /* Complétude du référentiel documentaaire par projet */
+  if(typeof REF_MODELES!=='undefined'){
+    var rows=P.slice().sort(function(a,b){return b.sc-a.sc;}).map(function(p){
+      var full=REF_MODELES.filter(function(m){var c=docCompleteness(p,m.id);return c&&c.n===c.tot;}).length;
+      var pc=Math.round(full/REF_MODELES.length*100);
+      var col=pc===100?'#10B981':(pc>=50?'#F59E0B':'#CBD5E1');
+      return '<div style="display:flex;align-items:center;gap:10px;padding:5px 0">'
+        +'<div style="width:170px;font-size:11px;font-weight:600;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.n+'</div>'
+        +'<div style="flex:1;height:7px;border-radius:4px;background:#F1F5F9;overflow:hidden"><div style="width:'+pc+'%;height:100%;background:'+col+'"></div></div>'
+        +'<div style="width:44px;text-align:right;font-size:10.5px;font-weight:800;color:'+col+'">'+full+'/'+REF_MODELES.length+'</div></div>';
+    }).join('');
+    h+='<div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-books" style="color:#EA580C;margin-right:6px"></i>Référentiel documentaire — complétude par projet</div>'
+      +'<span style="font-size:10px;color:#94A3B8">modèles entièrement complétés / 8 — la documentation est un indicateur de supervision comme les autres</span>'
+      +'<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="goPageTile(\'ref\')"><i class="ti ti-arrow-right"></i>Ouvrir le référentiel</button></div>'+rows+'</div>';
+  }
   body.innerHTML=h;
 }
 
@@ -2482,6 +2509,8 @@ function initMatrix(){
     data:{datasets:LP.map(p=>({label:p.n,data:[{x:MPT[p.n].x,y:MPT[p.n].y,r:Math.max(9,Math.round(8+(p.b-50)/300*11)),budget:p.b,valeur:p.valeur,effort:p.effort,vx:p.val,vy:p.fais,sc:p.sc,qL:qLabel[p.q]}],
       backgroundColor:qColor[p.q]+'CC',borderColor:p.sel?'#1D4ED8':'#fff',borderWidth:p.sel?3:2,hoverBackgroundColor:qColor[p.q],hoverBorderColor:'#1D4ED8',hoverBorderWidth:2}))},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:14,top:8,left:4,bottom:4}},
+      onClick:function(evt,els){ if(els&&els.length){ var ds=this.data.datasets[els[0].datasetIndex]; if(ds&&ds.label&&typeof openProjectDetail==='function') openProjectDetail(ds.label); } },
+      onHover:function(evt,els){ evt.native.target.style.cursor=els.length?'pointer':'default'; },
       plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#E2E8F0',borderWidth:1,titleColor:'#0F172A',bodyColor:'#64748B',padding:11,displayColors:false,
         callbacks:{title:ctx=>[ctx[0].dataset.label],label:ctx=>{const d=ctx.raw;return[` Valeur / impact : ${d.valeur}/5`,` Effort / complexité : ${d.effort}/5`,` → ${d.qL} · score ${d.sc}/100`,` Budget : ${d.budget}K€`];}}}},
       scales:{
@@ -2491,7 +2520,7 @@ function initMatrix(){
   });
   window.matrixChart=chart;
   var leg=document.getElementById('matrix-proj-legend');
-  if(leg) leg.innerHTML=LP.map((p,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#475569"><span style="width:17px;height:17px;border-radius:50%;background:${qColor[p.q]};color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</span><span style="font-weight:700;color:#0F172A">${p.sc}/100</span></div>`).join('');
+  if(leg) leg.innerHTML=LP.map((p,i)=>`<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#475569;cursor:pointer" onclick="openProjectDetail(${jsArg(p.n)})" title="Ouvrir la fiche projet"><span style="width:17px;height:17px;border-radius:50%;background:${qColor[p.q]};color:#fff;font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.n}</span><span style="font-weight:700;color:#0F172A">${p.sc}/100</span></div>`).join('');
 }
 function highlightBubble(idx){
   const chart=window.matrixChart;if(!chart)return;
@@ -3098,7 +3127,8 @@ function applyData(d){
   if(d && d.rex && typeof d.rex==='object') REX_DATA = d.rex;
   if(d && d.pilot && typeof d.pilot==='object') PILOT = d.pilot;
   if(d && d.backlog && typeof d.backlog==='object' && Object.keys(d.backlog).length) BACKLOG = d.backlog;
-  if(d && d.docs && typeof d.docs==='object') DOCS = d.docs;
+  if(d && d.docs && typeof d.docs==='object'){ Object.keys(d.docs).forEach(function(pn){ DOCS[pn]=DOCS[pn]||{}; Object.keys(d.docs[pn]).forEach(function(md){ DOCS[pn][md]=Object.assign({},DOCS[pn][md]||{},d.docs[pn][md]); }); }); }
+  Object.keys(REX_SEED_DOC).forEach(function(k){ if(!REX_DATA[k]||!(REX_DATA[k].ecarts||REX_DATA[k].lecons||REX_DATA[k].diff||REX_DATA[k].bonnes)) REX_DATA[k]=REX_SEED_DOC[k]; });
   PALL.forEach(function(p){ if(p.sp) SP_LINKS[p.n]=p.sp; });
   refreshP();
   recalc();
@@ -3307,7 +3337,27 @@ var REF_MODELES=[
  {id:'pv', ph:'Clôture', t:'PV de recette (VABF / VABE)', i:"L'acte contradictoire qui prouve la conformité au CDC et déclenche le paiement du solde prestataire.", r:['Synthèse des tests vs CDC','Réserves & échéances','Décision à 3 issues','Signatures MOA / MOE / presta']},
  {id:'rex', ph:'Clôture', t:'Fiche REX', i:"La capitalisation : écarts, difficultés, bonnes pratiques, leçons — réinjectée au référentiel chaque trimestre.", r:['Écarts coût/délai/qualité','Difficultés rencontrées','Bonnes pratiques','Leçons apprises']},
 ];
-var DOCS={}; /* projet -> modèle -> {champ: valeur} — onglet « Referentiel » du Sheet */
+/* Référentiel pré-complété du projet blueprint (dossier Partie 2 & 3) */
+var DOCS_SEED={'App mobile clients':{
+ besoin:{demandeur:"Direction Générale — stratégie de croissance (1 M de clients à 2 ans)",decision:"GO",datedec:"2026-04-15 — comité d'entrée du portefeuille"},
+ charte:{succes:"Commande complète réalisée en conditions réelles lors de la recette · temps de réponse < 2 s · crash-free ≥ 99 % · interfaçage CRM opérationnel avant mise en service · adoption : 10 000 téléchargements à 3 mois",
+  jalons:"Cadrage validé — fin mai · Fin des sprints de développement — fin octobre · Recette VABF/VABE — fin novembre · Mise en service — décembre (après bascule CRM et O365)"},
+ cdc:{contraintes:"Mise en service conditionnée au CRM et à Office 365 (dépendances fin-fin) · RGPD et sécurisation des paiements (volet piloté par le RSSI) · iOS + Android · budget plafonné à 150 K€ · sous-traitance ESN TechMob ≈ 40 % du budget"},
+ pmp:{reserve:"10 % du budget (15 K€) — mobilisable sur décision COPIL",
+  commutil:"Démos de fin de sprint ouvertes aux équipes métier · newsletter mensuelle support & commerce · formation du support à J-30 · communication clients au lancement (stores + campagne)"},
+ copil:{attention:"SPI 0,96 (ambre) : léger retard résorbable sur le sprint paiement · dépendance CRM sous surveillance (bascule prévue novembre) · staffing TechMob conforme au contrat",
+  decisions:"Valider le plan de rattrapage du sprint paiement (+0,5 ETP interne sur 3 semaines) · confirmer la date de recette au 30/11"},
+ risques:{analyse:"8 risques au registre, 2 en zone haute (dépendance CRM 4×4, sécurité des paiements 3×4). Mitigations engagées : contrat d'interface figé au cadrage, audit OWASP planifié avant recette. Aucun risque critique non couvert."},
+ pv:{reserves:"CT-05 — notification push retardée en réseau dégradé (4G) : sévérité mineure · responsable TechMob · levée au 15/01",decision:"Acceptation avec réserves",datepv:"2026-12-18"}
+}};
+var REX_SEED_DOC={'App mobile clients':{
+ ecarts:"Délai : +2 semaines sur le sprint paiement, résorbées avant la recette · Coût : +6 K€ de renfort interne, absorbés par la réserve pour aléas · Qualité : 10 cas de recette conformes sur 11, 1 réserve mineure (CT-05)",
+ diff:"Intégration du paiement plus complexe que prévu · disponibilité tardive des utilisateurs métier pour la recette · coordination de 4 dépendances simultanées (O365, CRM, app fournisseurs, refonte web)",
+ bonnes:"POC avant contractualisation de l'ESN · backlog pondéré comme mesure d'avancement objective · comité d'interface hebdomadaire avec l'équipe CRM",
+ lecons:"Prévoir +20 % de charge sur toute intégration de paiement · figer les contrats d'interface dès le cadrage · faire un REX à froid (J+30) pour capter l'adoption réelle",
+ date:"2026-12-19"}};
+var DOCS=JSON.parse(JSON.stringify(DOCS_SEED)); /* projet -> modèle -> {champ: valeur} — onglet « Referentiel » du Sheet */
+Object.keys(REX_SEED_DOC).forEach(function(k){ if(!REX_DATA[k]) REX_DATA[k]=REX_SEED_DOC[k]; });
 function dv(p,mid,k){ return (DOCS[p.n]&&DOCS[p.n][mid]&&DOCS[p.n][mid][k])||''; }
 /* Champs de chaque modèle. src:'doc' = propre au document (Sheet Referentiel) ; sinon champ partagé du site. */
 var DOC_FIELDS={
@@ -3389,6 +3439,7 @@ function saveDocEdit(){
     else if(fd.src==='rex'){ REX_DATA[p.n]=REX_DATA[p.n]||{}; REX_DATA[p.n][fd.k]=v; touchedRex=true; }
     else { p[fd.src]=v; touchedProj=true; }
   });
+  docFields._maj=todayISO();
   DOCS[p.n]=DOCS[p.n]||{}; DOCS[p.n][mid]=docFields;
   apiPost({action:'saveDoc', project:p.n, model:mid, fields:docFields});
   if(touchedProj) apiPost({action:'update', project:p, charges:MV[p.n]||[]});
@@ -3414,7 +3465,7 @@ function renderRef(){
         +'<div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:8px;background:'+phCol[ph]+'1A;color:'+phCol[ph]+';display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-file-text" style="font-size:14px"></i></div><div style="font-size:12.5px;font-weight:800;color:#0F172A">'+m.t+'</div></div>'
         +'<div style="font-size:10.5px;color:#64748B;line-height:1.55">'+m.i+'</div>'
         +'<div style="font-size:9.5px;color:#94A3B8">'+m.r.map(function(x){return '• '+x;}).join('&nbsp;&nbsp;')+'</div>'
-        +(function(){var c=docCompleteness(p,m.id);if(!c)return '';var pc=Math.round(c.n/c.tot*100);var col=pc===100?'#10B981':(pc>0?'#F59E0B':'#CBD5E1');return '<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:5px;border-radius:3px;background:#F1F5F9;overflow:hidden"><div style="width:'+pc+'%;height:100%;background:'+col+'"></div></div><span style="font-size:9px;font-weight:700;color:'+col+'">'+c.n+'/'+c.tot+' champs</span></div>';})()
+        +(function(){var c=docCompleteness(p,m.id);if(!c)return '';var pc=Math.round(c.n/c.tot*100);var col=pc===100?'#10B981':(pc>0?'#F59E0B':'#CBD5E1');return '<div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:5px;border-radius:3px;background:#F1F5F9;overflow:hidden"><div style="width:'+pc+'%;height:100%;background:'+col+'"></div></div><span style="font-size:9px;font-weight:700;color:'+col+'">'+c.n+'/'+c.tot+' champs</span>'+(dv(p,m.id,'_maj')?'<span style="font-size:8.5px;color:#94A3B8" title="Dernière modification">MAJ '+dv(p,m.id,'_maj')+'</span>':'')+'</div>';})()
         +'<div style="display:flex;gap:7px;margin-top:auto"><button class="btn btn-acc" style="flex:1;justify-content:center;font-size:10.5px" onclick="openDocEdit(\''+m.id+'\')"><i class="ti ti-pencil"></i>Compléter</button>'
         +'<button class="btn" style="justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'view\')" title="Aperçu imprimable"><i class="ti ti-eye"></i></button>'
         +'<button class="btn" style="justify-content:center;font-size:10.5px" onclick="refDoc(\''+m.id+'\',\'dl\')" title="Télécharger en Word, pré-rempli"><i class="ti ti-download"></i></button></div>'
@@ -3493,6 +3544,22 @@ function refDocHtml(id,p){
   }
   return head.replace('MODELE',(REF_MODELES.find(function(m){return m.id===id;})||{}).t+' — '+p.n)+b+foot;
 }
+function refFullDossier(){
+  var p=refP(); if(!p){toast('Choisissez un projet');return;}
+  var parts=REF_MODELES.map(function(m,i){
+    var inner=refDocHtml(m.id,p).replace(/^[\s\S]*?<body>/,'').replace(/<\/body>[\s\S]*$/,'');
+    return '<div style="page-break-before:'+(i?'always':'auto')+'">'+inner+'</div>';
+  }).join('');
+  var css='body{font-family:Arial,sans-serif;font-size:11pt;color:#1E293B;margin:2cm}h1{font-size:17pt;color:#1E293B;border-bottom:3px solid #EA580C;padding-bottom:6px}h2{font-size:12.5pt;color:#EA580C;margin-top:22px}table{border-collapse:collapse;width:100%;margin:8px 0}td,th{border:1px solid #CBD5E1;padding:6px 9px;font-size:10pt;text-align:left;vertical-align:top}th{background:#F1F5F9}p,li{line-height:1.55;font-size:10.5pt}.meta{color:#64748B;font-size:9.5pt}';
+  var cover='<div style="text-align:center;padding-top:4cm"><div style="font-size:26pt;font-weight:800;color:#1E293B">Dossier documentaire projet</div>'
+    +'<div style="font-size:19pt;color:#EA580C;font-weight:800;margin-top:10px">'+refEsc(p.n)+'</div>'
+    +'<div style="font-size:11pt;color:#64748B;margin-top:22px">Les 8 modèles du référentiel PMO, pré-remplis par PMO Suite<br>'+refEsc(p.dt||'')+' · '+(p.b||0)+' K€ · généré le '+todayISO()+'</div>'
+    +'<div style="font-size:10pt;color:#94A3B8;margin-top:30px">'+REF_MODELES.map(function(m,i){return (i+1)+'. '+m.t;}).join('<br>')+'</div></div>';
+  var w=window.open('','_blank'); if(!w){toast('Autorise les pop-ups pour générer le dossier');return;}
+  w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Dossier documentaire — '+refEsc(p.n)+'</title><style>'+css+'</style></head><body>'+cover+parts+'</body></html>');
+  w.document.close();
+  toast('✓ Dossier documentaire complet généré ('+REF_MODELES.length+' documents) — Ctrl+P pour imprimer / PDF');
+}
 function refDoc(id,mode){
   var p=refP(); if(!p){toast('Choisissez un projet');return;}
   var html=refDocHtml(id,p);
@@ -3561,6 +3628,7 @@ async function loadFromSheet(){
 
 /* Écriture : Web -> Sheet (POST text/plain = pas de pré-vol CORS) */
 function apiPost(payload){
+  if(typeof JURY!=='undefined'&&JURY){ toast('🔒 Mode jury — lecture seule : aucune modification enregistrée'); return; }
   if(!CONFIG.API_URL) return;
   fetch(CONFIG.API_URL, {
     method:'POST',
