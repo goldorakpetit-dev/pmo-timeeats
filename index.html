@@ -430,7 +430,9 @@ html,body{background:#F1F5F9;min-height:100vh;font-family:-apple-system,BlinkMac
       <div id="login-err" class="login-err"></div>
       <button type="submit" class="login-btn"><i class="ti ti-login"></i><span data-i18n="login.btn">Se connecter</span></button>
     </form>
-    <div class="login-hint">Démonstration — identifiant <strong>admin</strong> · mot de passe <strong>pmo2026</strong></div>
+    <div class="login-hint" style="border-top:none;padding-top:0;margin-top:14px">
+      <button type="button" onclick="enterJury()" style="width:100%;padding:11px;border:1.5px dashed #CBD5E1;border-radius:10px;background:#F8FAFC;color:#475569;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px" onmouseenter="this.style.borderColor='#F59E0B';this.style.color='#B45309';this.style.background='#FFFBEB'" onmouseleave="this.style.borderColor='#CBD5E1';this.style.color='#475569';this.style.background='#F8FAFC'"><i class="ti ti-eye"></i>Mode jury — consulter sans connexion (lecture seule)</button>
+    </div>
   </div>
 </div>
 <script>
@@ -440,11 +442,22 @@ var AUTH_USERS=[
   {user:'arthur', pass:'cesi2026'}
 ];
 var JURY=/[?&]jury=1/.test(location.search);
+function enterJury(){
+  JURY=true;
+  var ov=document.getElementById('login-overlay'); if(ov)ov.style.display='none';
+  document.body.style.overflow='';
+  var tb=document.querySelector('.tb-r');
+  if(tb&&!document.getElementById('jury-badge')){ var b=document.createElement('span'); b.id='jury-badge';
+    b.innerHTML='<i class="ti ti-lock"></i> Mode jury · lecture seule';
+    b.style.cssText='font-size:10px;font-weight:800;color:#B45309;background:#FEF9C3;border:1px solid #FDE68A;border-radius:14px;padding:4px 11px;display:inline-flex;align-items:center;gap:5px;margin-right:6px';
+    tb.prepend(b); }
+  toast('Mode jury activé — libre consultation, aucune modification possible');
+}
 function pmoIsAuthed(){ if(JURY)return true; try{ return sessionStorage.getItem('pmo_auth')==='1'; }catch(e){ return false; } }
 document.addEventListener('DOMContentLoaded',function(){
   if(!JURY)return;
   var tb=document.querySelector('.tb-r');
-  if(tb){ var b=document.createElement('span'); b.innerHTML='<i class="ti ti-lock"></i> Mode jury · lecture seule';
+  if(tb&&!document.getElementById('jury-badge')){ var b=document.createElement('span'); b.id='jury-badge'; b.innerHTML='<i class="ti ti-lock"></i> Mode jury · lecture seule';
     b.style.cssText='font-size:10px;font-weight:800;color:#B45309;background:#FEF9C3;border:1px solid #FDE68A;border-radius:14px;padding:4px 11px;display:inline-flex;align-items:center;gap:5px;margin-right:6px';
     tb.prepend(b); }
 });
