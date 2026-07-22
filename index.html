@@ -2074,6 +2074,18 @@ function renderBudget(){
 /* ── DÉTAILS PROJET (lecture complète) ── */
 var DET_SEL='';
 var DET_BL_OPEN=-1;
+var DET_WBS_EDIT=false;
+function detWbsToggle(){ if(!DET_WBS_EDIT&&juryGuard())return; DET_WBS_EDIT=!DET_WBS_EDIT; if(DET_WBS_EDIT){var p=P.find(function(x){return x.n===DET_SEL;}); if(p) wbsEditorOpen('det', wbsList(p.n));} renderDetails(); }
+function detWbsPropose(){ var p=P.find(function(x){return x.n===DET_SEL;}); if(!p)return;
+  if(WBS_STORE['det']&&WBS_STORE['det'].length&&!confirm('Remplacer les lots actuels par le WBS type « '+(WBS_TPL[p.cat]?p.cat:'générique')+' » réparti sur '+p.c+' j/h ?'))return;
+  WBS_STORE['det']=wbsPropose(p.cat,p.c); wbsRender('det'); }
+function detWbsSave(){ if(juryGuard())return;
+  var p=P.find(function(x){return x.n===DET_SEL;}); if(!p)return;
+  var wl=(WBS_STORE['det']||[]).filter(function(x){return String(x[0]).trim();});
+  WBS[p.n]=wl; apiPost({action:'saveWbs', project:p.n, rows:wl});
+  DET_WBS_EDIT=false; renderDetails();
+  toast('✓ WBS de « '+p.n+' » enregistré — '+wl.length+' lots, '+wl.reduce(function(a,x){return a+(+x[1]||0);},0)+' j/h');
+}
 function detBlToggle(i){ DET_BL_OPEN=(DET_BL_OPEN===i)?-1:i; renderDetails(); }
 function detBlSave(i){
   if(juryGuard())return;
@@ -2118,11 +2130,15 @@ function renderDetails(name){
   h+='<div><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Équipe affectée</div>'+(team.length?team.map(function(m){return '<div style="font-size:11.5px;color:#475569;padding:3px 0">• '+esc(m.name)+(m.type==='prestataire'?' <span style="color:#2563EB;font-weight:700">ESN</span>':'')+(m.share?' — '+Math.round(m.share*100)+'%':'')+'</div>';}).join(''):'<div style="font-size:11px;color:#CBD5E1">Aucune</div>')+'</div></div></div>';
   /* WBS — décomposition en lots */
   var wbs=wbsList(p.n);
-  if(wbs&&wbs.length){
+  if((!wbs||!wbs.length)&&!DET_WBS_EDIT){
+    h+='<div class="card" style="display:flex;align-items:center;gap:10px"><div style="font-size:12px;color:#64748B"><i class="ti ti-sitemap" style="color:#8B5CF6;margin-right:6px"></i>Aucun WBS pour ce projet.</div><button class="btn" style="margin-left:auto;padding:5px 12px;font-size:10.5px;color:#8B5CF6;border-color:#DDD6FE" onclick="detWbsToggle();setTimeout(detWbsPropose,50)"><i class="ti ti-wand"></i>Créer depuis un WBS type</button></div>';
+  }
+  if(wbs&&wbs.length&&!DET_WBS_EDIT){
     var wTot=wbs.reduce(function(a2,l){return a2+l[1];},0);
     h+='<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
       +'<div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-sitemap" style="color:#8B5CF6;margin-right:6px"></i>WBS — décomposition en '+wbs.length+' lots · '+wTot+' j/h</div>'
-      +'<span style="font-size:10.5px;color:#64748B">estimation bottom-up : la somme des lots retombe sur la charge du contexte — <strong>le WBS pondère, le backlog mesure</strong></span></div>';
+      +'<span style="font-size:10.5px;color:#64748B">estimation bottom-up — <strong>le WBS pondère, le backlog mesure</strong></span>'
+      +'<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px" onclick="detWbsToggle()" title="Modifier les lots du WBS"><i class="ti ti-pencil"></i>Modifier</button></div>';
     var wMax=Math.max.apply(null,wbs.map(function(l){return l[1];}));
     wbs.forEach(function(l){
       var pc=Math.round(l[1]/wMax*100);
@@ -2133,6 +2149,14 @@ function renderDetails(name){
         +'<div style="flex:1.4;font-size:10px;color:#94A3B8">'+esc(l[2])+'</div></div>';
     });
     h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:7px">Le lot « Développement + Recette » se décline en user stories pondérées (backlog ci-dessous) : c\'est lui qui porte la mesure d\'avancement du Pilotage.</div></div>';
+  }
+  if(DET_WBS_EDIT){
+    h+='<div class="card" style="border:1.5px dashed #C4B5FD;background:#FBFAFF"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-sitemap" style="color:#8B5CF6;margin-right:6px"></i>Modifier le WBS</div>'
+      +'<button class="btn" style="margin-left:auto;padding:4px 10px;font-size:10px;color:#8B5CF6;border-color:#DDD6FE" onclick="detWbsPropose()"><i class="ti ti-wand"></i>Proposer un WBS type</button>'
+      +'<button class="btn" style="padding:4px 10px;font-size:10px" onclick="wbsAddRow(\'det\')"><i class="ti ti-plus"></i>Lot</button>'
+      +'<button class="btn" style="padding:4px 10px;font-size:10px" onclick="DET_WBS_EDIT=false;renderDetails()">Annuler</button>'
+      +'<button class="btn btn-acc" style="padding:4px 10px;font-size:10px" onclick="detWbsSave()"><i class="ti ti-check"></i>Enregistrer</button></div>'
+      +'<div id="det-wbs-head" style="font-size:10px;color:#64748B;margin-bottom:6px"></div><div id="det-wbs-rows"></div></div>';
   }
   /* Backlog — user stories pondérées (lecture ; édition via la fiche projet) */
   var bl=blList(p.n);
@@ -2176,6 +2200,7 @@ function renderDetails(name){
     h+='<div class="card"><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Retour d\'expérience (REX)</div>'+rr('Écarts',rx.ecarts)+rr('Difficultés',rx.diff)+rr('Bonnes pratiques',rx.bonnes)+rr('Leçons apprises',rx.lecons)+'</div>';
   }
   body.innerHTML=h;
+  if(DET_WBS_EDIT) wbsRender('det');
   try{
     if(window.detRadarChart) window.detRadarChart.destroy();
     window.detRadarChart=new Chart(document.getElementById('detRadar'),{type:'radar',
@@ -3511,7 +3536,30 @@ function renderPilot(){
       +'<span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#EF4444;margin-right:5px"></span><strong style="color:#B91C1C">Rouge (&lt; 0,9)</strong> : écart sérieux, on décide en COPIL</span>'
       +'</div></div>';
   var scOpts=started.map(function(p){return '<option'+(p.n===PILOT_SEL?' selected':'')+'>'+p.n+'</option>';}).join('');
-  var sc='<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px"><div style="font-size:13px;font-weight:800;color:#0F172A">Courbe en S — budget planifié vs consommé</div><select id="pilot-proj" onchange="PILOT_SEL=this.value;renderPilot()" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer">'+scOpts+'</select></div><div style="height:240px"><canvas id="pilotSC"></canvas></div></div>';
+  /* Triangle d'or du projet sélectionné */
+  var tri='';
+  (function(){
+    if(!PILOT_SEL||!started.some(function(x){return x.n===PILOT_SEL;})) PILOT_SEL=(started.find(function(x){return x.sel;})||started[0]||{}).n||'';
+    var p=P.find(function(x){return x.n===PILOT_SEL;}); if(!p)return;
+    var d=pilotData(p), pv=pvPct(p,m), ev=Math.min(100,d.av);
+    var spi=(pv>0&&(ev||d.ac))?ev/pv:null, cpi=(d.ac>0)?((ev/100*(p.b||0))/d.ac):null;
+    var rag=function(v){return v==null?['#94A3B8','—']:(v<0.9?['#EF4444','Rouge']:(v<1?['#F59E0B','Ambre']:['#10B981','Vert']));};
+    var rs=rag(spi), rc=rag(cpi);
+    var bl=blList(p.n), must=bl.filter(function(u){return u.mos==='Must';});
+    var mDone=must.filter(function(u){return u.st==='Terminé';}).length;
+    var q=must.length?(mDone+'/'+must.length+' US Must terminées'):'recette tracée au CDC';
+    tri='<div class="card" style="position:relative;min-height:300px">'
+      +'<div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:2px">Triangle d\'or — '+p.n+'</div>'
+      +'<div style="font-size:10px;color:#94A3B8;margin-bottom:4px">Délais · Coûts · Qualité — chaque sommet a son indicateur et son seuil</div>'
+      +'<div style="position:relative;height:225px">'
+      +'<svg viewBox="0 0 300 210" style="position:absolute;inset:0;width:100%;height:100%"><polygon points="150,34 30,196 270,196" fill="#FFF7ED" stroke="#EA580C" stroke-width="2"/></svg>'
+      +'<div style="position:absolute;top:0;left:50%;transform:translateX(-50%);text-align:center"><div style="font-size:10px;font-weight:800;color:#10B981">QUALITÉ</div><div style="font-size:9px;color:#64748B">'+q+'</div></div>'
+      +'<div style="position:absolute;bottom:0;left:0;text-align:center;max-width:38%"><div style="font-size:10px;font-weight:800;color:'+rs[0]+'">DÉLAIS — SPI '+(spi==null?'—':spi.toFixed(2))+'</div><div style="font-size:9px;color:#64748B">'+rs[1]+' · fait ÷ prévu</div></div>'
+      +'<div style="position:absolute;bottom:0;right:0;text-align:center;max-width:38%"><div style="font-size:10px;font-weight:800;color:'+rc[0]+'">COÛTS — CPI '+(cpi==null?'—':cpi.toFixed(2))+'</div><div style="font-size:9px;color:#64748B">'+rc[1]+' · '+d.ac+' K€ / '+(p.b||0)+' K€</div></div>'
+      +'<div style="position:absolute;top:52%;left:50%;transform:translate(-50%,-50%);text-align:center"><div style="font-size:22px;font-weight:800;color:#EA580C">'+ev+' %</div><div style="font-size:8.5px;color:#94A3B8">avancement'+(backlogPct(p.n)!=null?' (backlog)':'')+'</div></div>'
+      +'</div></div>';
+  })();
+  var sc='<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:14px" class="home-split">'+tri+'<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px"><div style="font-size:13px;font-weight:800;color:#0F172A">Courbe en S — budget planifié vs consommé</div><select id="pilot-proj" onchange="PILOT_SEL=this.value;renderPilot()" style="font-size:11.5px;padding:6px 10px;border:1px solid #E2E8F0;border-radius:8px;background:#fff;color:#334155;font-family:inherit;cursor:pointer">'+scOpts+'</select></div><div style="height:240px"><canvas id="pilotSC"></canvas></div></div></div>';
   body.innerHTML=head+rows+(future.length?'<div style="font-size:10.5px;color:#94A3B8">'+future.length+' projet(s) non démarré(s) à cette date : '+future.map(function(p){return p.n;}).join(' · ')+'</div>':'')+sc;
   drawSCurve(m);
 }
