@@ -2116,6 +2116,24 @@ function renderDetails(name){
   var team=(TEAMS[p.n]&&TEAMS[p.n].members)?TEAMS[p.n].members:[];
   h+='<div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px"><div><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Dépendances</div>'+(deps.length?deps.map(function(d){return '<div style="font-size:11.5px;color:#475569;padding:3px 0">• '+esc(d)+'</div>';}).join(''):'<div style="font-size:11px;color:#CBD5E1">Aucune</div>')+'</div>';
   h+='<div><div style="font-size:13px;font-weight:800;color:#0F172A;margin-bottom:8px">Équipe affectée</div>'+(team.length?team.map(function(m){return '<div style="font-size:11.5px;color:#475569;padding:3px 0">• '+esc(m.name)+(m.type==='prestataire'?' <span style="color:#2563EB;font-weight:700">ESN</span>':'')+(m.share?' — '+Math.round(m.share*100)+'%':'')+'</div>';}).join(''):'<div style="font-size:11px;color:#CBD5E1">Aucune</div>')+'</div></div></div>';
+  /* WBS — décomposition en lots */
+  var wbs=WBS_SEED[p.n];
+  if(wbs){
+    var wTot=wbs.reduce(function(a2,l){return a2+l[1];},0);
+    h+='<div class="card"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
+      +'<div style="font-size:13px;font-weight:800;color:#0F172A"><i class="ti ti-sitemap" style="color:#8B5CF6;margin-right:6px"></i>WBS — décomposition en '+wbs.length+' lots · '+wTot+' j/h</div>'
+      +'<span style="font-size:10.5px;color:#64748B">estimation bottom-up : la somme des lots retombe sur la charge du contexte — <strong>le WBS pondère, le backlog mesure</strong></span></div>';
+    var wMax=Math.max.apply(null,wbs.map(function(l){return l[1];}));
+    wbs.forEach(function(l){
+      var pc=Math.round(l[1]/wMax*100);
+      h+='<div style="display:flex;align-items:center;gap:10px;padding:5px 4px;border-bottom:1px solid #F8FAFC">'
+        +'<div style="width:200px;font-size:11.5px;font-weight:700;color:#0F172A">'+esc(l[0])+'</div>'
+        +'<div style="flex:1;height:9px;border-radius:5px;background:#F1F5F9;overflow:hidden"><div style="width:'+pc+'%;height:100%;background:#8B5CF6CC"></div></div>'
+        +'<div style="width:56px;text-align:right;font-size:11px;font-weight:800;color:#0F172A">'+l[1]+' j/h</div>'
+        +'<div style="flex:1.4;font-size:10px;color:#94A3B8">'+esc(l[2])+'</div></div>';
+    });
+    h+='<div style="font-size:9.5px;color:#94A3B8;margin-top:7px">Le lot « Développement + Recette » se décline en user stories pondérées (backlog ci-dessous) : c\'est lui qui porte la mesure d\'avancement du Pilotage.</div></div>';
+  }
   /* Backlog — user stories pondérées (lecture ; édition via la fiche projet) */
   var bl=blList(p.n);
   if(bl.length){
@@ -3292,6 +3310,21 @@ function ragBadge(v){
 }
 /* ══ BACKLOG LÉGER — user stories pondérées : « le WBS pondère, le backlog mesure » ══ */
 var BACKLOG={}; /* projet -> [{id,t,w,st}] — onglet « Backlog » du Sheet */
+/* WBS — décomposition en lots (le WBS pondère, le backlog mesure) */
+var WBS_SEED={'App mobile clients':[
+  ['1. Cadrage & conception',25,'Ateliers MOA, spécifications, maquettes UX, architecture'],
+  ['2. Développement',95,'Sprints de réalisation des 8 user stories (iOS + Android)'],
+  ['3. Intégrations',35,'CRM (contrat d\'interface), paiement PSP, API, notifications'],
+  ['4. Recette',25,'VABF métier + VABE technique (perf, sécurité OWASP, devices)'],
+  ['5. Déploiement',8,'Publication stores, bascule, plan de communication au lancement'],
+  ['6. Pilotage',12,'Comités, reporting EVM, gestion des risques et du contrat ESN']],
+ 'CRM':[
+  ['1. Cadrage & spécifications',30,'Ateliers métier, règles de gestion, périmètre MoSCoW'],
+  ['2. Paramétrage',85,'Référentiel clients/fournisseurs, gestion commerciale'],
+  ['3. Reprise de données',50,'Audit, nettoyage, dédoublonnage, double run'],
+  ['4. Intégrations API',40,'Interfaçage web & mobile, contrat d\'interface'],
+  ['5. Recette & bascule',50,'VABF/VABE, formation, conduite du changement'],
+  ['6. Pilotage',45,'Comités, suivi intégrateur, gestion des risques']]};
 var BACKLOG_SEED={'App mobile clients':[
   {id:'US-01',t:'Compte client & authentification',w:20,st:'Terminé',mos:'Must',desc:"En tant que client (établissement ou entreprise), je veux créer mon compte et m'authentifier de façon sécurisée afin d'accéder à mes commandes et à mes informations.",crit:"Création de compte avec vérification e-mail • Connexion sécurisée adossée à l'annuaire (O365) • Récupération de mot de passe autonome"},
   {id:'US-02',t:'Catalogue des prestations traiteurs / chefs',w:25,st:'Terminé',mos:'Must',desc:"En tant que client, je veux parcourir le catalogue des prestations des traiteurs et chefs afin de choisir l'offre adaptée à mon besoin.",crit:"Recherche et filtres (type, prix, zone, date) • Fiches prestataires avec menus et avis • Temps d'affichage < 2 s"},
@@ -3638,7 +3671,8 @@ function refDocHtml(id,p){
     b='<h1>Plan de management du projet</h1>'+idcard
     +'<h2>1. Organisation</h2><p>'+(team.length?team.map(function(m){return e(m.name)+' ('+e(m.role||'équipe')+(m.type==='prestataire'?' — ESN':'')+', '+Math.round((m.share||0)*100)+' %)';}).join(' · '):W)+'</p>'
     +'<h2>2. Planification</h2><p>Période : '+e(p.dt||'—')+' · '+(p.d||'—')+' mois · Dépendances : '+((p.deps&&p.deps.length)?p.deps.map(function(d){return e(typeof d==='string'?d:d.dep);}).join(', '):'aucune')+'</p>'
-    +'<h2>3. Budget</h2><p>'+(p.b||0)+' K€ — licences '+(p.pctLic||0)+' %, sous-traitance ESN '+(p.pctEsnB||0)+' %, interne '+(100-(p.pctLic||0)-(p.pctEsnB||0))+' % · réserve pour aléas : '+(D('pmp','reserve')||W)+'</p>'
+    +((typeof WBS_SEED!=='undefined'&&WBS_SEED[p.n])?'<h2>3. Décomposition du travail (WBS)</h2><table><tr><th>Lot</th><th>Charge</th><th>Contenu</th></tr>'+WBS_SEED[p.n].map(function(l){return '<tr><td>'+e(l[0])+'</td><td>'+l[1]+' j/h</td><td>'+e(l[2])+'</td></tr>';}).join('')+'<tr><th colspan="2">Total : '+WBS_SEED[p.n].reduce(function(a2,l){return a2+l[1];},0)+' j/h</th><th></th></tr></table>':'')
+    +'<h2>'+((typeof WBS_SEED!=='undefined'&&WBS_SEED[p.n])?'4':'3')+'. Budget</h2><p>'+(p.b||0)+' K€ — licences '+(p.pctLic||0)+' %, sous-traitance ESN '+(p.pctEsnB||0)+' %, interne '+(100-(p.pctLic||0)-(p.pctEsnB||0))+' % · réserve pour aléas : '+(D('pmp','reserve')||W)+'</p>'
     +'<h2>4. Gestion des risques</h2><p>'+(risks.length?risks.length+' risques au registre (voir modèle « Registre des risques »)':W)+'</p>'
     +'<h2>5. Plan de communication</h2><table><tr><th>Cible</th><th>Canal / fréquence</th></tr><tr><td>Direction (COPIL)</td><td>Comité mensuel + flash report à jalon</td></tr><tr><td>Équipe projet</td><td>Point hebdomadaire</td></tr><tr><td>Utilisateurs</td><td>'+(D('pmp','commutil')||W)+'</td></tr></table>';
   } else if(id==='copil'){
